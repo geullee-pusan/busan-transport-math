@@ -426,7 +426,7 @@ const D3 = {
 // ── T9-3 같은 구간을 달린 만큼 (문장) — 09-templates-additions.md 9절 ──
 const blank93 = (v) => v === undefined || v === null || String(v).trim() === '';
 const TRAINS93 = ['가', '나'];
-const TEST_RUN = '(가상) 시험 운행 열차 두 대가 같은 구간을 달려요.';
+const TEST_RUN = '시험 운행 열차 두 대가 같은 구간을 달린다고 해 봐요.';
 const gcd = (x, y) => (y ? gcd(y, x % y) : x);
 
 /** 1단계: 같은 분모, 구간 그림 */

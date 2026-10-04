@@ -245,29 +245,29 @@ function t22Level3(all, empty) {
   const d = all - empty;
   const bl = blankAt(d, 1);
   return {
-    text: [L1(), '호선 ', CARS(), '량 열차의 좌석은 모두 ', V(all), '석이에요. 그중 ', V(empty), '석이 비어 있어요. 앉아 있는 사람은 몇 명이에요?'],
-    figure: { kind: 'seatBar', total: all },
+    text: ['열차에 ', V(all), '명이 타 있었어요. 그중 ', V(empty), '명이 서 있었어요. 앉아 있던 사람은 몇 명이에요?'],
+    figure: null,
     input: { kind: 'number', unit: '명' },
     answer: d,
     discriminators: uniq(
       [
-        { value: all + empty, category: '식', kind: 'check', feedback: '앉은 사람이 좌석보다 많을까요?' },
-        { value: empty, category: '읽기', kind: 'check', feedback: `${eun(empty)} 빈 좌석이에요. 무엇을 물었죠?` },
+        { value: all + empty, category: '식', kind: 'check', feedback: '앉은 사람이 탄 사람보다 많을까요?' },
+        { value: empty, category: '읽기', kind: 'check', feedback: `${eun(empty)} 서 있던 사람이에요. 무엇을 물었죠?` },
         { value: absDigits(all, empty), category: '개념', kind: 'check', feedback: `일의 자리 ${all % 10}에서 ${eul(empty % 10)} 뺄 수 있나요?` },
         { value: d + 10, category: '계산', kind: 'nudge', feedbackCheck: '빌려 준 자리를 다시 볼까요?', feedback: '빌려 준 자리는 1 줄었나요?' },
       ],
       d,
     ),
     hints: [
-      `좌석은 모두 ${all}석이에요. 그중 ${empty}석은 비어 있어요. 앉아 있는 사람 수를 물어요.`,
-      '전체 좌석, 빈 좌석, 앉은 사람이 그림의 좌석 띠에서 어디인지 나눠 표시해 봐요.',
+      `열차에 ${all}명이 타 있었고, 그중 ${empty}명이 서 있었어요. 앉아 있던 사람 수를 물어요.`,
+      '탄 사람 전체를 서 있던 사람과 앉아 있던 사람으로 나눠 띠를 그려 봐요.',
       `앉은 사람은 ${all} − ${ieyo(empty)}. 일의 자리 ${all % 10}에서 ${eun(empty % 10)} 뺄 수 없어요.`,
       `${all} − ${empty} = ${bl.blank}`,
     ],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     explain: {
-      why: [`전체 좌석에서 빈 좌석을 빼면 앉은 사람이에요.`, firstStep(all, empty), `${all} − ${empty} = ${ieyo(d)}.`, `그래서 앉아 있는 사람은 ${d}명이에요.`],
+      why: ['탄 사람 전체에서 서 있던 사람을 빼면 앉아 있던 사람이에요.', firstStep(all, empty), `${all} − ${empty} = ${ieyo(d)}.`, `그래서 앉아 있던 사람은 ${d}명이에요.`],
       alt: [`${empty}에서 ${all}까지 더해서 세요.`, `${empty} + ${d} = ${ieyo(all)}.`, `어느 길로 해도 답은 ${ro(d)} 같아요.`],
     },
   };

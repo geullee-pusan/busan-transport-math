@@ -60,6 +60,10 @@ for (const t of allTemplates()) {
           if (typeof piece === 'string') assert.ok(!/\d/.test(piece), `문장 조각에 감싸지 않은 숫자 ${where}: "${piece}"`);
         }
 
+        // 아이 화면에 "(가상)" 글자를 쓰지 않는다. 가정은 "~라고 해 봐요", "이 문제의 ~"처럼 문장으로(07 0.4-13).
+        const shownText = [plainText(p.text), ...(p.hints ?? []), JSON.stringify(p.figure ?? null), JSON.stringify(p.explain ?? null)].join(' ');
+        assert.ok(!shownText.includes('(가상)'), `"(가상)" 글자 ${where}`);
+
         // 힌트 ④는 빈칸의 값을 다른 표현(자릿값 말, 완성된 답)으로도 알려 주지 않는다(UX 7차 A-2).
         if (!t.diagnostic && typeof p.blank === 'string' && p.blankAnswer != null && p.hints?.[3]) {
           const rest = p.hints[3].split(p.blank).join(' ');

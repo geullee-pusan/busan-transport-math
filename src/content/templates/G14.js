@@ -547,8 +547,8 @@ function fusion4(rng, h, m, s, g) {
     textTrains.push(i < 2 ? ', ' : '에 떠나요. ');
   });
   return {
-    text: [L1(), '호선이 서면역에 ', ...hmsText(h, m, s), '에 도착했어요. 갈아타는 데 ', V(g), '분 걸려요. (가상) ', L2(), '호선 열차는 ', ...textTrains, '탈 수 있는 첫 열차는 몇 시 몇 분 열차예요?'],
-    figure: { kind: 'table', columns: ['(가상) 2호선 열차', '떠나는 시각'], rows: trains.map((t, i) => [`${i + 1}`, show(t)]) },
+    text: [L1(), '호선이 서면역에 ', ...hmsText(h, m, s), '에 도착했어요. 갈아타는 데 ', V(g), '분 걸려요. 이 문제의 ', L2(), '호선 열차는 ', ...textTrains, '탈 수 있는 첫 열차는 몇 시 몇 분 열차예요?'],
+    figure: { kind: 'table', columns: ['이 문제의 2호선 열차', '떠나는 시각'], rows: trains.map((t, i) => [`${i + 1}`, show(t)]) },
     input: { kind: 'choice', options: trains.map(show) },
     answer,
     requires: ['N25'],

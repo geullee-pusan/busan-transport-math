@@ -120,21 +120,21 @@ const asDiag = (p) => ({ ...p, hints: [], blank: null });
 const ye = (str) => `${str}${str.endsWith('분') ? '이에요' : '예요'}`;
 const rase = (str) => `${str}${str.endsWith('분') ? '이라서' : '라서'}`;
 
-// 시간표는 모두 "(가상) 가야역 시간표". 1~6단계 시각은 "몇 시 몇 분"까지, 초는 기다리는 시간에서만(10 문서 G15).
+// 시간표는 모두 "이 문제의 가야역 시간표"(07 0.4-13: "(가상)" 대신 문장으로 가정을 밝힌다). 1~6단계 시각은 "몇 시 몇 분"까지, 초는 기다리는 시간에서만(10 문서 G15).
 const ORD = ['첫째', '둘째', '셋째', '넷째', '다섯째'];
 /** 하루 분(분 단위 시각) → 문장 조각 / 글자 */
 const tText = (t) => hmsText(Math.floor(t / 60), t % 60);
 const tStr = (t) => hms(Math.floor(t / 60), t % 60);
 const tHm = (t) => hm(Math.floor(t / 60), t % 60);
-const timetable = (h, times, title = '(가상) 가야역 서면 방향') => ({ kind: 'table', columns: [title, '출발 시각'], rows: times.map((m, i) => [ORD[i], m === null ? '□' : hm(h, m)]) });
+const timetable = (h, times, title = '이 문제의 가야역 서면 방향') => ({ kind: 'table', columns: [title, '출발 시각'], rows: times.map((m, i) => [ORD[i], m === null ? '□' : hm(h, m)]) });
 
-// ── T15-1 (가상) 시간표 읽기 (빈칸·표) — 1~3단계 ──
+// ── T15-1 시간표 읽기 (빈칸·표) — 1~3단계 ──
 // 단계 불변식: 1 다음 열차 시각 / 2 다음 열차까지 기다리는 분초 / 3 같은 간격 시간표의 빈칸.
 function t151Level1(h, times, i, a) {
   const answer = { h, m: times[i + 1] };
   const discs = cleanDiscs([{ value: { h, m: times[i] }, category: '읽기', kind: 'check', feedback: `${h}시 ${times[i]}분은 ${h}시 ${a}분보다 앞일까요, 뒤일까요?` }], answer);
   return {
-    text: ['(가상) 가야역 서면 방향 시간표예요. ', ...hmsText(h, a), '에 승강장에 왔어요. 다음 열차는 몇 시 몇 분이에요?'],
+    text: ['이 문제의 가야역 서면 방향 시간표예요. ', ...hmsText(h, a), '에 승강장에 왔어요. 다음 열차는 몇 시 몇 분이에요?'],
     figure: timetable(h, times),
     input: { kind: 'compound', fields: HM_FIELDS },
     answer,
@@ -158,7 +158,7 @@ function t151Level2(h, times, i, a, s) {
     answer,
   );
   return {
-    text: ['(가상) 가야역 서면 방향 시간표예요. ', ...hmsText(h, a, s), '에 승강장에 왔어요. 다음 열차까지 몇 분 몇 초 기다려요?'],
+    text: ['이 문제의 가야역 서면 방향 시간표예요. ', ...hmsText(h, a, s), '에 승강장에 왔어요. 다음 열차까지 몇 분 몇 초 기다려요?'],
     figure: timetable(h, times),
     input: { kind: 'compound', fields: MS_FIELDS },
     answer,
@@ -180,7 +180,7 @@ function t151Level3(h, m0, g) {
   const answer = { m3: all[2], m5: all[4] };
   const discs = cleanDiscs([{ value: { m3: all[1] + g - 2 }, category: '개념', kind: 'check', feedback: `${h}시 ${all[0]}분과 ${h}시 ${all[1]}분 사이는 몇 분이에요?` }], answer);
   return {
-    text: ['(가상) 가야역 서면 방향 시간표에 빈칸이 두 곳 있어요. 열차는 같은 간격으로 와요. 빈칸의 시각을 채워요.'],
+    text: ['이 문제의 가야역 서면 방향 시간표에 빈칸이 두 곳 있어요. 열차는 같은 간격으로 와요. 빈칸의 시각을 채워요.'],
     figure: timetable(h, shown),
     input: { kind: 'compound', fields },
     answer,
@@ -195,7 +195,7 @@ function t151Level3(h, m0, g) {
 const T15_1 = {
   id: 'T15-1',
   node: 'G15',
-  title: '(가상) 시간표 읽기',
+  title: '시간표 읽기',
   repr: '빈칸',
   minLevel: 1,
   maxLevel: 3,
@@ -258,8 +258,8 @@ function t152Level3(D, g, e, k) {
     if (i < 2) textTrains.push(', ');
   });
   return {
-    text: ['서면역에 ', ...tText(D), '까지 도착해야 해요(그 시각에 도착해도 돼요). (가상) 가야역 열차는 ', ...textTrains, '에 떠나요. 서면까지 ', V(g), '분일 때 늦지 않는 가장 늦은 열차는 어느 것이에요?'],
-    figure: { kind: 'table', columns: ['(가상) 가야역 서면 방향', '출발 시각'], rows: trains.map((t, i) => [ORD[i], tHm(t)]) },
+    text: ['서면역에 ', ...tText(D), '까지 도착해야 해요(그 시각에 도착해도 돼요). 이 문제에서 가야역 열차는 ', ...textTrains, '에 떠나요. 서면까지 ', V(g), '분일 때 늦지 않는 가장 늦은 열차는 어느 것이에요?'],
+    figure: { kind: 'table', columns: ['이 문제의 가야역 서면 방향', '출발 시각'], rows: trains.map((t, i) => [ORD[i], tHm(t)]) },
     input: { kind: 'choice', options: opts },
     answer: opts[1],
     discriminators: [
@@ -303,7 +303,7 @@ function t152Level5(h, m0, g) {
   const count = (60 - m0) / g + 1;
   const list = Array.from({ length: count }, (_, i) => h * 60 + m0 + i * g);
   return {
-    text: ['(가상) 가야역 첫차가 ', ...hmsText(h, m0), '에 떠나고, 그 뒤로 ', V(g), '분마다 열차가 떠나요. ', V(h + 1), '시 정각까지(그 시각에 떠나는 열차도 세요) 열차는 모두 몇 대 떠나요?'],
+    text: ['이 문제에서 가야역 첫차가 ', ...hmsText(h, m0), '에 떠나고, 그 뒤로 ', V(g), '분마다 열차가 떠나요. ', V(h + 1), '시 정각까지(그 시각에 떠나는 열차도 세요) 열차는 모두 몇 대 떠나요?'],
     figure: null,
     challenge: true,
     input: { kind: 'number', unit: '대' },

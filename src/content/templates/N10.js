@@ -439,7 +439,7 @@ function t102Level3(k) {
     ans,
   );
   return {
-    text: ['(가상) 사하역 출구부터 ', V(0.1), 'km마다 표지판이 있어요. 첫 표지판은 출구에서 ', V(0.1), 'km 떨어진 곳에 있어요. ', V(k), '번째 표지판까지 몇 km예요?'],
+    text: ['사하역 출구부터 ', V(0.1), 'km마다 표지판을 세운다고 해 봐요. 첫 표지판은 출구에서 ', V(0.1), 'km 떨어진 곳에 있어요. ', V(k), '번째 표지판까지 몇 km예요?'],
     // 출구(0)에는 표지판이 없고, 0.1km 눈금마다 표지판이 있다.
     figure: { kind: 'numberline', from: 0, to: 1, ticks: 10, origin: '출구' },
     input: { kind: 'decimal', unit: 'km' },

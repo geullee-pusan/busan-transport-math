@@ -193,9 +193,9 @@ function t72Level1(c) {
   const P = c * 8;
   const bl = blankAt(P, 1);
   return {
-    text: [L1(), '호선은 ', CARS(), '량이에요. 한 칸에 좌석이 ', V(c), '석이면 열차 좌석은 모두 몇 석이에요?'],
+    text: [L1(), '호선은 ', CARS(), '량이에요. 어느 날 칸마다 ', V(c), '명씩 탔어요. 열차에 탄 사람은 모두 몇 명이에요?'],
     figure: { kind: 'train', cars: 8 },
-    input: { kind: 'number', unit: '석' },
+    input: { kind: 'number', unit: '명' },
     answer: P,
     discriminators: uniq(
       [
@@ -204,11 +204,11 @@ function t72Level1(c) {
       ],
       P,
     ),
-    hints: [`열차는 8칸이고, 한 칸에 좌석이 ${c}석이에요. 열차 전체 좌석 수를 물어요.`, `${c}석씩 8칸이에요. 10이 몇 개인지 생각해 볼까요?`, `${c / 10} × 8 = ${ieyo((c / 10) * 8)}.`, `${c} × 8 = ${bl.blank}`],
+    hints: [`열차는 8칸이고, 칸마다 ${c}명씩 탔어요. 열차에 탄 사람 수를 물어요.`, `${c}명씩 8칸이에요. 10이 몇 개인지 생각해 볼까요?`, `${c / 10} × 8 = ${ieyo((c / 10) * 8)}.`, `${c} × 8 = ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     explain: {
-      why: [`${c}석씩 8칸이니 ${c} × 8을 해요.`, `${eun(c)} 10이 ${c / 10}개라서 10이 ${(c / 10) * 8}개가 돼요.`, `그래서 모두 ${P}석이에요.`],
+      why: [`${c}명씩 8칸이니 ${c} × 8을 해요.`, `${eun(c)} 10이 ${c / 10}개라서 10이 ${(c / 10) * 8}개가 돼요.`, `그래서 모두 ${P}명이에요.`],
       alt: [`${c}을 8번 더해도 ${ieyo(P)}.`.replace(`${c}을`, eul(c)), `어느 길로 해도 답은 ${ro(P)} 같아요.`],
     },
   };

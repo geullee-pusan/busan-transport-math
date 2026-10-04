@@ -393,7 +393,7 @@ function t42Level5(K, s, q) {
   const ans = K - now;
   const bl = blankAt(ans, 1);
   return {
-    text: ['열차 앞쪽 두 칸에는 모두 ', V(K), '명까지 탈 수 있다고 해요. 그 두 칸에 ', V(s), '명이 타 있었는데, 신장림역에서 ', V(q), '명이 내렸어요. 신장림역에서 많아야 몇 명이 더 탈 수 있어요?'],
+    text: ['열차 앞쪽 두 칸에는 모두 ', V(K), '명까지 탈 수 있다고 해 봐요. 그 두 칸에 ', V(s), '명이 타 있었는데, 신장림역에서 ', V(q), '명이 내렸어요. 신장림역에서 많아야 몇 명이 더 탈 수 있어요?'],
     figure: { kind: 'train', cars: 8, highlight: [0, 1] },
     input: { kind: 'number', unit: '명' },
     answer: ans,

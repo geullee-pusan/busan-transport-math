@@ -134,11 +134,11 @@ const UNITS = ['mm', 'cm', 'm', 'km'];
 // ── T16-1 자로 재기 (그림) — 1~3단계 ──
 // 그림: { kind: 'ruler', cm: 10, mm: true, mark: { from, to, label } } — 0~10cm 자, mm 눈금, 물건이 놓인 자리(from·to는 mm).
 // 단계 불변식: 1 0에서 시작, cm·mm 읽기 / 2 0에서 시작, 모두 mm로도 / 3 0이 아닌 눈금에서 시작.
-const ruler = (from, to) => ({ kind: 'ruler', cm: 10, mm: true, mark: { from, to, label: '(가상) 승차권' } });
+const ruler = (from, to) => ({ kind: 'ruler', cm: 10, mm: true, mark: { from, to, label: '승차권' } });
 function t161Level1(a, b) {
   const answer = { cm: a, mm: b };
   return {
-    text: ['자 위에 (가상) 승차권을 놓았어요. 승차권의 한쪽 끝은 자의 눈금 ', n(0), '에 맞췄어요. 승차권의 길이는 몇 cm 몇 mm예요?'],
+    text: ['자 위에 승차권을 놓았어요. 승차권의 한쪽 끝은 자의 눈금 ', n(0), '에 맞췄어요. 승차권의 길이는 몇 cm 몇 mm예요?'],
     figure: ruler(0, 10 * a + b),
     input: { kind: 'compound', fields: CM_FIELDS },
     answer,
@@ -155,7 +155,7 @@ function t161Level2(a, b) {
   const answer = { cm: a, mm: b, all: 10 * a + b };
   const discs = cleanDiscs([{ value: { all: a + b }, category: '개념', kind: 'check', feedback: '작은 눈금은 모두 몇 칸이에요?' }], answer);
   return {
-    text: ['자 위에 (가상) 승차권을 놓았어요. 한쪽 끝은 눈금 ', n(0), '에 맞췄어요. 길이를 몇 cm 몇 mm로 쓰고, 같은 길이를 몇 mm로도 써요.'],
+    text: ['자 위에 승차권을 놓았어요. 한쪽 끝은 눈금 ', n(0), '에 맞췄어요. 길이를 몇 cm 몇 mm로 쓰고, 같은 길이를 몇 mm로도 써요.'],
     figure: ruler(0, 10 * a + b),
     input: { kind: 'compound', fields },
     answer,
@@ -171,7 +171,7 @@ function t161Level3(s, e, f) {
   const answer = { cm: e - s, mm: f };
   const discs = cleanDiscs([{ value: { cm: e, mm: f }, category: '개념', kind: 'check', feedback: '물건이 0에서 시작했나요?' }], answer);
   return {
-    text: ['자 위에 (가상) 승차권을 놓았어요. 승차권의 한쪽 끝은 자의 ', n(s), 'cm 눈금에 있어요. 승차권의 길이는 몇 cm 몇 mm예요?'],
+    text: ['자 위에 승차권을 놓았어요. 승차권의 한쪽 끝은 자의 ', n(s), 'cm 눈금에 있어요. 승차권의 길이는 몇 cm 몇 mm예요?'],
     figure: ruler(10 * s, 10 * e + f),
     input: { kind: 'compound', fields: CM_FIELDS },
     answer,

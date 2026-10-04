@@ -10,6 +10,16 @@ import N07 from './templates/N07.js';
 import N08 from './templates/N08.js';
 import N09 from './templates/N09.js';
 import N10 from './templates/N10.js';
+import N11 from './templates/N11.js';
+import N12 from './templates/N12.js';
+import N13 from './templates/N13.js';
+import N14 from './templates/N14.js';
+import N15 from './templates/N15.js';
+import N16 from './templates/N16.js';
+import N17 from './templates/N17.js';
+import N18 from './templates/N18.js';
+import N19 from './templates/N19.js';
+import N20 from './templates/N20.js';
 import B from './templates/B.js';
 import G13 from './templates/G13.js';
 import G14 from './templates/G14.js';
@@ -17,7 +27,7 @@ import G15 from './templates/G15.js';
 import G16 from './templates/G16.js';
 import G17 from './templates/G17.js';
 
-const ALL = [...N01, ...N02, ...N03, ...N04, ...N05, ...N06, ...N07, ...N08, ...N09, ...N10, ...B, ...G13, ...G14, ...G15, ...G16, ...G17];
+const ALL = [...N01, ...N02, ...N03, ...N04, ...N05, ...N06, ...N07, ...N08, ...N09, ...N10, ...N11, ...N12, ...N13, ...N14, ...N15, ...N16, ...N17, ...N18, ...N19, ...N20, ...B, ...G13, ...G14, ...G15, ...G16, ...G17];
 
 const byNode = new Map();
 for (const t of ALL) {

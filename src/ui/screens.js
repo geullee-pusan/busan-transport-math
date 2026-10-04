@@ -12,25 +12,22 @@ import { FULL, pendingText } from '../engine/mastery.js';
 import { TIERS, tierOf, goldNeeded } from '../content/vehicles.js';
 import { milestonesCrossed } from '../content/milestones.js';
 import { icon, starPoints } from './icons.js';
+import { vehicleArt } from './art/vehicles.js';
+import { CAR_COLORS, pickerBus } from './art/scenes.js';
 
-// 아이가 고르는 차량 색(시각 자문 1차 결정 1): 빨강·초록(정답·오답 관습)과 1호선 주황을 뺀 5색.
+// 아이가 고르는 차량 색(시각 4차 3.4): art/scenes.js CAR_COLORS 6색. 색은 지붕 띠에만 칠한다(지도 위 차량은 흰 몸통이라 남색도 묻히지 않음).
 // 예전에 고른 색이 이 목록에 없어도 그대로 쓴다(새로 고를 때만 이 목록).
-const COLORS = [
-  { c: '#00798C', name: '청록' },
-  { c: '#6D597A', name: '자주' },
-  { c: '#9C6644', name: '갈색' },
-  { c: '#4F5D75', name: '회청' },
-  { c: '#B08A2E', name: '겨자' },
-];
-// 남색(#1F3342)은 선로 테두리와 같아 지도에서 묻혀서 뺐다(UX 7차 A-7). 예전에 고른 기기는 그대로 쓴다.
+const COLORS = CAR_COLORS;
 const backBtn = (onclick) => h('button.icon-btn', { type: 'button', onclick, 'aria-label': '뒤로' }, icon('back'));
 
 export function renderSetup(root, app, { onDone }) {
   let name = app.state.profile.nickname || '';
-  let color = COLORS.some((x) => x.c === app.state.profile.color) || app.state.profile.nickname ? app.state.profile.color : COLORS[0].c;
+  let color = COLORS.some((x) => x.c === app.state.profile.color) || app.state.profile.nickname ? app.state.profile.color : COLORS[1].c;
   const nameBox = h('input.name-input', { type: 'text', maxlength: 8, placeholder: '이름이나 별명', value: name, autocomplete: 'off', oninput: (e) => { name = e.target.value; syncStart(); } });
-  const swatches = COLORS.map(({ c, name: cname }) => h('button.swatch', { type: 'button', style: { background: c }, 'aria-label': `차량 색 ${cname}`, 'aria-pressed': c === color ? 'true' : 'false', onclick: () => { color = c; swatches.forEach((b) => { b.classList.toggle('on', b.dataset.c === c); b.setAttribute('aria-pressed', b.dataset.c === c ? 'true' : 'false'); }); } }));
-  swatches.forEach((b, i) => { b.dataset.c = COLORS[i].c; b.classList.toggle('on', COLORS[i].c === color); });
+  const swatches = COLORS.map(({ c, name: cname }) => h('button.pick', { type: 'button', role: 'radio', 'aria-label': '내 차량 ' + cname, onclick: () => { color = c; syncPick(); onColor?.(c); } }, h('span', { html: pickerBus(c) }), cname));
+  const syncPick = () => swatches.forEach((b, i) => { b.classList.toggle('chosen', COLORS[i].c === color); b.setAttribute('aria-checked', COLORS[i].c === color ? 'true' : 'false'); });
+  let onColor = null;
+  syncPick();
   const startBtn = h('button.primary.big', { type: 'button', onclick: () => name.trim() && onDone({ nickname: name.trim(), color }) }, icon('depart'), '시승 운행 출발');
   const startWhy = h('p.why-off', '이름을 먼저 써요');
   const syncStart = () => { startBtn.disabled = !name.trim(); startWhy.hidden = Boolean(name.trim()); };
@@ -41,7 +38,7 @@ export function renderSetup(root, app, { onDone }) {
       h('p.lead', '불이 꺼진 1호선을 문제를 풀며 하나씩 켜요.'),
       h('label', '내 이름', nameBox),
       h('p.small', '이름은 이 기기에만 저장돼요.'),
-      h('div', h('div.label', '내 차량 색'), h('div.swatches', swatches)),
+      h('div', h('div.label', '내 차량'), h('div.v2-picker', { role: 'radiogroup', 'aria-label': '내 차량 색' }, swatches)),
       h('div.notice', h('p', '부모님도 이 앱을 볼 수 있어요.'), h('p', '어떤 역을 켰는지, 어디가 어려웠는지 봐요.'), h('p', '같이 이야기하려고 보는 거예요. 맞힌 개수로 혼내려는 게 아니에요.')),
       h('div', startBtn, startWhy),
       h('p.small', '시승 운행은 어느 역에서 출발할지 정하는 짧은 운행이에요. 모르는 문제는 "아직 몰라요"를 눌러도 돼요.'),
@@ -61,6 +58,13 @@ export function renderHome(root, app, { onStart, onExpress, onChallenge, onGarag
   const doneToday = runsLeftToday(state, dayNumber()) <= 0 && state.parked?.day !== dayNumber(); // 같은 날 멈춘 운행은 이어 탈 수 있다(R3)
   const canExpress = dest && diagnosticsFor(dest.id).length > 0 && !doneToday && !ns.inspect;
 
+  // 내 차량 카드(UX 8차 4.2-4): 지금 운행 차량 그림 + 이름 + 금 도장 칸. 누르면 차고
+  const myCar = () => {
+    const at = state.activeCard ?? state.license;
+    const need = goldNeeded(at);
+    const gold = Math.min(state.cardGold[at] ?? 0, need);
+    return h('button.my-car', { type: 'button', onclick: onGarage, 'aria-label': '내 차량 ' + tierOf(at).name + ', 차고 열기' }, h('span.my-car-art', { html: vehicleArt({ tier: at, shown: 2 }) }), h('span.my-car-body', h('span.small', '내 차량'), h('b', tierOf(at).name), h('span.gold-track', { 'aria-hidden': 'true' }, Array.from({ length: need }, (_, i) => h('i' + (i < gold ? '.on' : ''))))));
+  };
   // 부모가 신고를 확인했으면 한 번 알려 준다(아이의 신고가 닿았다는 고리 닫기).
   const returning = typeof state.lastRunDay === 'number' && dayNumber() - state.lastRunDay >= 7 ? h('div.notice', '어서 와요. 켠 역은 그대로예요.') : null;
   const ackNote = state.reportAck ? h('div.notice', '부모님이 "이 문제 이상해요" 신고를 확인했어요. 고마워요!') : null;
@@ -91,6 +95,7 @@ export function renderHome(root, app, { onStart, onExpress, onChallenge, onGarag
               h('button.secondary', { type: 'button', onclick: onGarage }, icon('garage'), '차고'),
             ),
             canExpress ? h('p.small', '급행: 역마다 2문제를 맞히면 통과해요 · 세 번째 역은 1문제 더') : null,
+            myCar(),
           )
         : h('section.next', h('div.next-dest', '지금 열린 역을 모두 켰어요. 다음 역은 준비 중이에요.'), h('button.secondary', { type: 'button', onclick: onGarage }, icon('garage'), '차고')),
     ),
@@ -160,6 +165,10 @@ export function renderLog(root, app, run, { onAgain, onHome }) {
 
 export function renderGarage(root, app, { onHome }) {
   const state = app.state;
+  const activeTier = state.activeCard ?? state.license;
+  const goldTrack = (gold, need) => h('div.gold-track', { 'aria-hidden': 'true' }, Array.from({ length: need }, (_, i) => h(`i${i < gold ? '.on' : ''}`)));
+  // 카드 그림 영역(120px): 옅은 하늘 + 땅 띠 위에 v2 차량(앞 2칸). 못 얻은 카드는 윤곽만(시각 4차 3.7, UX 8차 4.4)
+  const art = (tier, opts = {}) => h('div.art', { html: vehicleArt({ tier, shown: 2, ...opts }) });
   const cards = TIERS.map((t) => {
     const got = state.cards.includes(t.tier);
     const gold = state.cardGold[t.tier] ?? 0;
@@ -167,26 +176,34 @@ export function renderGarage(root, app, { onHome }) {
     const golden = gold >= need;
     // 노선 색 띠는 노선이 있는 차량(lineColor)에만. 나머지 차량은 색 없이(시각 자문 1차 결정 3)
     const stripe = t.lineColor ? h('div.card-line', { style: { background: t.lineColor }, 'aria-hidden': 'true' }) : null;
-    if (!got) return h('div.card.locked', h('div.card-tier', `${t.tier}단계`), h('div.card-name', t.name), h('div.card-small', `면허가 ${t.short} 단계가 되면 받아요`));
+    if (!got) return h('div.card.v2-card.locked', art(t.tier, { silhouette: true }), h('div.body', h('div.card-tier', `${t.tier}단계`), h('div.card-name', t.name), h('div.card-small', `면허가 ${t.short} 단계가 되면 받아요`)));
     const f = t.facts;
-    return h(`div.card${golden ? '.golden' : ''}`,
+    return h(`div.card.v2-card${golden ? '.golden' : ''}${activeTier === t.tier ? '.active' : ''}`,
       stripe,
       golden ? h('span.card-star', { 'aria-hidden': 'true', html: `<svg viewBox="0 0 24 24" width="28" height="28"><polygon points="${starPoints(12, 12.5, 10.5)}"/></svg>` }) : null,
-      h('div.card-tier', `${t.tier}단계`),
-      h('div.card-name', t.name),
-      f.speedNow ? h('div.card-big', `지금 달리는 최고속도 ${f.speedNow} km/h`) : null,
-      f.speedDesign ? h('div.card-small', `설계 속도 ${f.speedDesign} km/h`) : null,
-      f.cars ? h('div.card-small', `${f.cars}량`) : null,
-      f.seats ? h('div.card-small', typeof f.seats === 'number' ? `좌석 ${f.seats}석` : f.seats) : null,
-      f.route ? h('div.card-small', f.route) : null,
-      f.note ? h('div.card-small', f.note) : null,
-      f.why ? h('div.card-why', f.why) : null,
-      h('div.card-gold', golden ? '금테 카드' : `금 도장 ${Math.min(gold, need)}/${need}`),
-      (state.activeCard ?? state.license) === t.tier ? h('div.card-active', '지금 운행 차량') : h('button.chip', { type: 'button', onclick: () => { app.save({ ...app.state, activeCard: t.tier }); renderGarage(root, app, { onHome }); } }, '이 차량으로 운행'),
-      h('div.card-src', `출처: ${t.source}`),
+      art(t.tier, { title: t.name }),
+      h('div.body',
+        h('div.card-tier', `${t.tier}단계`),
+        h('div.card-name', t.name),
+        f.speedNow ? h('div.card-big', `지금 달리는 최고속도 ${f.speedNow} km/h`) : null,
+        f.speedDesign ? h('div.card-small', `설계 속도 ${f.speedDesign} km/h`) : null,
+        f.cars ? h('div.card-small', `${f.cars}량`) : null,
+        f.seats ? h('div.card-small', typeof f.seats === 'number' ? `좌석 ${f.seats}석` : f.seats) : null,
+        f.route ? h('div.card-small', f.route) : null,
+        f.note ? h('div.card-small', f.note) : null,
+        f.why ? h('div.card-why', f.why) : null,
+        h('div.card-gold', golden ? '금테 카드' : `금 도장 ${Math.min(gold, need)}/${need}`),
+        golden ? null : goldTrack(Math.min(gold, need), need),
+        activeTier === t.tier ? h('div.card-active', '지금 운행 차량') : h('button.chip', { type: 'button', onclick: () => { app.save({ ...app.state, activeCard: t.tier }); renderGarage(root, app, { onHome }); } }, '이 차량으로 운행'),
+        h('div.card-src', `출처: ${t.source}`),
+      ),
     );
   });
-  clear(root).append(h('main.garage', h('header.page-head', backBtn(onHome), h('h2', '차고')), h('div.garage-stats', `모두 ${kmText(state.meters)}`), h('div.cards', cards)));
+  // 위쪽: 지금 운행 차량 큰 그림(높이 200, 앞 3칸) + 이름 + 금 도장 칸
+  const at = tierOf(activeTier);
+  const aGold = Math.min(state.cardGold[activeTier] ?? 0, goldNeeded(activeTier));
+  const hero = h('section.garage-hero', h('div.hero-art', { html: vehicleArt({ tier: activeTier, shown: 3, title: at.name }) }), h('div.hero-body', h('div.small', '지금 운행 차량'), h('div.hero-name', at.name), h('div.card-gold', `금 도장 ${aGold}/${goldNeeded(activeTier)}`), goldTrack(aGold, goldNeeded(activeTier)), h('div.garage-stats', `모두 ${kmText(state.meters)}`)));
+  clear(root).append(h('main.garage', h('header.page-head', backBtn(onHome), h('h2', '차고')), hero, h('div.cards.v2-cards', cards)));
 }
 
 export function renderSettings(root, app, { onHome }) {

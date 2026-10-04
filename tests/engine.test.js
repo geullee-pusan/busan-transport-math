@@ -283,7 +283,7 @@ function placeAll(answerFn) {
 test('시승 운행: 줄기마다 이분 탐색, 모두 5역 이하(10문제 이하)', () => {
   const { run } = placeAll((cur) => cur.problem.answer);
   assert.ok(run.placement.tested <= 5);
-  assert.ok(run.index <= 10);
+  assert.ok(run.index <= 13, '더 묻기를 포함해 많아야 13문제'); // 보통 10문제 + 앞서가는 아이 더 묻기 3
 });
 
 test('시승 운행: 모두 맞히면 앞 역이 통과역(추정)으로 켜지고, 필수 확인 역은 켜지지 않는다', () => {
@@ -305,10 +305,11 @@ test('시작 실력: 같은 줄기 틀림 없이 2번 이상 통과 + 6역 안�
   const pl = state.placement;
   assert.ok(pl.passes.whole >= 2 && !pl.misses.whole);
   const near = LINE1_NODES.find((n) => n.strand === 'whole' && !state.nodes[n.id] && !MUST_CHECK.has(n.id) && n.order - pl.farthest.whole <= 6 && !(n.prereqs ?? []).some((p) => p.minLevel && state.nodes[p.node]?.inferred));
-  if (near) assert.equal(startRatingOf(state, near.id), 3.5, near.id);
+  if (near) assert.equal(startRatingOf(state, near.id), pl.high?.whole ? 4.5 : 3.5, near.id);
   const far = LINE1_NODES.find((n) => n.strand === 'whole' && n.order - pl.farthest.whole > 6);
-  if (far) assert.equal(startRatingOf(state, far.id), 3, far.id);
-  assert.equal(startRatingOf(state, 'N17'), 3);
+  const floor = !Object.keys(pl.misses).length && Object.keys(pl.high ?? {}).length ? 3.5 : 3;
+  if (far) assert.equal(startRatingOf(state, far.id), floor, far.id);
+  assert.equal(startRatingOf(state, 'N17'), 3, 'N17은 필수 확인 역이라 늘 3');
   const dest = destination(state);
   if (dest && !state.nodes[dest.id] && startRatingOf(state, dest.id) === 3.5) {
     const r = startRun(state, { day: 2, seed: 3 });
@@ -467,4 +468,28 @@ test('한 운행에서 같은 템플릿은 두 번까지, 연달아서는 나오
     }
     for (let i = 1; i < ids.length; i++) assert.notEqual(ids[i], ids[i - 1], `씨앗 ${seed}: 연달아 ${ids[i]}`);
   }
+});
+
+test('앞서가는 아이: 모두 맞히면 필수 확인 역도 시승에서 시험하고, 5단계 확인을 맞히면 4~5단계에서 시작', () => {
+  const { state, run } = placeAll((cur) => cur.problem.answer);
+  assert.ok(run.index <= 13);
+  assert.equal(state.nodes.N03?.status, 'passed', '낫개(필수 확인)도 시험해서 통과');
+  assert.ok(!state.nodes.N03.inferred, '추정이 아니라 시험한 역');
+  assert.ok(Object.keys(state.placement.high).length > 0, '5단계 확인 통과');
+  const dest = destination(state);
+  const r = startRatingOf(state, dest.id);
+  assert.ok(r >= 3.5 || MUST_CHECK.has(dest.id), `첫 목적지 ${dest.id} 시작 실력 ${r}`);
+  const first = startRun(state, { day: 2, seed: 4 });
+  const hard = first.slots.find((x) => x.kind === 'hard' && x.node === dest.id);
+  assert.ok(hard.level >= Math.min(4, ceilingOf(dest.id)), `본 문제 ${hard.level}단계`);
+});
+
+test('한 번이라도 틀리면 더 묻기 없이 끝난다', () => {
+  let missed = null;
+  const { run } = placeAll((cur, r) => {
+    if (!missed) missed = r.dest;
+    return r.dest === missed ? -12345 : cur.problem.answer;
+  });
+  assert.equal(run.placement.extra.length, 0);
+  assert.ok(run.index <= 10);
 });

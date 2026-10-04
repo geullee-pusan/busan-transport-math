@@ -39,11 +39,16 @@ export function startRatingOf(state, id) {
   if (!pl?.any) return 2;
   const node = NODES.get(id);
   // 필수 확인 역은 판별 오답이 가장 흔한 곳이라 늘 3에서 시작한다(4·5단계부터면 오개념을 놓친다, 커리큘럼 11 검토 8).
-  if (!node || node.line !== 'L1' || FAR_FROM_EVIDENCE.has(id) || MUST_CHECK.has(id)) return 3;
+  // 하나도 틀리지 않고 5단계 확인 문제까지 맞힌 아이는 다른 줄기의 새 역도 4단계 근처(3.5)에서 시작한다(보호자 승인 2026-10-04).
+  const strong = !Object.keys(pl.misses ?? {}).length && Object.keys(pl.high ?? {}).length > 0;
+  const floor = strong ? 3.5 : 3;
+  if (!node || node.line !== 'L1' || FAR_FROM_EVIDENCE.has(id) || MUST_CHECK.has(id)) return MUST_CHECK.has(id) ? 3 : floor;
   const s = node.strand;
   const near = node.order - (pl.farthest[s] ?? -99) <= 6;
   const weakPrereq = (node.prereqs ?? []).some((p) => p.minLevel && state.nodes[p.node]?.inferred);
-  return (pl.passes[s] ?? 0) >= 2 && !pl.misses[s] && near && !weakPrereq ? 3.5 : 3;
+  if (!((pl.passes[s] ?? 0) >= 2 && !pl.misses[s] && near && !weakPrereq)) return floor;
+  // 시승 더 묻기에서 그 줄기의 5단계 문제를 맞혔으면 5단계 근처에서 시작(앞서가는 아이, 보호자 승인 2026-10-04)
+  return pl.high?.[s] ? 4.5 : 3.5;
 }
 
 /** 처음 보는 역은 시승 결과로 정한 시작 실력에서 출발한다. */

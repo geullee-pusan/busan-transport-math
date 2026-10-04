@@ -96,7 +96,7 @@ function noCarry(a, m) {
   const [h, t, u] = digits3(a);
   return h * m * 100 + ((t * m) % 10) * 10 + ((u * m) % 10);
 }
-/** 올린 수를 먼저 더하고 곱한 값 */
+/** 받아올림한 수를 먼저 더하고 곱한 값 */
 function carryFirst(a, m) {
   const [h, t, u] = digits3(a);
   let out = 0;
@@ -118,8 +118,8 @@ function mulDiscs(a, m) {
   const list = [];
   if (t === 0) list.push({ value: (h * 10 + u) * m, category: '개념', kind: 'nudge', feedbackCheck: '백의 자리를 다시 볼까요?', feedback: `${a}의 ${h * 100}도 ${m}배 했나요?` });
   if (mulCarries(a, m) > 0) {
-    list.push({ value: noCarry(a, m), category: '계산', kind: 'check', feedback: '올린 수는 어디 갔나요?' });
-    list.push({ value: carryFirst(a, m), category: '개념', kind: 'check', feedback: '올린 수는 언제 더했나요?' });
+    list.push({ value: noCarry(a, m), category: '계산', kind: 'check', feedback: '받아올림한 수는 어디 갔나요?' });
+    list.push({ value: carryFirst(a, m), category: '개념', kind: 'check', feedback: '받아올림한 수는 언제 더했나요?' });
   }
   list.push({ value: a + m, category: '식', kind: 'nudge', feedbackCheck: '문제를 다시 읽어 볼까요?', feedback: '곱셈이에요. 몇 번 더하는 셈일까요?' });
   return uniq(list, P);
@@ -136,21 +136,21 @@ function mulHints(a, m, lead) {
   const P = a * m;
   const bl = blankAt(P, 1);
   const prods = ps.map((x) => `${x} × ${m} = ${x * m}`).join(', ');
-  const split = ps.length === 2 ? `${wa(ps[0])} ${ro(ps[1])}` : `${ps[0]}, ${wa(ps[1])} ${ro(ps[2])}`;
+  const split = ps.length === 2 ? `${wa(ps[0])} ${ro(ps[1])}` : `${ps[0]}, ${ps[1]}, ${ro(ps[2])}`;
   const u = a % 10;
   if (u * m < 10) {
-    // 일의 자리 곱에 올림이 없으면 빈칸 값이 ③의 부분곱에 그대로 보인다. ③은 앞 부분곱만, ④는 일의 자리 곱을 직접 계산하게(11 검토 4).
+    // 일의 자리 곱에 받아올림이 없으면 빈칸 값이 ③의 부분곱에 그대로 보인다. ③은 앞 부분곱만, ④는 일의 자리 곱을 직접 계산하게(11 검토 4).
     const head = ps.slice(0, -1);
     const bl0 = blankAt(P, 0);
     const prods0 = head.map((x) => `${x} × ${m} = ${x * m}`).join(', ');
     return {
-      hints: [lead, `${eul(a)} ${split} 나눠서 각각 ${m}배 해 볼까요?`, `${prods0}${jo(head.at(-1) * m, "이에요", "예요")}.`, `${head.map((x) => x * m).join(' + ')} + ${u} × ${m} = ${bl0.blank}`],
+      hints: [lead, `${eul(a)} ${split} 갈라서 하나씩 ${m}배 해 볼까요?`, `${prods0}${jo(head.at(-1) * m, "이에요", "예요")}.`, `${head.map((x) => x * m).join(' + ')} + ${u} × ${m} = ${bl0.blank}`],
       blank: bl0.blank,
       blankAnswer: bl0.blankAnswer,
     };
   }
   return {
-    hints: [lead, `${eul(a)} ${split} 나눠서 각각 ${m}배 해 볼까요?`, `${prods}${jo(ps.at(-1) * m, "이에요", "예요")}.`, `${ps.map((x) => x * m).join(' + ')} = ${bl.blank}`],
+    hints: [lead, `${eul(a)} ${split} 갈라서 하나씩 ${m}배 해 볼까요?`, `${prods}${jo(ps.at(-1) * m, "이에요", "예요")}.`, `${ps.map((x) => x * m).join(' + ')} = ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
   };
@@ -159,10 +159,9 @@ function mulHints(a, m, lead) {
 function mulExplain(a, m, unit = '') {
   const ps = parts(a);
   const P = a * m;
-  const end = unit ? `${P}${unit}이에요` : ieyo(P);
   return {
-    why: [`${a} × ${m}${jo(m, '은', '는')} ${ps.map((x) => `${x} × ${m}`).join(', ')}${jo(m, '을', '를')} 합친 거예요.`, `${ps.map((x) => x * m).join(' + ')} = ${ieyo(P)}.`, `그래서 ${a} × ${m} = ${end}.`],
-    alt: m <= 4 ? [`${eul(a)} ${m}번 더해요. ${Array(m).fill(a).join(' + ')} = ${ieyo(P)}.`, `두 풀이 모두 ${ieyo(P)}.`] : ['세로로 일의 자리부터 곱하고, 올린 수는 다음 자리의 곱에 더해요.', `어느 길로 해도 답은 ${ro(P)} 같아요.`],
+    why: [`${a} × ${m}${jo(m, '은', '는')} ${ps.map((x) => `${x} × ${m}`).join(', ')}${jo(m, '을', '를')} 합친 거예요.`, `${ps.map((x) => x * m).join(' + ')} = ${ieyo(P)}.`, unit ? `그래서 모두 ${P}${unit}이에요.` : `그래서 ${a} × ${m} = ${ieyo(P)}.`],
+    alt: m <= 4 ? [`${eul(a)} ${m}번 더해요. ${Array(m).fill(a).join(' + ')} = ${ieyo(P)}.`, `어느 길로 해도 답은 ${ieyo(P)}.`] : ['세로로 일의 자리부터 곱하고, 받아올림한 수는 다음 자리의 곱에 더해요.', `어느 길로 해도 답은 ${ieyo(P)}.`],
   };
 }
 
@@ -176,7 +175,7 @@ function buildMul(a, m, scene = null) {
     answer: a * m,
     discriminators: mulDiscs(a, m),
     ...mulHints(a, m, `${wa(a)} ${m}의 곱을 물어요.${t === 0 ? ` ${eun(a)} 십의 자리가 0이에요.` : ''}`),
-    explain: mulExplain(a, m),
+    explain: mulExplain(a, m, scene?.unit ?? ''),
   };
 }
 
@@ -210,7 +209,7 @@ const T12_1 = {
   generate(rng, level) {
     const [a, m] = pickMul(rng, level);
     return buildMul(a, m, {
-      text: [level >= 3 ? '어느 날 대티역을 지난 열차마다 ' : '대티역을 지난 열차마다 ', V(a), '명씩 타 있었어요. 열차 ', V(m), '대에 탄 사람은 모두 몇 명인지 식으로 계산해요. '],
+      text: [['', '아침에 ', '퇴근 시간에 '][level - 1] + '대티역을 지나는 열차 ', V(m), '대에 ', V(a), '명씩 타 있었어요.', '\n'],
       unit: '명',
     });
   },
@@ -223,7 +222,7 @@ function t122Level1(c) {
   const P = c * 8;
   const bl = blankAt(P, 1);
   return {
-    text: [L1(), '호선은 ', CARS(), '량이에요. 어느 날 열차 한 대의 칸마다 ', V(c), '명씩 탔어요. 열차에 탄 사람은 모두 몇 명이에요?'],
+    text: ['퇴근 시간에 ', L1(), '호선 열차 ', CARS(), '칸에 칸마다 ', V(c), '명씩 탔어요. 열차에 탄 사람은 모두 몇 명이에요?'],
     figure: { kind: 'train', cars: 8 },
     input: { kind: 'number', unit: '명' },
     answer: P,
@@ -234,24 +233,24 @@ function t122Level1(c) {
       ],
       P,
     ),
-    hints: [`열차는 8칸이고, 칸마다 ${c}명씩 탔어요. 열차에 탄 사람 수를 모두 물어요.`, `${c}명씩 8칸이에요. ${eul(c)} ${wa(Math.floor(c / 100) * 100)} ${ro(c % 100)} 나눠 생각해 볼까요?`, `${Math.floor(c / 100) * 100} × 8 = ${ieyo(Math.floor(c / 100) * 800)}.`, `${Math.floor(c / 100) * 800} + ${c % 100} × 8 = ${bl.blank}`],
+    hints: [`구하는 것: 열차에 탄 사람이 모두 몇 명인지 / 알고 있는 것: 8칸, 칸마다 ${c}명`, `${c}명씩 8칸이에요. ${eul(c)} ${wa(Math.floor(c / 100) * 100)} ${ro(c % 100)} 갈라서 생각해 볼까요?`, `${Math.floor(c / 100) * 100} × 8 = ${ieyo(Math.floor(c / 100) * 800)}.`, `${Math.floor(c / 100) * 800} + ${c % 100} × 8 = ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     explain: { ...mulExplain(c, 8, '명'), why: [`${c}명씩 8칸이니 ${c} × 8을 해요.`, `${Math.floor(c / 100) * 100} × 8 = ${Math.floor(c / 100) * 800}, ${c % 100} × 8 = ${ieyo((c % 100) * 8)}.`, `그래서 모두 ${P}명이에요.`] },
   };
 }
 
-/** 2단계: 8량에 칸마다 x명(올림 두 번) */
+/** 2단계: 8칸에 칸마다 x명(받아올림 두 번) */
 function t122Level2(x) {
   const P = x * 8;
   const e = mulExplain(x, 8, '명');
   return {
-    text: [L1(), '호선 ', CARS(), '량 열차에 칸마다 ', V(x), '명씩 탔어요. 열차에 탄 사람은 모두 몇 명이에요?'],
+    text: ['아침에 ', L1(), '호선 열차 ', CARS(), '칸에 칸마다 ', V(x), '명씩 탔어요. 열차에 탄 사람은 모두 몇 명이에요?'],
     figure: { kind: 'train', cars: 8, perCar: x },
     input: { kind: 'number', unit: '명' },
     answer: P,
     discriminators: mulDiscs(x, 8),
-    ...mulHints(x, 8, `열차는 8칸이고, 칸마다 ${x}명씩 탔어요. 열차에 탄 사람 수를 모두 물어요.`),
+    ...mulHints(x, 8, `구하는 것: 열차에 탄 사람이 모두 몇 명인지 / 알고 있는 것: 8칸, 칸마다 ${x}명`),
     explain: { why: [...e.why.slice(0, -1), `그래서 모두 ${P}명이에요.`], alt: e.alt },
   };
 }
@@ -264,52 +263,52 @@ function t122Level3(a, k, b) {
   const bl = blankAt(back, 0);
   const answer = { front, back, more };
   return {
-    text: ['앞 열차는 ', CARS(), '량 모두에 ', V(a), '명씩, 뒤 열차는 ', CARS(), '량 중 ', V(k), '칸에만 ', V(b), '명씩 탔어요. 사람이 더 많이 탄 열차는 어느 쪽이에요?'],
+    text: ['앞 열차는 ', CARS(), '칸에 칸마다 ', V(a), '명씩, 뒤 열차는 ', V(k), '칸에만 칸마다 ', V(b), '명씩 탔어요. 어느 열차에 사람이 더 많이 탔어요?'],
     figure: { kind: 'trains', trains: [{ name: '앞 열차', cars: 8 }, { name: '뒤 열차', cars: 8, full: k }] },
     input: { kind: 'compound', fields: [{ key: 'front', label: '앞 열차' }, { key: 'back', label: '뒤 열차' }, { key: 'more', label: '더 많은 열차', options: ['앞', '뒤'] }] },
     answer,
     discriminators: uniqK(
       [
         { key: 'back', value: b * 8, category: '읽기', kind: 'check', feedback: '뒤 열차는 몇 칸에 탔나요?' },
-        { key: 'more', value: more === '앞' ? '뒤' : '앞', category: '개념', kind: 'check', feedback: '두 열차의 사람 수를 다시 견주어 볼까요?' },
+        { key: 'more', value: more === '앞' ? '뒤' : '앞', category: '개념', kind: 'check', feedback: '두 열차의 사람 수를 다시 비교해 볼까요?' },
       ],
       answer,
     ),
-    hints: [`앞 열차는 8칸에 ${a}명씩, 뒤 열차는 ${k}칸에 ${b}명씩 탔어요. 어느 열차에 사람이 더 많은지 물어요.`, '두 열차에 탄 사람을 각각 구해서 견주어 볼까요?', `앞 열차는 ${a} × 8 = ${front}명이에요.`, `뒤 열차는 ${b} × ${k} = ${bl.blank}명`],
+    hints: [`구하는 것: 두 열차에 탄 사람 수, 사람이 더 많은 열차 / 알고 있는 것: 앞 열차 8칸에 칸마다 ${a}명, 뒤 열차 ${k}칸에 칸마다 ${b}명`, '두 열차에 탄 사람을 각각 구해서 비교해 볼까요?', `앞 열차는 ${a} × 8 = ${front}명이에요.`, `뒤 열차는 ${b} × ${k} = ${bl.blank}명`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     blankThen: '더 많은 열차는 어느 쪽이에요?',
     explain: {
       why: [`앞 열차는 ${a} × 8 = ${front}명, 뒤 열차는 ${b} × ${k} = ${back}명이에요.`, `${more} 열차가 ${Math.abs(front - back)}명 더 많아요.`, `그래서 더 많이 탄 열차는 ${more} 열차예요.`],
-      alt: [`${k}칸끼리 보면 뒤 열차가 한 칸에 ${b - a}명씩 더 많아 ${b - a} × ${k} = ${(b - a) * k}명 더 많아요.`, `앞 열차는 남은 ${8 - k}칸에 ${a * (8 - k)}명이 더 있어요.`, `두 풀이 모두 ${more} 열차예요.`],
+      alt: [`${k}칸끼리 보면 뒤 열차가 한 칸에 ${b - a}명씩 더 많아 ${b - a} × ${k} = ${(b - a) * k}명 더 많아요.`, `앞 열차는 남은 ${8 - k}칸에 ${a * (8 - k)}명이 더 있어요.`, `어느 길로 해도 답은 ${more} 열차예요.`],
     },
   };
 }
 
-/** 4단계: × 대신 −를 눌렀어요 */
+/** 4단계: 계산기에서 × 대신 −를 눌렀어요(아이가 겪을 만한 실수, 하린 지적) */
 function t122Level4(m, x) {
   const w = x - m;
   const P = x * m;
   const bl = blankAt(P, 1);
   return {
-    text: ['어느 날 역무원이 한 칸 승객 수에 ', V(m), jo(m, '을', '를'), ' 곱해야 하는데, 계산기에서 × 대신 −를 눌러 ', V(w), jo(w, '이', '가'), ' 나왔어요. 바르게 계산하면 얼마예요?'],
+    text: [m % 2 ? '동생이' : '내가', ' 계산기로 열차 한 칸에 탄 사람 수에 ', V(m), jo(m, '을', '를'), ' 곱하려다 −를 잘못 눌렀어요. ', V(w), jo(w, '이', '가'), ' 나왔어요. 바르게 계산하면 얼마예요?'],
     figure: null,
     input: { kind: 'number' },
     answer: P,
     discriminators: uniq(
       [
-        { value: w * m, category: '식', kind: 'nudge', feedbackCheck: `${eun(w)} 무엇을 뺀 결과예요?`, feedback: `${eun(w)} 잘못 나온 수예요. 한 칸 승객은요?` },
+        { value: w * m, category: '식', kind: 'nudge', feedbackCheck: `${eun(w)} 무엇을 뺀 결과예요?`, feedback: `${eun(w)} 잘못 나온 수예요. 한 칸의 사람 수는요?` },
         { value: x, category: '식', kind: 'nudge', feedbackCheck: '무엇을 물었는지 다시 볼까요?', feedback: `${x}명을 찾았어요. 다음엔요?` },
         { value: (w - m) * m, category: '식', kind: 'check', feedback: `${eun(w)} 무엇을 뺀 결과예요?` },
       ],
       P,
     ),
-    hints: [`곱해야 할 수는 ${ieyo(m)}. 계산기에서 잘못 누른 결과가 ${ieyo(w)}. 바르게 계산한 값을 물어요.`, '잘못 누른 계산을 거꾸로 해서 한 칸 승객 수부터 찾아볼까요?', `한 칸 승객 수는 ${w} + ${m} = ${x}명이에요.`, `${x} × ${m} = ${bl.blank}`],
+    hints: [`구하는 것: 바르게 계산한 값 / 알고 있는 것: 곱할 수 ${m}, 잘못 눌러 나온 수 ${w}`, '잘못 누른 계산을 거꾸로 해서 한 칸의 사람 수부터 찾아볼까요?', `한 칸의 사람 수는 ${w} + ${m} = ${x}명이에요.`, `${x} × ${m} = ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     explain: {
-      why: [`−를 눌러 ${w}${jo(w, '이', '가')} 나왔으니 한 칸 승객 수는 ${w} + ${m} = ${x}명이에요.`, `바르게 계산하면 ${x} × ${m} = ${ieyo(P)}.`, `그래서 답은 ${ieyo(P)}.`],
-      alt: [...mulExplain(x, m).why.slice(0, 2), `어느 길로 해도 답은 ${ro(P)} 같아요.`],
+      why: [`−를 눌러 ${w}${jo(w, '이', '가')} 나왔으니 한 칸의 사람 수는 ${w} + ${m} = ${x}명이에요.`, `바르게 계산하면 ${x} × ${m} = ${ieyo(P)}.`, `그래서 바르게 계산한 값은 ${ieyo(P)}.`],
+      alt: [`한 칸의 사람 수를 ${wa(w)} ${ro(m)} 갈라서 생각해도 돼요. ${w} × ${m} = ${w * m}, ${m} × ${m} = ${m * m}, 합치면 ${ieyo(P)}.`, `어느 길로 해도 답은 ${ieyo(P)}.`],
     },
   };
 }
@@ -352,12 +351,12 @@ function t123Level5(h, u, m, k, T) {
     answer,
     discriminators: uniq(discs, answer),
     grade: multiGrade(answer, discs),
-    hints: [`${h}□${u}의 ${m}배가 ${T}보다 작게 되는 □를 모두 찾아요.`, '□에 0부터 차례로 넣어 볼까요? 조건이 바뀌는 곳을 찾아봐요.', `□가 ${k + 1}${jo(k + 1, '이면', '면')} ${h}${k + 1}${u} × ${m} = ${ro(val(k + 1))} ${T}보다 커요.`, '들어갈 수 있는 수: 0부터 ☐까지'],
+    hints: [`구하는 것: □에 들어갈 수 있는 수 모두 / 알고 있는 것: ${h}□${u} × ${m}${jo(m, '이', '가')} ${T}보다 작아요`, '□에 0부터 차례로 넣어 볼까요? 조건이 바뀌는 곳을 찾아봐요.', `□가 ${k + 1}${jo(k + 1, '이면', '면')} ${h}${k + 1}${u} × ${m} = ${ro(val(k + 1))} ${T}보다 커요.`, '들어갈 수 있는 수: 0부터 ☐까지'],
     blank: '0부터 ☐까지',
     blankAnswer: String(k),
     explain: {
       why: [`${h}${k}${u} × ${m} = ${ro(val(k))} ${T}보다 작아요.`, `${h}${k + 1}${u} × ${m} = ${ro(val(k + 1))} ${T}보다 커요.`, `그래서 들어갈 수 있는 수는 0부터 ${k}까지예요.`],
-      alt: [`어림해서 ${h}□0 × ${m}부터 보고, 경계의 수만 정확히 계산해도 돼요.`, `어느 길로 해도 답은 0부터 ${k}까지로 같아요.`],
+      alt: [`어림해서 ${h}00 × ${m}부터 보고, 답이 바뀌는 곳 근처의 수만 정확히 계산해도 돼요.`, `어느 길로 해도 답은 0부터 ${k}까지예요.`],
     },
   };
 }
@@ -389,13 +388,13 @@ function t123Level6(cards) {
     challenge: true,
     input: { kind: 'number' },
     answer: best,
-    discriminators: uniq([{ value: bestTop, category: '개념', kind: 'nudge', feedbackCheck: '다른 자리에도 놓아 봤나요?', feedback: `${eul(big)} 한 자리 쪽에 놓아 봤나요?` }], best),
-    hints: ['카드 네 장으로 세 자리 수 하나와 한 자리 수 하나를 만들어요. 두 수의 곱이 가장 클 때를 물어요.', '한 자리 수는 세 자리 수 전체에 곱해져요. 어느 숫자를 한 자리 수로 둘지 여러 가지로 견주어 볼까요?', `가장 큰 숫자를 세 자리 수 맨 앞에 두면 가장 큰 곱이 ${ieyo(bestTop)}.`, `${pair[0]} × ${pair[1]} = ${bl.blank}`],
+    discriminators: uniq([{ value: bestTop, category: '개념', kind: 'nudge', feedbackCheck: '다른 자리에도 놓아 봤나요?', feedback: `${eul(big)} 한 자리 수로 놓아 봤나요?` }], best),
+    hints: [`구하는 것: 가장 큰 곱 / 알고 있는 것: 숫자 카드 ${cards.join(', ')}, (세 자리 수) × (한 자리 수)`, '한 자리 수는 세 자리 수 전체에 곱해져요. 어느 숫자를 한 자리 수로 둘지 여러 가지로 비교해 볼까요?', `${eul(big)} 세 자리 수 맨 앞에 두면 곱은 ${bestTop}까지예요. ${eul(big)} 다른 자리에도 놓아 볼까요?`, `${pair[0]} × ${pair[1]} = ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     explain: {
-      why: ['한 자리 수는 세 자리 수의 모든 자리에 곱해져서 힘이 커요.', `견주어 보면 ${pair[0]} × ${pair[1]} = ${ro(best)} 가장 커요.`, `그래서 가장 큰 곱은 ${ieyo(best)}.`],
-      alt: [`가장 큰 숫자를 세 자리 수 맨 앞에 두면 ${bestTop}까지밖에 안 돼요.`, `어느 길로 해도 답은 ${ro(best)} 같아요.`],
+      why: ['한 자리 수는 세 자리 수의 모든 자리에 곱해져요.', `가장 큰 숫자 ${eul(pair[1])} 한 자리 수로 두고, 남은 숫자로 가장 큰 세 자리 수 ${eul(pair[0])} 만들어요.`, `그래서 가장 큰 곱은 ${pair[0]} × ${pair[1]} = ${ieyo(best)}.`],
+      alt: [`${eul(big)} 세 자리 수 맨 앞에 두면 곱이 가장 커도 ${ro(bestTop)} ${best}보다 작아요.`, '확인해 보면 답이 맞아요.'],
     },
   };
 }
@@ -450,7 +449,7 @@ function t124(a, m) {
     answer,
   );
   return {
-    text: [n(a), ' × ', n(m), jo(m, '을', '를'), ' 그림처럼 세 부분으로 나눠서 구해요.'],
+    text: ['역 대합실 벽에 타일을 가로 ', V(a), '장씩 ', V(m), '줄 붙인다고 해 봐요. 그림처럼 세 부분으로 생각해서 타일 수를 구해요.'],
     figure: { kind: 'areaModel', parts: [[H, T, u], [m]] },
     input: {
       kind: 'compound',
@@ -463,12 +462,12 @@ function t124(a, m) {
     },
     answer,
     discriminators: discs,
-    hints: [`그림은 가로가 ${H}, ${T}, ${u}의 세 부분, 세로가 ${ieyo(m)}. 세 부분의 값과 모두를 물어요.`, '세 부분을 각각 구해 볼까요? 세 부분을 합치면 전체예요.', `${H} × ${m} = ${H * m}, ${T} × ${m} = ${ieyo(T * m)}.`, `${u} × ${m} = ${bl.blank}`],
+    hints: [`구하는 것: 세 부분의 타일 수와 모두 합한 수 / 알고 있는 것: 가로 ${H}, ${T}, ${u}의 세 부분, 세로 ${m}줄`, '세 부분을 각각 구해 볼까요? 세 부분을 합치면 전체예요.', `${H} × ${m} = ${H * m}, ${T} × ${m} = ${ieyo(T * m)}.`, `${u} × ${m} = ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     blankThen: '"모두" 칸도 채워요.',
     explain: {
-      why: [`${a} × ${m}${jo(m, '은', '는')} ${H} × ${m}, ${T} × ${m}, ${u} × ${m}${roOnly(m)} 나눌 수 있어요.`, `${H * m} + ${T * m} + ${u * m} = ${ieyo(P)}.`, `그래서 ${a} × ${m} = ${ieyo(P)}.`],
+      why: [`${a} × ${m}${jo(m, '은', '는')} ${H} × ${m}, ${T} × ${m}, ${u} × ${m}${roOnly(m)} 갈라 생각할 수 있어요.`, `${H * m} + ${T * m} + ${u * m} = ${ieyo(P)}.`, `그래서 타일은 모두 ${P}장이에요.`],
       alt: mulExplain(a, m).alt,
     },
   };
@@ -509,7 +508,7 @@ const D1 = {
   maxLevel: 3,
   diagnostic: true,
   generate() {
-    return { ...buildMul(305, 4, { text: ['대티역을 지난 열차 ', V(4), '대에 ', V(305), '명씩 타 있었어요. '], unit: '명' }), hints: [], blank: null };
+    return { ...buildMul(305, 4, { text: ['대티역을 지나는 열차 ', V(4), '대에 ', V(305), '명씩 타 있었어요.', '\n'], unit: '명' }), hints: [], blank: null };
   },
 };
 const D2 = {

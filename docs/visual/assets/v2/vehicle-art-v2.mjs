@@ -138,7 +138,7 @@ export const VEHICLES_V2 = {
   2: { name: '급행버스', arche: 'bus', tag: '1000번대' },
   3: { name: '도시고속버스', arche: 'bus', tag: '3000번대' },
   4: { name: '부산김해경전철', arche: 'metro', cars: 2, band: '#895FA7' },
-  5: { name: '부산 도시철도(1호선)', arche: 'metro', cars: 8, band: '#F7941D', facts: { doors: 3, panto: true, steel: true }, pending: ['line1Doors3', 'line1Steel', 'line1Panto'] },
+  5: { name: '부산 도시철도(1호선)', arche: 'metro', cars: 8, band: '#F7941D', pending: ['line1Doors3', 'line1Steel', 'line1Panto'] }, // 전략 결정(4차 회신): FACTS 등록 전까지 facts 비움 — 문·팬터그래프 없이. 등록되면 facts: { doors: 3, panto: true, steel: true }
   6: { name: '동해선 광역전철', arche: 'metro', cars: 4, band: '#0065B3' },
   7: { name: '무궁화호', arche: 'metro', cars: 4, note: '기관차 원형은 1차 vehicle-art.mjs의 locoHauled를 쓴다(이 파일은 v2 표현 예시만)' },
   8: { name: 'ITX-마음', arche: 'highspeed', cars: 6, note: '간선형 — 앞모양 확인 전까지 고속 원형의 짧은 코로 그리지 말고 1차 intercity를 쓴다' },

@@ -1,6 +1,6 @@
 {
   "$schema": "./concept-graph.schema.json",
-  "version": "2026-10-04.3",
+  "version": "2026-10-04.4",
   "source": "docs/curriculum/02-concept-graph.md, 03-line1-mvp-map.md; 성취기준 코드는 docs/CURRICULUM.md(별책 8 원문 대조)",
   "rules": {
     "prereqDefault": "mastered",
@@ -400,7 +400,10 @@
         }
       ],
       "ceiling": 6,
-      "scope": "in"
+      "scope": "in",
+      "templateNeeds": [
+        "위 숫자가 0인 자리 변형(340 − 126)"
+      ]
     },
     {
       "id": "N04",
@@ -504,7 +507,10 @@
         }
       ],
       "ceiling": 6,
-      "scope": "in"
+      "scope": "in",
+      "templateNeeds": [
+        "진단: 공평하게 나누기 세 기준(개수·같은 크기·남김없이)"
+      ]
     },
     {
       "id": "N09",
@@ -523,7 +529,11 @@
         }
       ],
       "ceiling": 6,
-      "scope": "in"
+      "scope": "in",
+      "templateNeeds": [
+        "수직선 템플릿"
+      ],
+      "explain": true
     },
     {
       "id": "N10",
@@ -561,7 +571,11 @@
         }
       ],
       "ceiling": 5,
-      "scope": "in"
+      "scope": "in",
+      "templateNeeds": [
+        "역수형 판별 쌍(0.3 / 0.4)"
+      ],
+      "explain": true
     },
     {
       "id": "N12",
@@ -703,7 +717,11 @@
         }
       ],
       "ceiling": 6,
-      "scope": "in"
+      "scope": "in",
+      "templateNeeds": [
+        "수직선 템플릿",
+        "진단: 가분수를 1 너머 수직선에 찍기"
+      ]
     },
     {
       "id": "N19",
@@ -722,7 +740,10 @@
         }
       ],
       "ceiling": 9,
-      "scope": "in"
+      "scope": "in",
+      "templateNeeds": [
+        "같은 나눗셈을 여러 해석으로(올림·버림·나머지가 답)"
+      ]
     },
     {
       "id": "N20",
@@ -825,7 +846,10 @@
         }
       ],
       "ceiling": 7,
-      "scope": "in"
+      "scope": "in",
+      "templateNeeds": [
+        "수직선 또는 같은 단위분수 막대 템플릿"
+      ]
     },
     {
       "id": "N25",
@@ -880,7 +904,12 @@
         }
       ],
       "ceiling": 7,
-      "scope": "in"
+      "scope": "in",
+      "templateNeeds": [
+        "Steinle & Stacey 판별 묶음 4종(4.8/4.63, 5.736/5.62, 4.7/4.08, 0.4/0.3)",
+        "km 셋째 자리 맥락"
+      ],
+      "explain": true
     },
     {
       "id": "N27",
@@ -918,7 +947,8 @@
         }
       ],
       "ceiling": 8,
-      "scope": "in"
+      "scope": "in",
+      "explain": true
     },
     {
       "id": "N29",
@@ -1130,7 +1160,10 @@
         }
       ],
       "ceiling": 9,
-      "scope": "in"
+      "scope": "in",
+      "templateNeeds": [
+        "나머지 해석 네 번째 갈래: 소수·분수 답이 맞는 상황"
+      ]
     },
     {
       "id": "N38",
@@ -1153,7 +1186,10 @@
         }
       ],
       "ceiling": 8,
-      "scope": "in"
+      "scope": "in",
+      "templateNeeds": [
+        "나머지 해석 네 번째 갈래: 소수·분수 답이 맞는 상황"
+      ]
     },
     {
       "id": "N39",
@@ -1679,7 +1715,8 @@
       ],
       "ceiling": 7,
       "scope": "in",
-      "provisional": true
+      "provisional": true,
+      "explain": true
     },
     {
       "id": "G25",
@@ -2532,7 +2569,10 @@
       "floor": 4,
       "ceiling": 11,
       "scope": "in",
-      "provisional": true
+      "provisional": true,
+      "templateNeeds": [
+        "마무리 문제: 창의 서술 형식(다른 풀이 찾기, 조건 바꾸기)"
+      ]
     },
     {
       "id": "X02",
@@ -2551,7 +2591,10 @@
       "floor": 4,
       "ceiling": 11,
       "scope": "in",
-      "provisional": true
+      "provisional": true,
+      "templateNeeds": [
+        "마무리 문제: 창의 서술 형식(다른 풀이 찾기, 조건 바꾸기)"
+      ]
     },
     {
       "id": "X03",
@@ -2570,7 +2613,10 @@
       "floor": 4,
       "ceiling": 11,
       "scope": "in",
-      "provisional": true
+      "provisional": true,
+      "templateNeeds": [
+        "마무리 문제: 창의 서술 형식(다른 풀이 찾기, 조건 바꾸기)"
+      ]
     },
     {
       "id": "X04",
@@ -2589,7 +2635,10 @@
       "floor": 4,
       "ceiling": 11,
       "scope": "in",
-      "provisional": true
+      "provisional": true,
+      "templateNeeds": [
+        "마무리 문제: 창의 서술 형식(다른 풀이 찾기, 조건 바꾸기)"
+      ]
     },
     {
       "id": "X05",
@@ -2608,7 +2657,10 @@
       "floor": 4,
       "ceiling": 11,
       "scope": "in",
-      "provisional": true
+      "provisional": true,
+      "templateNeeds": [
+        "마무리 문제: 창의 서술 형식(다른 풀이 찾기, 조건 바꾸기)"
+      ]
     },
     {
       "id": "X06",
@@ -2630,7 +2682,10 @@
       "floor": 4,
       "ceiling": 11,
       "scope": "contest",
-      "provisional": true
+      "provisional": true,
+      "templateNeeds": [
+        "마무리 문제: 창의 서술 형식(다른 풀이 찾기, 조건 바꾸기)"
+      ]
     },
     {
       "id": "X07",
@@ -2652,7 +2707,10 @@
       "floor": 4,
       "ceiling": 11,
       "scope": "contest",
-      "provisional": true
+      "provisional": true,
+      "templateNeeds": [
+        "마무리 문제: 창의 서술 형식(다른 풀이 찾기, 조건 바꾸기)"
+      ]
     },
     {
       "id": "X08",
@@ -2671,7 +2729,10 @@
       "floor": 4,
       "ceiling": 11,
       "scope": "contest",
-      "provisional": true
+      "provisional": true,
+      "templateNeeds": [
+        "마무리 문제: 창의 서술 형식(다른 풀이 찾기, 조건 바꾸기)"
+      ]
     },
     {
       "id": "X09",
@@ -2693,7 +2754,10 @@
       "floor": 4,
       "ceiling": 11,
       "scope": "contest",
-      "provisional": true
+      "provisional": true,
+      "templateNeeds": [
+        "마무리 문제: 창의 서술 형식(다른 풀이 찾기, 조건 바꾸기)"
+      ]
     },
     {
       "id": "X10",
@@ -2712,7 +2776,10 @@
       "floor": 4,
       "ceiling": 11,
       "scope": "contest",
-      "provisional": true
+      "provisional": true,
+      "templateNeeds": [
+        "마무리 문제: 창의 서술 형식(다른 풀이 찾기, 조건 바꾸기)"
+      ]
     },
     {
       "id": "X11",
@@ -2731,7 +2798,10 @@
       "floor": 4,
       "ceiling": 11,
       "scope": "contest",
-      "provisional": true
+      "provisional": true,
+      "templateNeeds": [
+        "마무리 문제: 창의 서술 형식(다른 풀이 찾기, 조건 바꾸기)"
+      ]
     },
     {
       "id": "X12",
@@ -2750,7 +2820,10 @@
       "floor": 4,
       "ceiling": 11,
       "scope": "beyond",
-      "provisional": true
+      "provisional": true,
+      "templateNeeds": [
+        "마무리 문제: 창의 서술 형식(다른 풀이 찾기, 조건 바꾸기)"
+      ]
     },
     {
       "id": "X13",
@@ -2769,7 +2842,10 @@
       "floor": 4,
       "ceiling": 11,
       "scope": "beyond",
-      "provisional": true
+      "provisional": true,
+      "templateNeeds": [
+        "마무리 문제: 창의 서술 형식(다른 풀이 찾기, 조건 바꾸기)"
+      ]
     },
     {
       "id": "X14",
@@ -2788,7 +2864,10 @@
       "floor": 4,
       "ceiling": 11,
       "scope": "beyond",
-      "provisional": true
+      "provisional": true,
+      "templateNeeds": [
+        "마무리 문제: 창의 서술 형식(다른 풀이 찾기, 조건 바꾸기)"
+      ]
     },
     {
       "id": "X15",
@@ -2807,7 +2886,10 @@
       "floor": 4,
       "ceiling": 11,
       "scope": "contest",
-      "provisional": true
+      "provisional": true,
+      "templateNeeds": [
+        "마무리 문제: 창의 서술 형식(다른 풀이 찾기, 조건 바꾸기)"
+      ]
     },
     {
       "id": "X16",
@@ -2826,7 +2908,10 @@
       "floor": 4,
       "ceiling": 11,
       "scope": "contest",
-      "provisional": true
+      "provisional": true,
+      "templateNeeds": [
+        "마무리 문제: 창의 서술 형식(다른 풀이 찾기, 조건 바꾸기)"
+      ]
     },
     {
       "id": "X17",
@@ -2845,7 +2930,10 @@
       "floor": 4,
       "ceiling": 11,
       "scope": "in",
-      "provisional": true
+      "provisional": true,
+      "templateNeeds": [
+        "마무리 문제: 창의 서술 형식(다른 풀이 찾기, 조건 바꾸기)"
+      ]
     },
     {
       "id": "X18",
@@ -2867,7 +2955,10 @@
       "floor": 4,
       "ceiling": 11,
       "scope": "contest",
-      "provisional": true
+      "provisional": true,
+      "templateNeeds": [
+        "마무리 문제: 창의 서술 형식(다른 풀이 찾기, 조건 바꾸기)"
+      ]
     },
     {
       "id": "X19",
@@ -2886,7 +2977,10 @@
       "floor": 4,
       "ceiling": 11,
       "scope": "beyond",
-      "provisional": true
+      "provisional": true,
+      "templateNeeds": [
+        "마무리 문제: 창의 서술 형식(다른 풀이 찾기, 조건 바꾸기)"
+      ]
     },
     {
       "id": "X20",
@@ -2908,11 +3002,14 @@
       "floor": 4,
       "ceiling": 11,
       "scope": "in",
-      "provisional": true
+      "provisional": true,
+      "templateNeeds": [
+        "마무리 문제: 창의 서술 형식(다른 풀이 찾기, 조건 바꾸기)"
+      ]
     },
     {
       "id": "X21",
-      "title": "넓이 나누기·옮기기",
+      "title": "넓이·둘레: 나누기·옮기기·최대최소",
       "codes": [],
       "gradeBand": null,
       "line": "DH",
@@ -2927,7 +3024,11 @@
       "floor": 4,
       "ceiling": 11,
       "scope": "contest",
-      "provisional": true
+      "provisional": true,
+      "templateNeeds": [
+        "둘레·넓이의 최대·최소 포함",
+        "마무리 문제: 창의 서술 형식(다른 풀이 찾기, 조건 바꾸기)"
+      ]
     },
     {
       "id": "X22",
@@ -2942,7 +3043,10 @@
       "floor": 4,
       "ceiling": 11,
       "scope": "contest",
-      "provisional": true
+      "provisional": true,
+      "templateNeeds": [
+        "마무리 문제: 창의 서술 형식(다른 풀이 찾기, 조건 바꾸기)"
+      ]
     },
     {
       "id": "X23",
@@ -2964,7 +3068,10 @@
       "floor": 4,
       "ceiling": 11,
       "scope": "contest",
-      "provisional": true
+      "provisional": true,
+      "templateNeeds": [
+        "마무리 문제: 창의 서술 형식(다른 풀이 찾기, 조건 바꾸기)"
+      ]
     }
   ]
 }

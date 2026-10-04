@@ -153,6 +153,8 @@ function nextNode(run) {
     p.gi += 1;
   }
   if (p.gi >= p.groups.length) {
+    if (!p.extra) planExtra(run);
+    if (p.extra.length) return pushExtra(run);
     run.finished = true;
     return;
   }
@@ -165,6 +167,34 @@ function nextNode(run) {
   g.tested += 1;
   run.dest = p.node;
   run.slots.push(diagSlot(p.node, 0), diagSlot(p.node, Math.min(1, diagnosticsFor(p.node).length - 1)));
+}
+
+/**
+ * 더 묻기(앞서가는 아이용, 보호자 승인 2026-10-04): 이분 탐색을 하나도 틀리지 않았을 때만.
+ *   ① 통과한 가장 먼 역보다 앞에 있는 필수 확인 역을 진단 1문제씩(최대 2역) — 맞히면 그 역도 통과(시험한 역)라
+ *      쉬운 필수 확인 역이 첫 목적지로 남지 않는다.
+ *   ② 가장 멀리 통과한 역의 5단계 문제 1개 — 맞히면 그 줄기의 처음 보는 역은 4.5(5단계 근처)에서 시작.
+ * 시승 길이는 많아야 13문제쯤(보통 10문제 + 3).
+ */
+const EXTRA_MUST = 2;
+function planExtra(run) {
+  const p = run.placement;
+  p.extra = [];
+  if (p.missedIds.length || !p.passedIds.length) return;
+  const far = Math.max(...p.passedIds.map((id) => NODES.get(id).order));
+  const must = playableNodes()
+    .filter((n) => MUST_CHECK.has(n.id) && n.order < far && !p.passedIds.includes(n.id) && diagnosticsFor(n.id).length > 0)
+    .slice(0, EXTRA_MUST)
+    .map((n) => ({ type: 'must', node: n.id }));
+  const top = p.passedIds.reduce((a, b) => (NODES.get(b).order > NODES.get(a).order ? b : a));
+  p.extra = [...must, ...(ceilingOf(top) >= 5 ? [{ type: 'probe', node: top }] : [])];
+}
+function pushExtra(run) {
+  const p = run.placement;
+  const x = p.extra[0];
+  p.node = x.node;
+  run.dest = x.node;
+  run.slots.push(x.type === 'must' ? diagSlot(x.node, 0) : { kind: 'probe', node: x.node, level: Math.min(5, ceilingOf(x.node)) });
 }
 
 /** 시승 결과 요약(처음 보는 역의 시작 실력에 쓴다, state.js startRatingOf) */
@@ -181,7 +211,7 @@ function placementResult(p) {
     const { strand } = NODES.get(id);
     misses[strand] = (misses[strand] ?? 0) + 1;
   }
-  return { passes, misses, farthest, any: p.passedIds.length > 0 };
+  return { passes, misses, farthest, any: p.passedIds.length > 0, high: p.high ?? {} };
 }
 
 export function submitPlacement(state0, run, response) {
@@ -195,6 +225,25 @@ export function submitPlacement(state0, run, response) {
   record(state, node, result.correct, cur.template.repr);
   run.current = null;
   run.index += 1;
+  if (p.extra?.length && !g) {
+    // 더 묻기 단계: 한 문제로 판정
+    const x = p.extra.shift();
+    if (x.type === 'must') {
+      if (result.correct) {
+        markPassed(state, x.node, run.day);
+        p.passedIds.push(x.node);
+      } else {
+        state.nodes[x.node] = { ...nodeState(state, x.node), rating: 2.5, placementMissed: true };
+        p.missedIds.push(x.node);
+      }
+    } else if (result.correct) {
+      p.high = { ...(p.high ?? {}), [NODES.get(x.node).strand]: true };
+      state.nodes[x.node] = { ...nodeState(state, x.node), rating: Math.max(nodeState(state, x.node).rating, 5) };
+    }
+    nextNode(run);
+    if (run.finished) finishPlacement(state, run);
+    return { state, run, result, outcome: result.correct ? 'correct' : 'wrong' };
+  }
   p.k += 1;
   if (result.correct) p.right += 1;
 

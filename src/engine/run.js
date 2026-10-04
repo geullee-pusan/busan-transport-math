@@ -203,6 +203,13 @@ export function giveUp(state, run) {
   return finishProblem(state, run, false, run.hint);
 }
 
+/** 이번 문제의 목표 정답률 종류(L2): 도전 운행 → challenge, 처음 3운행이거나 바로 앞 두 문제를 못 맞혔으면 → gentle */
+function ratingTarget(state, run) {
+  if (run.mode === 'challenge') return 'challenge';
+  if ((state.runs ?? 0) < 3 || run.wrongStreak >= 2) return 'gentle';
+  return 'normal';
+}
+
 function finishProblem(state0, run, correct, hint) {
   const { slot, template, level, seed } = run.current;
   const state = { ...state0, nodes: { ...state0.nodes } };
@@ -215,7 +222,7 @@ function finishProblem(state0, run, correct, hint) {
     // 두 운행 안에 끝나지 않으면 목적지를 내주고 보통 임시 정차로 돌린다(불은 그대로). 막힘이 되지 않게(아동 심리 자문 04 R2).
     const right = (ns.inspectRight ?? 0) + (correct && level >= 3 ? (hint <= 1 ? 1 : 0.5) : 0);
     const runs = ns.inspectRuns?.includes(run.seed) ? ns.inspectRuns : [...(ns.inspectRuns ?? []), run.seed];
-    const node = { ...ns, attempts: [...ns.attempts, { c: correct, h: hint, l: level, r: template.repr, d: run.day }].slice(-20), rating: nextRating(ns.rating, { correct, hint }), inspectRight: right, inspectRuns: runs };
+    const node = { ...ns, attempts: [...ns.attempts, { c: correct, h: hint, l: level, r: template.repr, d: run.day }].slice(-20), rating: nextRating(ns.rating, { correct, hint, target: ratingTarget(state0, run) }), inspectRight: right, inspectRuns: runs };
     if (right < 2 && runs.length >= 3) {
       Object.assign(node, { inspect: false, inspectRight: 0, inspectRuns: [], inferStrikes: 0, reviewDay: run.day + 1 });
       run.events.push({ type: 'inspectReleased', node: slot.node });
@@ -242,7 +249,7 @@ function finishProblem(state0, run, correct, hint) {
     // 급행 진단은 칸에 넣지 않는다(별도 판정).
     state.nodes[slot.node] = { ...ns, attempts: [...ns.attempts, { c: correct, h: hint, l: level, r: template.repr, x: 1 }].slice(-20) };
   } else {
-    const { node, gained, lit, pending } = applyAttempt(ns.status ? ns : emptyNode(), { correct, hint, opened: run.hint, level, repr: template.repr, counted }, run.day);
+    const { node, gained, lit, pending } = applyAttempt(ns.status ? ns : emptyNode(), { correct, hint, opened: run.hint, level, repr: template.repr, counted, target: ratingTarget(state0, run) }, run.day);
     state.nodes[slot.node] = node;
     if (gained > 0) {
       const perHalf = segmentMeters(slot.node) / FULL;

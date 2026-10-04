@@ -94,8 +94,9 @@
 .v2-card .art.silhouette svg { filter: grayscale(1) contrast(0.3) brightness(1.5); opacity: 0.7; } /* 시안: 실제로는 vehicle-art.mjs silhouette(윤곽선)로 */
 
 /* ── 문제 판: 오른쪽 위 도구 + 옅은 크림 바탕 ── */
-.v2-problem { position: relative; max-width: 900px; background: var(--cream); border: 1.5px solid var(--soft); border-radius: var(--r-lg); padding: 24px 150px 24px 28px; }
+.v2-problem { position: relative; max-width: 900px; background: var(--cream); border: 1.5px solid var(--soft); border-radius: var(--r-lg); padding: 24px 196px 24px 28px; }
 .pp-tools { position: absolute; top: 0; right: 0; display: flex; }
-.pp-tool { width: 84px; height: 84px; background: none; border: 0; display: grid; place-items: center; align-content: center; gap: 2px; color: var(--ink); font: inherit; font-size: 13px; font-weight: 700; position: relative; }
+.pp-tool { width: 92px; height: 92px; background: none; border: 0; display: grid; place-items: center; align-content: center; gap: 0; color: var(--ink); font: inherit; font-size: 16px; font-weight: 700; position: relative; } /* 보이는 판 64(이름표 16px이 들어가게), 누르는 영역 92 */
 .pp-tool::before { content: ''; position: absolute; inset: 14px; border: 2px solid var(--ink); border-radius: 14px; background: #fff; z-index: -1; }
+.pp-tool span { font-size: 16px; line-height: 1.1; }
 .v2-problem .problem-text { font-size: 26px; line-height: 1.6; margin: 0; }

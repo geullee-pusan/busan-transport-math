@@ -134,16 +134,16 @@ function t151Level1(h, times, i, a) {
   const answer = { h, m: times[i + 1] };
   const discs = cleanDiscs([{ value: { h, m: times[i] }, category: '읽기', kind: 'check', feedback: `${h}시 ${times[i]}분은 ${h}시 ${a}분보다 앞일까요, 뒤일까요?` }], answer);
   return {
-    text: ['이 문제의 가야역 서면 방향 시간표예요. ', ...hmsText(h, a), '에 승강장에 왔어요. 다음 열차는 몇 시 몇 분이에요?'],
+    text: ['이 문제의 가야역 시간표예요. ', ...hmsText(h, a), '에 승강장에 왔어요. 다음 열차는 몇 시 몇 분이에요?'],
     figure: timetable(h, times),
     input: { kind: 'compound', fields: HM_FIELDS },
     answer,
     discriminators: discs,
     grade: cgrade(HM_FIELDS, answer, discs),
-    hints: [`${h}시 ${a}분에 승강장에 왔어요. 그 뒤에 오는 첫 열차의 시각을 물어요.`, `시간표에서 ${h}시 ${a}분 바로 앞과 바로 뒤의 열차를 찾아볼까요?`, `바로 앞 열차는 ${h}시 ${times[i]}분이라 이미 떠났어요.`, `다음 열차: ${h}시 ${blankAt(times[i + 1], times[i + 1] >= 10 ? 1 : 0).blank}분`],
+    hints: [`구하는 것: 다음 열차 시각 / 알고 있는 것: 승강장에 온 시각 ${h}시 ${a}분`, `시간표에서 ${h}시 ${a}분 바로 앞과 바로 뒤의 열차를 찾아볼까요?`, `바로 앞 열차는 ${h}시 ${times[i]}분이라 이미 떠났어요.`, `다음 열차: ${h}시 ${blankAt(times[i + 1], times[i + 1] >= 10 ? 1 : 0).blank}분`],
     blank: blankAt(times[i + 1], times[i + 1] >= 10 ? 1 : 0).blank,
     blankAnswer: blankAt(times[i + 1], times[i + 1] >= 10 ? 1 : 0).blankAnswer,
-    explain: { why: [`${h}시 ${times[i]}분 열차는 ${h}시 ${a}분보다 앞이라 이미 떠났어요.`, `${h}시 ${a}분 뒤에 처음 오는 열차는 ${h}시 ${times[i + 1]}분이에요.`, `그래서 다음 열차는 ${h}시 ${times[i + 1]}분이에요.`], alt: ['시간표를 위에서부터 내려가며 온 시각보다 늦은 첫 칸을 찾아도 돼요.', `두 방법 모두 ${h}시 ${times[i + 1]}분이에요.`] },
+    explain: { why: [`${h}시 ${times[i]}분 열차는 ${h}시 ${a}분보다 앞이라 이미 떠났어요.`, `${h}시 ${a}분 뒤에 처음 오는 열차는 ${h}시 ${times[i + 1]}분이에요.`, `그래서 다음 열차는 ${h}시 ${times[i + 1]}분이에요.`], alt: ['시간표를 위에서부터 내려가며 온 시각보다 늦은 첫 칸을 찾아도 돼요.', `어느 길로 해도 답은 ${h}시 ${times[i + 1]}분이에요.`] },
   };
 }
 function t151Level2(h, times, i, a, s) {
@@ -153,21 +153,21 @@ function t151Level2(h, times, i, a, s) {
   const discs = cleanDiscs(
     [
       { value: { m: next - a, s: 60 - s }, category: '계산', kind: 'check', feedback: '분 칸을 다시 볼까요?' },
-      { value: { m: next - a - 1, s: 100 - s }, category: '계산', kind: 'check', feedback: '1분은 몇 초였죠? 다시 볼까요?' },
+      { value: { m: next - a - 1, s: 100 - s }, category: '계산', kind: 'check', feedback: '1분은 몇 초일까요?' },
     ],
     answer,
   );
   return {
-    text: ['이 문제의 가야역 서면 방향 시간표예요. ', ...hmsText(h, a, s), '에 승강장에 왔어요. 다음 열차까지 몇 분 몇 초 기다려요?'],
+    text: ['이 문제의 가야역 시간표예요. ', ...hmsText(h, a, s), '에 승강장에 왔어요. 다음 열차까지 몇 분 몇 초 기다려요?'],
     figure: timetable(h, times),
     input: { kind: 'compound', fields: MS_FIELDS },
     answer,
     discriminators: discs,
     grade: cgrade(MS_FIELDS, answer, discs),
-    hints: [`${hms(h, a, s)}에 왔어요. 다음 열차가 올 때까지 기다리는 시간을 물어요.`, `다음 열차는 ${h}시 ${next}분이에요. ${h}시 ${a + 1}분까지 몇 초 남았는지부터 볼까요?`, `${hms(h, a, s)}에서 ${h}시 ${a + 1}분까지는 ${60 - s}초예요.`, `${60 - s}초 + ${next - a - 1}분 = ☐분 ${answer.s}초`],
+    hints: [`구하는 것: 다음 열차까지 기다리는 시간 / 알고 있는 것: 승강장에 온 시각 ${hms(h, a, s)}`, `다음 열차는 ${h}시 ${next}분이에요. ${h}시 ${a + 1}분까지 몇 초 남았는지부터 볼까요?`, `${hms(h, a, s)}에서 ${h}시 ${a + 1}분까지는 ${60 - s}초예요.`, `${60 - s}초 + ${next - a - 1}분 = ☐분 ${answer.s}초`],
     blank: '☐',
     blankAnswer: String(answer.m),
-    explain: { why: [`${hms(h, a, s)}에서 ${h}시 ${a + 1}분까지 ${60 - s}초예요.`, `${h}시 ${a + 1}분에서 ${h}시 ${next}분까지 ${next - a - 1}분이에요.`, `그래서 ${ms0(wait)} 기다려요.`], alt: [`${h}시 ${next}분 0초 − ${h}시 ${a}분 ${s}초를 1분 빌려 계산하면 ${ms0(wait)}예요.`, `두 풀이 모두 ${ms0(wait)}예요.`] },
+    explain: { why: [`${hms(h, a, s)}에서 ${h}시 ${a + 1}분까지 ${60 - s}초예요.`, `${h}시 ${a + 1}분에서 ${h}시 ${next}분까지 ${next - a - 1}분이에요.`, `그래서 ${ms0(wait)} 기다려요.`], alt: [`1분을 받아내림해서 ${h}시 ${next}분 0초 − ${h}시 ${a}분 ${s}초를 계산하면 ${ms0(wait)}예요.`, `어느 길로 해도 답은 ${ms0(wait)}예요.`] },
   };
 }
 function t151Level3(h, m0, g) {
@@ -180,16 +180,16 @@ function t151Level3(h, m0, g) {
   const answer = { m3: all[2], m5: all[4] };
   const discs = cleanDiscs([{ value: { m3: all[1] + g - 2 }, category: '개념', kind: 'check', feedback: `${h}시 ${all[0]}분과 ${h}시 ${all[1]}분 사이는 몇 분이에요?` }], answer);
   return {
-    text: ['이 문제의 가야역 서면 방향 시간표에 빈칸이 두 곳 있어요. 열차는 같은 간격으로 와요. 빈칸의 시각을 채워요.'],
+    text: ['이 문제의 가야역 시간표예요. 열차는 같은 간격으로 떠나요. 빈칸의 시각을 채워요.'],
     figure: timetable(h, shown),
     input: { kind: 'compound', fields },
     answer,
     discriminators: discs,
     grade: cgrade(fields, answer, discs),
-    hints: [`열차가 같은 간격으로 오는 시간표예요. 셋째와 다섯째 열차의 시각을 물어요.`, '첫째와 둘째 열차 사이가 몇 분인지 볼까요?', `${h}시 ${all[0]}분과 ${h}시 ${all[1]}분 사이는 ${g}분이에요.`, `셋째 열차: ${h}시 ${blankAt(all[2], all[2] >= 10 ? 1 : 0).blank}분`],
+    hints: [`구하는 것: 셋째와 다섯째 열차 시각 / 알고 있는 것: 열차가 같은 간격으로 떠나요`, '첫째와 둘째 열차 사이가 몇 분인지 볼까요?', `${h}시 ${all[0]}분과 ${h}시 ${all[1]}분 사이는 ${g}분이에요.`, `셋째 열차: ${h}시 ${blankAt(all[2], all[2] >= 10 ? 1 : 0).blank}분`],
     blank: blankAt(all[2], all[2] >= 10 ? 1 : 0).blank,
     blankAnswer: blankAt(all[2], all[2] >= 10 ? 1 : 0).blankAnswer,
-    explain: { why: [`열차는 ${g}분마다 와요.`, `셋째는 ${all[1]} + ${g} = ${all[2]}분, 다섯째는 ${all[3]} + ${g} = ${all[4]}분이에요.`, `그래서 ${h}시 ${all[2]}분, ${h}시 ${all[4]}분이에요.`], alt: [`넷째 ${h}시 ${all[3]}분에서 ${g}분 앞이 셋째예요.`, `두 풀이 모두 ${h}시 ${all[2]}분, ${h}시 ${all[4]}분이에요.`] },
+    explain: { why: [`열차는 ${g}분마다 와요.`, `셋째는 ${all[1]} + ${g} = ${all[2]}분, 다섯째는 ${all[3]} + ${g} = ${all[4]}분이에요.`, `그래서 ${h}시 ${all[2]}분, ${h}시 ${all[4]}분이에요.`], alt: [`넷째 ${h}시 ${all[3]}분에서 ${g}분 앞이 셋째예요.`, `어느 길로 해도 답은 ${h}시 ${all[2]}분, ${h}시 ${all[4]}분이에요.`] },
   };
 }
 const T15_1 = {
@@ -222,29 +222,29 @@ function t152Level12(h, m, g) {
   const discs = cross
     ? cleanDiscs(
         [
-          { value: { h, m: m + g }, category: '개념', kind: 'check', feedback: `${m + g}분은 1시간보다 길지 않나요?` },
+          { value: { h, m: m + g }, category: '개념', kind: 'check', feedback: `${m + g}분은 1시간보다 길까요?` },
           { value: { h, m: m + g - 60 }, category: '계산', kind: 'check', feedback: '시 칸을 다시 볼까요?' },
         ],
         answer,
       )
     : [];
   return {
-    text: ['가야역에서 서면역까지 열차로 ', V(g), '분 걸려요. ', ...hmsText(h, m), ' 열차를 타면 서면역에 몇 시 몇 분에 도착해요?'],
+    text: ['가야역에서 서면역까지 열차로 ', V(g), '분 걸린다고 해 봐요. ', ...hmsText(h, m), ' 열차를 타면 서면역에 몇 시 몇 분에 도착해요?'],
     figure: { kind: 'stations', line: '2', stations: ['가야', '부암', '서면'] },
     input: { kind: 'compound', fields: HM_FIELDS },
     answer,
     discriminators: discs,
     grade: cgrade(HM_FIELDS, answer, discs),
     hints: cross
-      ? [`${h}시 ${m}분에 타서 ${g}분 걸려요. 서면역에 도착하는 시각을 물어요.`, `${h + 1}시 정각까지 몇 분 남았는지 먼저 볼까요?`, `${h}시 ${m}분에서 ${h + 1}시까지는 ${60 - m}분이에요.`, `${h + 1}시 ☐분`]
-      : [`${h}시 ${m}분에 타서 ${g}분 걸려요. 서면역에 도착하는 시각을 물어요.`, '분에 걸리는 시간을 이어 세어 볼까요?', `${h}시 ${m}분에서 ${g}분 뒤예요.`, `${h}시 ${blankAt(m + g, m + g >= 10 ? 1 : 0).blank}분`],
+      ? [`구하는 것: 서면역에 도착하는 시각 / 알고 있는 것: ${h}시 ${m}분에 탐, ${g}분 걸림`, `${h + 1}시 정각까지 몇 분 남았는지 먼저 볼까요?`, `${h}시 ${m}분에서 ${h + 1}시까지는 ${60 - m}분이에요.`, `${h + 1}시 ☐분`]
+      : [`구하는 것: 서면역에 도착하는 시각 / 알고 있는 것: ${h}시 ${m}분에 탐, ${g}분 걸림`, '분에 걸리는 시간을 이어 세어 볼까요?', `${h}시 ${m}분에서 ${g}분 뒤예요.`, `${h}시 ${blankAt(m + g, m + g >= 10 ? 1 : 0).blank}분`],
     blank: cross ? '☐' : blankAt(m + g, m + g >= 10 ? 1 : 0).blank,
     blankAnswer: cross ? String(answer.m) : blankAt(m + g, m + g >= 10 ? 1 : 0).blankAnswer,
     explain: {
       why: cross
         ? [`${h}시 ${m}분에서 ${60 - m}분 가면 ${h + 1}시예요.`, `남은 ${g - (60 - m)}분을 더 가요.`, `그래서 ${tStr(t)}에 도착해요.`]
-        : [`${h}시 ${m}분에서 ${g}분 뒤는 ${m} + ${g} = ${m + g}분이에요.`, '60분을 넘지 않아서 시는 그대로예요.', `그래서 ${tStr(t)}에 도착해요.`],
-      alt: cross ? [`${m} + ${g} = ${m + g}분은 1시간 ${m + g - 60}분이에요.`, `두 풀이 모두 ${ye(tStr(t))}.`] : [`도착 시각에서 ${g}분 앞이 ${h}시 ${m}분인지 확인해도 돼요.`, `두 풀이 모두 ${ye(tStr(t))}.`],
+        : [`${h}시 ${m}분에서 ${g}분 뒤는 ${m} + ${g} = ${m + g}분이에요.`, '60분보다 작아서 시는 그대로예요.', `그래서 ${tStr(t)}에 도착해요.`],
+      alt: cross ? [`${m} + ${g} = ${m + g}분은 1시간 ${m + g - 60}분이에요.`, `어느 길로 해도 답은 ${ye(tStr(t))}.`] : [`${tStr(t)}에서 ${g}분 앞은 ${h}시 ${m}분이에요.`, '확인해 보면 답이 맞아요.'],
     },
   };
 }
@@ -252,27 +252,23 @@ function t152Level3(D, g, e, k) {
   const t2 = D - g - e;
   const trains = [t2 - k, t2, t2 + k];
   const opts = trains.map(tHm);
-  const textTrains = [];
-  trains.forEach((t, i) => {
-    textTrains.push(...tText(t));
-    if (i < 2) textTrains.push(', ');
-  });
   return {
-    text: ['어느 날 서면역에 ', ...tText(D), '까지 도착해야 했어요(그 시각에 도착해도 됐어요). 이 문제에서 가야역 열차는 ', ...textTrains, '에 떠나요. 서면까지 ', V(g), '분일 때 늦지 않는 가장 늦은 열차는 어느 것이에요?'],
+    // 열차 시각은 표가 보여 준다(02 문서 규칙 10).
+    text: [...tText(D), '까지 서면역에 닿으면 돼요. 가야역에서 ', V(g), '분 걸린다고 해 봐요. 가장 늦게 탈 수 있는 열차는 어느 것이에요?'],
     figure: { kind: 'table', columns: ['이 문제의 가야역 서면 방향', '출발 시각'], rows: trains.map((t, i) => [ORD[i], tHm(t)]) },
     input: { kind: 'choice', options: opts },
     answer: opts[1],
     discriminators: [
       { value: opts[2], category: '계산', kind: 'check', feedback: `${tStr(trains[2])} 열차는 몇 시 몇 분에 도착해요?` },
-      { value: opts[0], category: '개념', kind: 'check', feedback: '늦지 않는 열차 중 가장 늦은 것을 물었어요' },
+      { value: opts[0], category: '개념', kind: 'check', feedback: '더 늦게 떠나는 열차도 탈 수 있을까요?' },
     ],
-    hints: [`서면역에 ${tStr(D)}까지 도착해야 해요. 가야역 열차는 ${trains.map(tStr).join(', ')}${tStr(trains[2]).endsWith('분') ? '이고' : '고'}, 서면까지 ${g}분이에요. 늦지 않는 가장 늦은 열차를 물어요.`, '열차마다 서면역 도착 시각을 적어 볼까요?', `${tStr(trains[0])} 열차는 ${tStr(trains[0] + g)}에 도착해요.`, `${tStr(trains[1])} 열차는 ☐시 ${(trains[1] + g) % 60}분에 도착`],
+    hints: [`구하는 것: ${tStr(D)}까지 서면역에 닿는 열차 중 가장 늦은 열차 / 알고 있는 것: 열차 시각 ${trains.map(tStr).join(', ')}, 서면역까지 ${g}분`, '열차마다 서면역 도착 시각을 적어 볼까요?', `${tStr(trains[0])} 열차는 ${tStr(trains[0] + g)}에 도착해요.`, `${tStr(trains[1])} 열차는 ☐시 ${(trains[1] + g) % 60}분에 도착`],
     blank: '☐',
     blankAnswer: String(Math.floor((trains[1] + g) / 60)),
     blankThen: '늦지 않는 가장 늦은 열차는?',
     explain: {
       why: [`${trains.map((t) => `${tStr(t)} 열차는 ${tStr(t + g)}`).join(', ')}에 도착해요.`, `${tStr(D)}까지 도착하는 열차 중 가장 늦은 것은 ${tStr(trains[1])} 열차예요.`, `그래서 ${opts[1]} 열차예요.`],
-      alt: [`${tStr(D)}에서 ${g}분을 거꾸로 빼면 ${ye(tStr(D - g))}.`, `${tStr(D - g)}${tStr(D - g).endsWith("분") ? "이나" : "나"} 그보다 앞에 출발하면 돼요.`, `가장 늦은 것은 ${opts[1]} 열차예요. 두 풀이 모두 ${opts[1]} 열차예요.`],
+      alt: [`${tStr(D)}에서 ${g}분을 거꾸로 빼면 ${ye(tStr(D - g))}.`, `${tStr(D - g)}${tStr(D - g).endsWith("분") ? "이나" : "나"} 그보다 앞에 출발하면 돼요.`, `어느 길로 해도 답은 ${opts[1]} 열차예요.`],
     },
   };
 }
@@ -287,23 +283,23 @@ function t152Level4(H, m, g) {
     answer,
   );
   return {
-    text: ['어느 날 서면역에 ', ...hmsText(H, m), '에 도착했어요. 가야역에서 ', V(g), '분 걸렸어요. 가야역에서 몇 시 몇 분 열차를 탔어요?'],
+    text: ['오늘 서면역에 ', ...hmsText(H, m), '에 도착했어요. 가야역에서 ', V(g), '분 걸렸어요. 가야역에서 몇 시 몇 분 열차를 탔어요?'],
     figure: null,
     input: { kind: 'compound', fields: HM_FIELDS },
     answer,
     discriminators: discs,
     grade: cgrade(HM_FIELDS, answer, discs),
-    hints: [`서면역에 ${H}시 ${m}분에 도착했고, 가야역에서 ${g}분 걸렸어요. 탄 열차의 시각을 물어요.`, `${H}시 정각까지 거꾸로 가 본 다음, 남은 분만큼 더 거꾸로 가 볼까요?`, `${H}시 ${m}분에서 ${m}분 거꾸로 가면 ${H}시 정각이에요.`, `${H}시에서 ${g - m}분 앞: ${answer.h}시 ${blankAt(answer.m, 1).blank}분`],
+    hints: [`구하는 것: 가야역에서 탄 열차 시각 / 알고 있는 것: 서면역 도착 ${H}시 ${m}분, 걸린 시간 ${g}분`, `${H}시 정각까지 거꾸로 가 본 다음, 남은 분만큼 더 거꾸로 가 볼까요?`, `${H}시 ${m}분에서 ${m}분 거꾸로 가면 ${H}시 정각이에요.`, `${H}시에서 ${g - m}분 앞: ${answer.h}시 ${blankAt(answer.m, 1).blank}분`],
     blank: blankAt(answer.m, 1).blank,
     blankAnswer: blankAt(answer.m, 1).blankAnswer,
-    explain: { why: [`${H}시 ${m}분에서 ${m}분 거꾸로 가면 ${H}시예요.`, `${g - m}분 더 거꾸로 가면 ${ye(tStr(t))}.`, `그래서 ${tStr(t)} 열차를 탔어요.`], alt: [`${tStr(t)}에서 ${g}분 뒤는 ${H}시 ${m}분이에요.`, `두 풀이 모두 ${ye(tStr(t))}.`] },
+    explain: { why: [`${H}시 ${m}분에서 ${m}분 거꾸로 가면 ${H}시예요.`, `${g - m}분 더 거꾸로 가면 ${ye(tStr(t))}.`, `그래서 ${tStr(t)} 열차를 탔어요.`], alt: [`${tStr(t)}에서 ${g}분 뒤는 ${H}시 ${m}분이에요.`, '확인해 보면 답이 맞아요.'] },
   };
 }
 function t152Level5(h, m0, g) {
   const count = (60 - m0) / g + 1;
   const list = Array.from({ length: count }, (_, i) => h * 60 + m0 + i * g);
   return {
-    text: ['이 문제에서 가야역 첫차가 ', ...hmsText(h, m0), '에 떠나고, 그 뒤로 ', V(g), '분마다 열차가 떠나요. ', V(h + 1), '시 정각까지(그 시각에 떠나는 열차도 세요) 열차는 모두 몇 대 떠나요?'],
+    text: ['이 문제에서 가야역 첫차가 ', ...hmsText(h, m0), '에 떠나고, 그 뒤로 ', V(g), '분마다 열차가 떠나요. ', V(h + 1), '시 정각까지(그 시각에 떠나는 열차도 세어요) 열차는 모두 몇 대 떠나요?'],
     figure: null,
     challenge: true,
     input: { kind: 'number', unit: '대' },
@@ -312,7 +308,7 @@ function t152Level5(h, m0, g) {
     hints: [`첫차는 ${h}시 ${m0}분, ${g}분마다 열차가 떠나요. ${h + 1}시 정각까지 떠나는 열차 수를 물어요.`, '떠나는 시각을 차례로 적어 볼까요?', `${list.slice(0, 3).map(tStr).join(', ')}, …`, `마지막 열차는 ${h + 1}시 정각이에요. 모두 ☐대`],
     blank: '☐',
     blankAnswer: String(count),
-    explain: { why: [`떠나는 시각은 ${ye(list.map(tStr).join(', '))}.`, `첫차부터 ${h + 1}시 열차까지 세면 ${count}대예요.`, `그래서 ${count}대예요.`], alt: [`${h}시 ${m0}분부터 ${h + 1}시까지 ${60 - m0}분이에요. ${g}분 간격이 ${(60 - m0) / g}번이에요.`, `간격 수에 첫차 1대를 더해 ${count}대예요.`, `두 풀이 모두 ${count}대예요.`] },
+    explain: { why: [`떠나는 시각은 ${ye(list.map(tStr).join(', '))}.`, `첫차부터 ${h + 1}시 열차까지 세면 ${count}대예요.`, `그래서 ${count}대예요.`], alt: [`${h}시 ${m0}분부터 ${h + 1}시까지 ${60 - m0}분이에요. ${g}분 간격이 ${(60 - m0) / g}번이에요.`, `간격 수에 첫차 1대를 더해 ${count}대예요.`, `어느 길로 해도 답은 ${count}대예요.`] },
   };
 }
 const T15_2 = {
@@ -355,33 +351,33 @@ const T15_2 = {
 // 단계 불변식: 1 분끼리 두 구간 / 2 분초 두 구간(받아올림) / 3 구간 셋 + 서면 정차 시간.
 function t153Level1(a, b) {
   return {
-    text: ['노선 그림에 역 사이마다 걸리는 시간이 적혀 있어요. 가야–부암 ', V(a), '분, 부암–서면 ', V(b), '분이에요. 가야역에서 서면역까지 몇 분 걸려요?'],
+    text: ['가야–부암은 ', V(a), '분, 부암–서면은 ', V(b), '분 걸린다고 해 봐요. 가야역에서 서면역까지 몇 분 걸려요?'],
     figure: { kind: 'stations', line: '2', stations: ['가야', '부암', '서면'], times: [`${a}분`, `${b}분`] },
     input: { kind: 'number', unit: '분' },
     answer: a + b,
     discriminators: [],
-    hints: [`가야–부암 ${a}분, 부암–서면 ${b}분이에요. 가야에서 서면까지 걸리는 시간을 물어요.`, '역 사이 시간을 차례로 이어 볼까요?', `가야에서 부암까지 ${a}분이에요.`, `${a} + ${b} = ☐`],
+    hints: [`구하는 것: 가야역에서 서면역까지 걸리는 시간 / 알고 있는 것: 가야–부암 ${a}분, 부암–서면 ${b}분`, '역 사이 시간을 차례로 이어 볼까요?', `가야에서 부암까지 ${a}분이에요.`, `${a} + ${b} = ☐`],
     blank: '☐',
     blankAnswer: String(a + b),
-    explain: { why: ['가야에서 서면까지 가려면 부암을 지나요.', `두 구간 시간을 이으면 ${a} + ${b} = ${a + b}분이에요.`, `그래서 ${a + b}분 걸려요.`], alt: [`서면에서 가야 쪽으로 거꾸로 이어도 ${b} + ${a} = ${a + b}분이에요.`, `두 방법 모두 ${a + b}분이에요.`] },
+    explain: { why: ['가야에서 서면까지 가려면 부암을 지나요.', `두 구간 시간을 이으면 ${a} + ${b} = ${a + b}분이에요.`, `그래서 ${a + b}분 걸려요.`], alt: [`서면에서 가야 쪽으로 거꾸로 이어도 ${b} + ${a} = ${a + b}분이에요.`, `어느 길로 해도 답은 ${a + b}분이에요.`] },
   };
 }
 function t153Level2(x, y) {
   const sum = x + y;
   const answer = msAns(sum);
   const raw = { m: Math.floor(x / 60) + Math.floor(y / 60), s: (x % 60) + (y % 60) };
-  const discs = cleanDiscs([{ value: raw, category: '개념', kind: 'check', feedback: `${raw.s}초는 1분보다 길지 않나요?` }], answer);
+  const discs = cleanDiscs([{ value: raw, category: '개념', kind: 'check', feedback: `${raw.s}초는 1분보다 길까요?` }], answer);
   return {
-    text: ['노선 그림에 가야–부암 ', ...msText(x), ', 부암–서면 ', ...msText(y), '가 적혀 있어요. 가야역에서 서면역까지 몇 분 몇 초 걸려요?'],
+    text: ['가야–부암은 ', ...msText(x), ', 부암–서면은 ', ...msText(y), ' 걸린다고 해 봐요. 가야역에서 서면역까지 몇 분 몇 초 걸려요?'],
     figure: { kind: 'stations', line: '2', stations: ['가야', '부암', '서면'], times: [ms(x), ms(y)] },
     input: { kind: 'compound', fields: MS_FIELDS },
     answer,
     discriminators: discs,
     grade: cgrade(MS_FIELDS, answer, discs),
-    hints: [`가야–부암 ${ms(x)}, 부암–서면 ${ms(y)}예요. 가야에서 서면까지 걸리는 시간을 물어요.`, '초끼리 모은 다음 60초가 넘으면 1분으로 바꿔 볼까요?', `초끼리 ${x % 60} + ${y % 60} = ${raw.s}초, 1분 ${raw.s - 60}초예요.`, `☐분 ${answer.s}초`],
+    hints: [`구하는 것: 가야역에서 서면역까지 걸리는 시간 / 알고 있는 것: 가야–부암 ${ms(x)}, 부암–서면 ${ms(y)}`, '초끼리 모은 다음 60초이거나 60초보다 길면 1분으로 바꿔 볼까요?', `초끼리 ${x % 60} + ${y % 60} = ${raw.s}초, 1분 ${raw.s - 60}초예요.`, `☐분 ${answer.s}초`],
     blank: '☐',
     blankAnswer: String(answer.m),
-    explain: { why: [`초끼리 ${raw.s}초는 1분 ${raw.s - 60}초예요.`, `분끼리 ${raw.m}분에 1분을 더해 ${answer.m}분이에요.`, `그래서 ${ms0(sum)} 걸려요.`], alt: [`초로 바꾸면 ${x} + ${y} = ${sum}초, 60초씩 묶으면 ${ms0(sum)}예요.`, `두 풀이 모두 ${ms0(sum)}예요.`] },
+    explain: { why: [`초끼리 ${raw.s}초는 1분 ${raw.s - 60}초예요.`, `분끼리 ${raw.m}분에 1분을 더해 ${answer.m}분이에요.`, `그래서 ${ms0(sum)} 걸려요.`], alt: [`초로 바꾸면 ${x} + ${y} = ${sum}초, 60초씩 묶으면 ${ms0(sum)}예요.`, `어느 길로 해도 답은 ${ms0(sum)}예요.`] },
   };
 }
 function t153Level3(x, y, z, p) {
@@ -397,16 +393,17 @@ function t153Level3(x, y, z, p) {
     answer,
   );
   return {
-    text: ['노선 그림에 가야–부암 ', ...msText(x), ', 부암–서면 ', ...msText(y), ', 서면–전포 ', ...msText(z), '가 적혀 있어요. 열차는 서면역에서 ', V(p), '초 멈춰요. 가야역에서 전포역까지 몇 분 몇 초 걸려요?'],
+    // 구간 시간은 그림이 보여 준다(02 문서 규칙 10).
+    text: ['이 문제의 노선 그림을 봐요. 열차는 서면역에서 ', V(p), '초 멈춘다고 해 봐요. 가야역에서 전포역까지 몇 분 몇 초 걸려요?'],
     figure: { kind: 'stations', line: '2', stations: ['가야', '부암', '서면', '전포'], times: [ms(x), ms(y), ms(z)], stop: { at: '서면', time: `${p}초` } },
     input: { kind: 'compound', fields: MS_FIELDS },
     answer,
     discriminators: discs,
     grade: cgrade(MS_FIELDS, answer, discs),
-    hints: [`가야–부암 ${ms(x)}, 부암–서면 ${ms(y)}, 서면–전포 ${ms(z)}이고, 서면역에서 ${p}초 멈춰요. 가야에서 전포까지 걸리는 시간을 물어요.`, '그림에 있는 시간을 모두 적은 다음, 분끼리 초끼리 모아 볼까요?', `분끼리 ${raw.m}분, 초끼리 ${raw.s}초예요.`, `${raw.m}분 ${raw.s}초 = ☐분 ${answer.s}초`],
+    hints: [`구하는 것: 가야역에서 전포역까지 걸리는 시간 / 알고 있는 것: 그림의 세 구간 시간, 서면역에서 ${p}초 멈춤`, '그림에 있는 시간을 모두 적은 다음, 분끼리 초끼리 모아 볼까요?', `분끼리 ${raw.m}분, 초끼리 ${raw.s}초예요.`, `${raw.m}분 ${raw.s}초 = ☐분 ${answer.s}초`],
     blank: '☐',
     blankAnswer: String(answer.m),
-    explain: { why: [`세 구간과 서면역에서 멈춘 ${p}초를 모두 모아요.`, `분끼리 ${raw.m}분, 초끼리 ${raw.s}초예요.`, `${raw.s}초는 ${rase(ms(raw.s))} ${ms0(sum)}예요.`, `그래서 ${ms0(sum)} 걸려요.`], alt: [`초로 바꾸면 ${x} + ${y} + ${p} + ${z} = ${sum}초, 60초씩 묶으면 ${ms0(sum)}예요.`, `두 풀이 모두 ${ms0(sum)}예요.`] },
+    explain: { why: [`세 구간과 서면역에서 멈춘 ${p}초를 모두 모아요.`, `분끼리 ${raw.m}분, 초끼리 ${raw.s}초예요.`, `${raw.s}초는 ${rase(ms(raw.s))} ${ms0(sum)}예요.`, `그래서 ${ms0(sum)} 걸려요.`], alt: [`초로 바꾸면 ${x} + ${y} + ${p} + ${z} = ${sum}초, 60초씩 묶으면 ${ms0(sum)}예요.`, `어느 길로 해도 답은 ${ms0(sum)}예요.`] },
   };
 }
 const T15_3 = {

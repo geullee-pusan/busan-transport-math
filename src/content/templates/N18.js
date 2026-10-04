@@ -117,19 +117,19 @@ function t181Level1(k) {
     { value: fr(num, 16), category: '개념', kind: 'check', feedback: '전체 1은 몇 칸이에요?' },
   ];
   return {
-    text: [L1(), '호선 열차 한 대(', CARS(), '량)를 ', n(1), jo(1, '로', '로'), ' 보면 그림의 칸은 모두 얼마예요? 가분수로 써요.'],
+    text: [L1(), '호선 열차 한 대(', CARS(), '칸)를 ', n(1), jo(1, '로', '로'), ' 보면 그림의 칸은 모두 얼마예요? 가분수로 나타내요.'],
     figure: { kind: 'trains', trains: [{ name: '열차 한 대', cars: 8 }, { name: '', cars: k }] },
     input: { kind: 'fraction' },
     answer: ans,
     discriminators: discs,
     grade: fracGrade(num, discs),
-    hints: ['열차 한 대(8량)를 1로 봐요. 그림의 칸이 모두 얼마인지 가분수로 물어요.', '한 칸은 1/8이에요. 칸이 모두 몇 개인지 세어 볼까요?', '열차 한 대는 8/8이에요.', `1/8이 ${bl.blank}개`],
+    hints: ['구하는 것: 그림의 칸을 모두 나타내는 가분수 / 알고 있는 것: 열차 한 대(8칸)가 1', '한 칸은 1/8이에요. 칸이 모두 몇 개인지 세어 볼까요?', '열차 한 대는 8/8이에요.', `1/8이 ${bl.blank}개`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
-    blankThen: '가분수로 써요.',
+    blankThen: '가분수로 나타내요.',
     explain: {
       why: ['열차 한 대를 1로 보면 한 칸은 1/8이에요.', `칸은 8 + ${k} = ${num}개라서 1/8이 ${num}개예요.`, `그래서 그림의 칸은 ${ieyo(ans)}.`],
-      alt: [`대분수로 쓰면 ${mix(1, k)}${mjo(k, '이에요', '예요')}. 가분수로 바꾸면 ${ieyo(ans)}.`, `두 생각 모두 ${ieyo(ans)}.`],
+      alt: [`열차 한 대와 ${k}칸이라 대분수로 ${mix(1, k)}${mjo(k, '이에요', '예요')}. 이것을 가분수로 바꾸면 ${ieyo(ans)}.`, `어느 길로 해도 답은 ${ieyo(ans)}.`],
     },
   };
 }
@@ -140,7 +140,7 @@ function t181Level2(N) {
   const r = N % 8;
   const answer = { w, num: r, den: 8 };
   return {
-    text: [n(fr(N, 8)), jo(N, '을', '를'), ' 대분수로 써요.'],
+    text: [n(fr(N, 8)), jo(N, '을', '를'), ' 대분수로 나타내요.'],
     figure: null,
     input: { kind: 'compound', fields: [{ key: 'w', label: '자연수' }, { key: 'num', label: '분자' }, { key: 'den', label: '분모' }] },
     answer,
@@ -152,13 +152,13 @@ function t181Level2(N) {
       ],
       answer,
     ),
-    hints: [`${eul(fr(N, 8))} 대분수로 쓰는 문제예요.`, '8/8은 1이에요. 1을 몇 번 덜어 낼 수 있는지 볼까요?', `${fr(N, 8)}${jo(N, '은', '는')} 1/8이 ${N}개예요.`, `8/8을 덜어 낼 수 있는 횟수: ☐번`],
+    hints: [`구하는 것: ${eul(fr(N, 8))} 대분수로 나타낸 수 / 알고 있는 것: 분모가 8인 가분수`, '8/8은 1이에요. 1을 몇 번 덜어 낼 수 있는지 볼까요?', `${fr(N, 8)}${jo(N, '은', '는')} 1/8이 ${N}개예요.`, `8/8을 덜어 낼 수 있는 횟수: ☐번`],
     blank: '☐번',
     blankAnswer: String(w),
-    blankThen: '대분수로 써요.',
+    blankThen: '대분수로 나타내요.',
     explain: {
       why: [`8/8이 1이라서 1/8 ${N}개에서 8개씩 ${w}번 묶을 수 있어요.`, `남는 것은 1/8이 ${r}개예요.`, `그래서 ${fr(N, 8)} = ${mix(w, r)}${mjo(r, '이에요', '예요')}.`],
-      alt: [`${N} ÷ 8 = ${w} … ${r}, 몫이 자연수, 나머지가 분자예요.`, `두 풀이 모두 ${mix(w, r)}${mjo(r, '이에요', '예요')}.`],
+      alt: [`${N} ÷ 8 = ${w} … ${r}, 몫이 자연수, 나머지가 분자예요.`, `어느 길로 해도 답은 ${mix(w, r)}${mjo(r, '이에요', '예요')}.`],
     },
   };
 }
@@ -172,7 +172,7 @@ function t181Level3(p, q, c, d, order) {
   const discs = [
     { value: sortA([...answer, items.mixed]), category: '개념', kind: 'nudge', feedbackCheck: `${items.mixed}의 모양을 다시 볼까요?`, feedback: `${items.mixed}${mjo(d, '은', '는')} 대분수예요.` },
     { value: sortA([items.improper]), category: '개념', kind: 'nudge', feedbackCheck: '빠진 것이 없나요?', feedback: '분자와 분모가 같은 분수는요?' },
-    { value: sortA([...answer, items.proper]), category: '개념', kind: 'check', feedback: `${items.proper}${jo(p, '은', '는')} 1보다 작지 않나요?` },
+    { value: sortA([...answer, items.proper]), category: '개념', kind: 'check', feedback: `${items.proper}의 분자와 분모를 비교해 볼까요?` },
   ];
   return {
     text: [n(items[order[0]]), ', ', n(items[order[1]]), ', ', n(items[order[2]]), ', ', n(items[order[3]]), ' 중 가분수를 모두 골라요.'],
@@ -181,13 +181,13 @@ function t181Level3(p, q, c, d, order) {
     answer,
     discriminators: uniq(discs, answer),
     grade: multiGrade(answer, discs),
-    hints: ['분수 네 개 중 가분수를 모두 물어요.', '분수마다 분자와 분모의 크기를 견주어 볼까요?', '분자가 분모와 같거나 분모보다 큰 분수가 가분수예요.', '가분수는 모두 ☐개'],
+    hints: ['구하는 것: 가분수 모두 / 알고 있는 것: 분수 네 개', '분수마다 분자와 분모의 크기를 비교해 볼까요?', '분자가 분모와 같거나 분모보다 큰 분수가 가분수예요.', '가분수는 모두 ☐개'],
     blank: '모두 ☐개',
     blankAnswer: '2',
     blankThen: '가분수를 골라요.',
     explain: {
       why: [`${items.proper}${jo(p, '은', '는')} 분자가 분모보다 작은 진분수, ${items.mixed}${mjo(d, '은', '는')} 자연수와 진분수로 된 대분수예요.`, `8/8과 ${items.improper}${jo(q, '은', '는')} 분자가 분모와 같거나 커요.`, `그래서 가분수는 8/8과 ${ieyo(items.improper)}.`],
-      alt: ['1과 같거나 1보다 큰 수를 분수 하나로 쓴 것이 가분수예요.', `두 생각 모두 8/8과 ${ieyo(items.improper)}.`],
+      alt: [`1과 같거나 1보다 큰 수를 분수 하나로 쓴 것이 가분수예요. 8/8은 1이고, ${items.improper}${jo(q, '은', '는')} 1보다 커요.`, `어느 길로 해도 답은 8/8과 ${ieyo(items.improper)}.`],
     },
   };
 }
@@ -196,25 +196,25 @@ function t181Level3(p, q, c, d, order) {
 function t181Level4(a, b) {
   const ans = 8 * a + b;
   return {
-    text: [L1(), '호선 열차 한 대는 ', CARS(), '량이에요. 어느 날 차량 기지에 ', L1(), '호선 열차 ', V(mix(a, b)), '대만큼의 칸이 있었어요. 칸은 모두 몇 량이에요?'],
+    text: [L1(), '호선 열차 한 대는 ', CARS(), '칸이에요. 차량 기지에 열차 ', V(mix(a, b)), '대만큼의 칸이 있어요. 모두 몇 칸이에요?'],
     figure: null,
-    input: { kind: 'number', unit: '량' },
+    input: { kind: 'number', unit: '칸' },
     answer: ans,
     discriminators: uniq(
       [
-        { value: 10 * a + b, category: '개념', kind: 'check', feedback: `열차 ${a}대는 몇 량이에요?` },
-        { value: 8 + b, category: '개념', kind: 'check', feedback: `열차 ${a}대는 몇 량이에요?` },
-        { value: a + b, category: '개념', kind: 'check', feedback: `열차 ${a}대는 몇 량이에요?` },
+        { value: 10 * a + b, category: '개념', kind: 'check', feedback: `열차 ${a}대는 몇 칸이에요?` },
+        { value: 8 + b, category: '개념', kind: 'check', feedback: `열차 ${a}대는 몇 칸이에요?` },
+        { value: a + b, category: '개념', kind: 'check', feedback: `열차 ${a}대는 몇 칸이에요?` },
       ],
       ans,
     ),
-    hints: [`칸은 1호선 열차 ${mix(a, b)}대만큼 있어요. 모두 몇 량인지 물어요.`, `열차 한 대는 8량이에요. ${a}대와 ${b}/8대를 따로 생각해 볼까요?`, `열차 ${a}대는 ${8 * a}량이에요.`, `${b}/8대는 ☐량`],
-    blank: '☐량',
+    hints: [`구하는 것: 칸이 모두 몇 칸인지 / 알고 있는 것: 열차 한 대는 8칸, 칸은 열차 ${mix(a, b)}대만큼`, `열차 한 대는 8칸이에요. ${a}대와 ${b}/8대를 따로 생각해 볼까요?`, `열차 ${a}대는 ${8 * a}칸이에요.`, `${b}/8대는 ☐칸`],
+    blank: '☐칸',
     blankAnswer: String(b),
-    blankThen: '칸은 모두 몇 량이에요?',
+    blankThen: '칸은 모두 몇 칸이에요?',
     explain: {
-      why: [`열차 한 대가 8량이니 ${a}대는 ${8 * a}량, ${b}/8대는 ${b}량이에요.`, `모두 ${8 * a} + ${b} = ${ans}량이에요.`, `그래서 ${mix(a, b)} = ${fr(ans, 8)}, 칸은 ${ans}량이에요.`],
-      alt: [`${mix(a, b)}${mjo(b, '을', '를')} 가분수로 바꾸면 ${fr(ans, 8)}, 곧 1/8(1량)이 ${ans}개예요.`, `두 풀이 모두 ${ans}량이에요.`],
+      why: [`열차 한 대가 8칸이니 ${a}대는 ${8 * a}칸, ${b}/8대는 ${b}칸이에요.`, `모두 ${8 * a} + ${b} = ${ans}칸이에요.`, `그래서 차량 기지의 칸은 모두 ${ans}칸이에요.`],
+      alt: [`${mix(a, b)}${mjo(b, '을', '를')} 가분수로 바꾸면 ${fr(ans, 8)}, 곧 1/8(한 칸)이 ${ans}개예요.`, `어느 길로 해도 답은 ${ans}칸이에요.`],
     },
   };
 }
@@ -226,7 +226,7 @@ function t181Level5(w) {
   const answer = { min, max };
   const bl = blankOf(8 * w + 1);
   return {
-    text: [unknown('□/8'), '을 대분수로 나타내면 자연수 부분이 ', n(w), jo(w, '이에요', '예요'), '. 이런 ', unknown('□/8'), ' 중 가장 작은 것과 가장 큰 것은 무엇이에요?'],
+    text: [unknown('□/8'), '을 대분수로 나타내면 자연수 부분이 ', n(w), jo(w, '이에요', '예요'), '. 이런 ', unknown('□/8'), ' 중 가장 작은 것과 가장 큰 것을 써요.'],
     figure: null,
     input: { kind: 'compound', fields: [{ key: 'min', label: '가장 작은 것', kind: 'fraction' }, { key: 'max', label: '가장 큰 것', kind: 'fraction' }] },
     answer,
@@ -237,13 +237,13 @@ function t181Level5(w) {
       ],
       answer,
     ),
-    hints: [`□/8을 대분수로 나타내면 자연수 부분이 ${ieyo(w)}. 그런 분수 중 가장 작은 것과 가장 큰 것을 물어요.`, `자연수 부분이 ${w}인 대분수를 작은 것부터 적어 볼까요?`, `자연수 부분이 ${w}인 대분수는 ${mix(w, 1)}부터 ${mix(w, 7)}까지예요.`, `${mix(w, 1)} = ${bl.blank}/8`],
+    hints: [`구하는 것: 가장 작은 □/8과 가장 큰 □/8 / 알고 있는 것: 대분수로 나타내면 자연수 부분이 ${w}`, `자연수 부분이 ${w}인 대분수를 작은 것부터 적어 볼까요?`, `자연수 부분이 ${w}인 대분수는 ${mix(w, 1)}부터 ${mix(w, 7)}까지예요.`, `${mix(w, 1)} = ${bl.blank}/8`],
     blank: `${bl.blank}/8`,
     blankAnswer: bl.blankAnswer,
     blankThen: '가장 작은 것과 가장 큰 것을 써요.',
     explain: {
       why: [`${w} = ${fr(8 * w, 8)}이고, ${w + 1} = ${fr(8 * w + 8, 8)}이에요.`, `자연수 부분이 ${w}이려면 ${fr(8 * w, 8)}보다 크고 ${fr(8 * w + 8, 8)}보다 작아야 해요.`, `그래서 가장 작은 것은 ${min}, 가장 큰 것은 ${ieyo(max)}.`],
-      alt: [`${mix(w, 1)}과 ${mix(w, 7)}을 가분수로 바꿔도 ${min}, ${max}예요.`.replace(`${mix(w, 1)}과`, `${mix(w, 1)}${mjo(1, '과', '와')}`).replace(`${mix(w, 7)}을`, `${mix(w, 7)}${mjo(7, '을', '를')}`).replace(`${max}예요`, ieyo(max)), `두 풀이 모두 ${wa(min)} ${ieyo(max)}.`],
+      alt: [`${mix(w, 1)}${mjo(1, '과', '와')} ${mix(w, 7)}${mjo(7, '을', '를')} 가분수로 바꿔도 ${min}, ${ieyo(max)}.`, `어느 길로 해도 답은 ${wa(min)} ${ieyo(max)}.`],
     },
   };
 }
@@ -259,14 +259,14 @@ function t181Level6(x, a, b) {
     figure: null,
     input: { kind: 'choice', options: SIGNS },
     answer: ans,
-    discriminators: SIGNS.filter((s) => s !== ans).map((s) => (s === '=' ? { value: s, category: '개념', kind: 'check', feedback: '두 수가 같은 크기일까요?' } : { value: s, category: '개념', kind: 'nudge', feedbackCheck: '두 수를 다시 볼까요?', feedback: '같은 꼴로 바꿔 견주어 볼까요?' })),
-    hints: [`${wa(fr(x, 8))} ${mix(a, b)}의 크기를 견주는 기호를 물어요.`, '두 수를 같은 꼴로 바꿔 볼까요? 가분수끼리 견주면 쉬워요.', `${eun(a)} 8/8이 ${a}개예요.`, `${mix(a, b)} = ${bl.blank}/8`],
+    discriminators: SIGNS.filter((s) => s !== ans).map((s) => (s === '=' ? { value: s, category: '개념', kind: 'check', feedback: '두 수가 같은 크기일까요?' } : { value: s, category: '개념', kind: 'nudge', feedbackCheck: '두 수를 다시 볼까요?', feedback: '같은 꼴로 바꿔 비교해 볼까요?' })),
+    hints: [`구하는 것: ○ 안에 알맞은 기호 / 알고 있는 것: ${wa(fr(x, 8))} ${mix(a, b)}`, '두 수를 같은 꼴로 바꿔 볼까요? 가분수끼리 비교하면 쉬워요.', `${eun(a)} 8/8이 ${a}개예요.`, `${mix(a, b)} = ${bl.blank}/8`],
     blank: `${bl.blank}/8`,
     blankAnswer: bl.blankAnswer,
     blankThen: '알맞은 기호는 무엇이에요?',
     explain: {
-      why: [`${mix(a, b)}${mjo(b, '을', '를')} 가분수로 바꾸면 ${ieyo(fr(v, 8))}.`, `${wa(fr(x, 8))} ${fr(v, 8)}의 분자를 견주면 ${wa(x)} ${ieyo(v)}.`, `그래서 ${fr(x, 8)} ${ans} ${mix(a, b)}${mjo(b, '이에요', '예요')}.`],
-      alt: [`${fr(x, 8)}${jo(x, '을', '를')} 대분수로 바꾸면 ${mix(Math.floor(x / 8), x % 8)}${mjo(x % 8, '이에요', '예요')}. 대분수끼리 견주어도 돼요.`, `어느 길로 해도 답은 ${ans}로 같아요.`],
+      why: [`${mix(a, b)}${mjo(b, '을', '를')} 가분수로 바꾸면 ${ieyo(fr(v, 8))}.`, `${wa(fr(x, 8))} ${fr(v, 8)}의 분자를 비교하면 ${wa(x)} ${ieyo(v)}.`, `그래서 ${fr(x, 8)} ${ans} ${mix(a, b)}${mjo(b, '이에요', '예요')}.`],
+      alt: [`${fr(x, 8)}${jo(x, '을', '를')} 대분수로 바꾸면 ${mix(Math.floor(x / 8), x % 8)}${mjo(x % 8, '이에요', '예요')}. 대분수끼리 비교해도 돼요.`, `어느 길로 해도 답은 '${ans}'예요.`],
     },
   };
 }
@@ -298,25 +298,25 @@ function t182Level1(N) {
   const r = N % 8;
   const answer = { w, num: r, den: 8 };
   return {
-    text: ['어느 날 차량 기지에 ', L1(), '호선 칸이 ', V(N), '량 있었어요. 열차 한 대(', CARS(), '량)를 ', n(1), '로 보면 열차 몇 대만큼이에요? 대분수로 써요.'],
+    text: [L1(), '호선 열차는 한 대가 ', CARS(), '칸이에요. 차량 기지에 있는 칸 ', V(N), '개는 열차 몇 대만큼인지 대분수로 나타내요.'],
     figure: null,
     input: { kind: 'compound', fields: [{ key: 'w', label: '자연수' }, { key: 'num', label: '분자' }, { key: 'den', label: '분모' }] },
     answer,
     discriminators: uniqK(
       [
-        { key: 'den', value: N, category: '개념', kind: 'nudge', feedbackCheck: '분모를 다시 볼까요?', feedback: '열차 한 대가 1이에요. 한 대는 몇 량이죠?' },
+        { key: 'den', value: N, category: '개념', kind: 'nudge', feedbackCheck: '분모를 다시 볼까요?', feedback: '열차 한 대가 1이에요. 한 대는 몇 칸일까요?' },
         { key: 'num', value: N, category: '개념', kind: 'check', feedback: '열차 몇 대를 다 채우고 남는 칸은요?' },
         { key: 'w', value: 0, category: '개념', kind: 'check', feedback: '자연수 부분을 다시 볼까요?' },
       ],
       answer,
     ),
-    hints: [`칸이 ${N}량 있어요. 열차 한 대(8량)를 1로 볼 때 열차 몇 대만큼인지 대분수로 물어요.`, '8량씩 묶어 열차를 채워 볼까요? 남는 칸은 한 대의 몇 분의 몇인지 생각해요.', '한 칸은 열차 한 대의 1/8이에요.', '8량씩 채운 열차: ☐대'],
+    hints: [`구하는 것: 칸 ${N}개가 열차 몇 대만큼인지(대분수) / 알고 있는 것: 열차 한 대(8칸)가 1`, '8칸씩 묶어 열차를 채워 볼까요? 남는 칸은 한 대의 몇 분의 몇인지 생각해요.', '한 칸은 열차 한 대의 1/8이에요.', '8칸씩 채운 열차: ☐대'],
     blank: '☐대',
     blankAnswer: String(w),
-    blankThen: '대분수로 써요.',
+    blankThen: '대분수로 나타내요.',
     explain: {
-      why: [`${N}량은 8량짜리 열차 ${w}대와 ${r}량이에요.`, `${r}량은 한 대의 ${ieyo(fr(r, 8))}.`, `그래서 열차 ${mix(w, r)}대만큼이에요.`],
-      alt: [`${N}량은 1/8이 ${N}개라서 ${fr(N, 8)}, 대분수로 ${mix(w, r)}${mjo(r, '이에요', '예요')}.`, `두 풀이 모두 ${mix(w, r)}${mjo(r, '이에요', '예요')}.`],
+      why: [`${N}칸은 8칸짜리 열차 ${w}대와 ${r}칸이에요.`, `${r}칸은 한 대의 ${ieyo(fr(r, 8))}.`, `그래서 열차 ${mix(w, r)}대만큼이에요.`],
+      alt: [`${N}칸은 1/8이 ${N}개라서 ${fr(N, 8)}, 대분수로 ${mix(w, r)}${mjo(r, '이에요', '예요')}.`, `어느 길로 해도 답은 ${mix(w, r)}${mjo(r, '이에요', '예요')}.`],
     },
   };
 }
@@ -330,19 +330,19 @@ function t182Level2(a, b) {
     { value: fr(a + b, 8), category: '개념', kind: 'check', feedback: `${eun(a)} 8/8이 몇 개예요?` },
   ];
   return {
-    text: ['어느 날 정비창에 ', L1(), '호선 열차 ', V(mix(a, b)), '대만큼의 칸이 들어왔어요. 열차 한 대를 ', n(1), '로 보고 이 수를 가분수로 써요.'],
+    text: ['차량 기지에 ', L1(), '호선 열차 ', V(mix(a, b)), '대만큼의 칸이 들어왔어요. 열차 한 대를 ', n(1), '로 보고 가분수로 나타내요.'],
     figure: { kind: 'trains', trains: [...Array.from({ length: a }, () => ({ name: '', cars: 8 })), { name: '', cars: b }] },
     input: { kind: 'fraction' },
     answer: ans,
     discriminators: uniq(discs, ans),
     grade: fracGrade(num, discs),
-    hints: [`칸은 열차 ${mix(a, b)}대만큼이에요. 이 수를 가분수로 물어요.`, `열차 한 대는 8/8이에요. ${a}대는 1/8이 몇 개일까요?`, `${a}대는 ${fr(8 * a, 8)}이에요.`, `1/8이 ${bl.blank}개`],
+    hints: [`구하는 것: 열차 ${mix(a, b)}대를 나타내는 가분수 / 알고 있는 것: 열차 한 대가 1`, `열차 한 대는 8/8이에요. ${a}대는 1/8이 몇 개일까요?`, `${a}대는 ${ieyo(fr(8 * a, 8))}.`, `1/8이 ${bl.blank}개`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
-    blankThen: '가분수로 써요.',
+    blankThen: '가분수로 나타내요.',
     explain: {
       why: [`${eun(a)} ${fr(8 * a, 8)}이고, 여기에 ${b}/8을 더해요.`, `1/8이 ${8 * a} + ${b} = ${num}개예요.`, `그래서 ${mix(a, b)} = ${ieyo(ans)}.`],
-      alt: [`그림의 칸을 세어도 ${num}칸, 곧 ${ieyo(ans)}.`, `두 풀이 모두 ${ieyo(ans)}.`],
+      alt: [`그림의 칸을 세어도 ${num}칸, 곧 ${ieyo(ans)}.`, `어느 길로 해도 답은 ${ieyo(ans)}.`],
     },
   };
 }
@@ -352,24 +352,24 @@ function t182Level3(a, b, M, gaFirst) {
   const more = ga > M ? '가' : '나';
   const answer = { ga, more };
   return {
-    text: ['가 차량 기지에는 ', L1(), '호선 열차 ', V(mix(a, b)), '대만큼의 칸이 있고, 나 차량 기지에는 칸이 ', V(M), '량 있어요. 칸이 더 많은 기지는 어디예요?'],
+    text: ['차량 기지 (가)에는 열차 ', V(mix(a, b)), '대만큼의 칸이, (나)에는 ', V(M), '칸이 있어요. 칸이 더 많은 곳은 어디예요?'],
     figure: null,
-    input: { kind: 'compound', fields: [{ key: 'ga', label: '가 기지의 칸(량)' }, { key: 'more', label: '더 많은 기지', options: ['가', '나'] }] },
+    input: { kind: 'compound', fields: [{ key: 'ga', label: '(가)의 칸 수' }, { key: 'more', label: '더 많은 곳', options: ['가', '나'] }] },
     answer,
     discriminators: uniqK(
       [
-        { key: 'ga', value: 10 * a + b, category: '개념', kind: 'check', feedback: `열차 ${a}대는 몇 량이에요?` },
-        { key: 'more', value: more === '가' ? '나' : '가', category: '개념', kind: 'check', feedback: '두 기지의 칸 수를 다시 견주어 볼까요?' },
+        { key: 'ga', value: 10 * a + b, category: '개념', kind: 'check', feedback: `열차 ${a}대는 몇 칸이에요?` },
+        { key: 'more', value: more === '가' ? '나' : '가', category: '개념', kind: 'check', feedback: '두 곳의 칸 수를 다시 비교해 볼까요?' },
       ],
       answer,
     ),
-    hints: [`가 기지는 열차 ${mix(a, b)}대만큼, 나 기지는 ${M}량이에요. 칸이 더 많은 기지를 물어요.`, '가 기지의 칸이 몇 량인지 먼저 구해 볼까요?', `열차 ${a}대는 ${8 * a}량이에요.`, `${b}/8대는 ☐량`],
-    blank: '☐량',
+    hints: [`구하는 것: 칸이 더 많은 곳 / 알고 있는 것: (가) 열차 ${mix(a, b)}대만큼, (나) ${M}칸`, '(가)의 칸이 몇 칸인지 먼저 구해 볼까요?', `열차 ${a}대는 ${8 * a}칸이에요.`, `${b}/8대는 ☐칸`],
+    blank: '☐칸',
     blankAnswer: String(b),
-    blankThen: '칸이 더 많은 기지는 어디예요?',
+    blankThen: '칸이 더 많은 곳은 어디예요?',
     explain: {
-      why: [`가 기지는 ${8 * a} + ${b} = ${ga}량이에요.`, `${wa(ga)} ${M}${jo(M, '을', '를')} 견주면 ${more} 기지가 ${Math.abs(ga - M)}량 더 많아요.`, `그래서 칸이 더 많은 기지는 ${more} 기지예요.`],
-      alt: [`나 기지의 ${M}량을 열차 대수로 바꾸면 ${mix(Math.floor(M / 8), M % 8)}대예요. 대분수끼리 견주어도 돼요.`, `두 풀이 모두 ${more} 기지예요.`],
+      why: [`(가)는 ${8 * a} + ${b} = ${ga}칸이에요.`, `${ga}칸과 ${M}칸을 비교하면 (${more})가 ${Math.abs(ga - M)}칸 더 많아요.`, `그래서 칸이 더 많은 곳은 (${more})예요.`],
+      alt: [`(나)의 ${M}칸을 열차 몇 대인지로 바꾸면 ${mix(Math.floor(M / 8), M % 8)}대예요. 대분수끼리 비교해도 돼요.`, `어느 길로 해도 답은 (${more})예요.`],
     },
   };
 }
@@ -406,12 +406,12 @@ function t183Mixed(a, b) {
       ],
       ans,
     ),
-    hints: [`${mix(a, b)}${mjo(b, '을', '를')} 분모가 8인 가분수로 나타내는 문제예요.`, `자연수 ${a}${jo(a, '을', '를')} 분모가 8인 분수로 바꿔 볼까요?`, `${a} = ${fr(8 * a, 8)}이에요.`, `${fr(8 * a, 8)}${jo(8 * a, '과', '와')} ${b}/8을 합치면 ${bl.blank}/8`],
+    hints: [`구하는 것: □/8의 □ / 알고 있는 것: ${mix(a, b)}${mjo(b, '을', '를')} 분모가 8인 가분수로 나타냄`, `자연수 ${a}${jo(a, '을', '를')} 분모가 8인 분수로 바꿔 볼까요?`, `${a} = ${ieyo(fr(8 * a, 8))}.`, `${fr(8 * a, 8)}${jo(8 * a, '과', '와')} ${b}/8을 합치면 ${bl.blank}/8`],
     blank: `${bl.blank}/8`,
     blankAnswer: bl.blankAnswer,
     explain: {
       why: [`${eun(a)} 8/8이 ${a}개라서 ${ieyo(fr(8 * a, 8))}.`, `${fr(8 * a, 8)}${jo(8 * a, '과', '와')} ${b}/8을 합치면 1/8이 ${ans}개예요.`, `그래서 □는 ${ieyo(ans)}.`],
-      alt: [`${a} × 8 + ${b} = ${ro(ans)} 구해도 같아요.`, `두 풀이 모두 ${ieyo(ans)}.`],
+      alt: [`${a} × 8 = ${8 * a}, ${8 * a} + ${b} = ${ro(ans)} 구해도 같아요.`, `어느 길로 해도 답은 ${ieyo(ans)}.`],
     },
   };
 }
@@ -433,13 +433,13 @@ function t183Improper(N) {
       ],
       answer,
     ),
-    hints: [`${eul(fr(N, 8))} 대분수로 나타내는 틀을 채우는 문제예요.`, '8/8은 1이에요. 1을 몇 번 덜어 낼 수 있는지 볼까요?', `${fr(N, 8)}${jo(N, '은', '는')} 1/8이 ${N}개예요.`, '8/8을 덜어 낼 수 있는 횟수: ☐번'],
+    hints: [`구하는 것: 대분수 틀의 두 □ / 알고 있는 것: ${eul(fr(N, 8))} 대분수로 나타냄`, '8/8은 1이에요. 1을 몇 번 덜어 낼 수 있는지 볼까요?', `${fr(N, 8)}${jo(N, '은', '는')} 1/8이 ${N}개예요.`, '8/8을 덜어 낼 수 있는 횟수: ☐번'],
     blank: '☐번',
     blankAnswer: String(w),
     blankThen: '두 칸을 채워요.',
     explain: {
       why: [`1/8 ${N}개를 8개씩 묶으면 ${w}묶음과 ${r}개예요.`, `${w}묶음은 자연수 ${w}, 남은 것은 ${ieyo(fr(r, 8))}.`, `그래서 ${fr(N, 8)} = ${mix(w, r)}${mjo(r, '이에요', '예요')}.`],
-      alt: [`${N} ÷ 8 = ${w} … ${r}${roOnly(r)} 구해도 같아요.`, `두 풀이 모두 ${mix(w, r)}${mjo(r, '이에요', '예요')}.`],
+      alt: [`${N} ÷ 8 = ${w} … ${r}${roOnly(r)} 구해도 같아요.`, `어느 길로 해도 답은 ${mix(w, r)}${mjo(r, '이에요', '예요')}.`],
     },
   };
 }

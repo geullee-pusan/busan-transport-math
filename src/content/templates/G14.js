@@ -130,8 +130,10 @@ const msMath = (sec) => msText(sec, n);
 
 // ── T14-1 정비창 점검 (식) — 1~3단계 ──
 // 단계 불변식: 1 받아올림 없음 / 2 초 받아올림 / 3 뺄셈 받아내림.
-// scene = 식 앞 교통 장면 조각(없으면 식만)
+// scene = 식 앞 교통 장면 조각 배열, 또는 { text, h1, concl }(h1 = 힌트 ①, concl = 해설 결론 앞말). 없으면 식만.
+const sceneOf = (scene) => (Array.isArray(scene) ? { text: scene } : scene ?? {});
 function t141Add(x, y, level, scene = null) {
+  const sc = sceneOf(scene);
   const sum = x + y;
   const answer = msAns(sum);
   const [a, b, c, d] = [Math.floor(x / 60), x % 60, Math.floor(y / 60), y % 60];
@@ -140,23 +142,23 @@ function t141Add(x, y, level, scene = null) {
       ? []
       : cleanDiscs(
           [
-            { value: { m: a + c, s: b + d }, category: '개념', kind: 'check', feedback: `${b + d}초는 1분보다 길지 않나요?` },
+            { value: { m: a + c, s: b + d }, category: '개념', kind: 'check', feedback: `${b + d}초는 1분보다 길까요?` },
             { value: { m: a + c + 1, s: b + d }, category: '계산', kind: 'check', feedback: '초 칸을 다시 볼까요?' },
-            { value: { m: a + c, s: b + d - 60 }, category: '계산', kind: 'check', feedback: '받아올린 1분은 어디 갔나요?' },
+            { value: { m: a + c, s: b + d - 60 }, category: '계산', kind: 'check', feedback: '받아올림한 1분을 더했나요?' },
           ],
           answer,
         );
   const carry = b + d >= 60;
   return {
-    text: [...(scene ?? []), ...msMath(x), ' + ', ...msMath(y), ' = ?'],
+    text: [...(sc.text ?? []), ...msMath(x), ' + ', ...msMath(y), ' = ?'],
     figure: null,
     input: { kind: 'compound', fields: MS_FIELDS },
     answer,
     discriminators: discs,
     grade: cgrade(MS_FIELDS, answer, discs),
     hints: [
-      `${ms(x)} + ${ms(y)}를 몇 분 몇 초로 구해요.`,
-      carry ? '초끼리, 분끼리 더해 볼까요? 초가 60을 넘으면 1분으로 바꿔요.' : '초끼리, 분끼리 따로 더해 볼까요?',
+      sc.h1 ?? `${ms(x)} + ${ms(y)}를 몇 분 몇 초로 나타내는 문제예요.`,
+      carry ? '초끼리, 분끼리 더해 볼까요? 초가 60이거나 60보다 크면 1분으로 받아올림해요.' : '초끼리, 분끼리 따로 더해 볼까요?',
       carry ? `초끼리 ${b} + ${d} = ${b + d}초, 1분 ${b + d - 60}초예요.` : `초끼리 ${b} + ${d} = ${b + d}초예요.`,
       `${ms(x)} + ${ms(y)} = ☐분 ${answer.s}초`,
     ],
@@ -164,37 +166,38 @@ function t141Add(x, y, level, scene = null) {
     blankAnswer: String(answer.m),
     explain: {
       why: carry
-        ? [`초끼리 ${b} + ${d} = ${b + d}초예요.`, `${b + d}초는 1분 ${b + d - 60}초라서 1분을 분 쪽으로 올려요.`, `분은 ${a} + ${c} + 1 = ${answer.m}분이에요.`, `그래서 ${ms0(sum)}예요.`]
-        : [`초끼리 ${b} + ${d} = ${b + d}초예요.`, `분끼리 ${a} + ${c} = ${a + c}분이에요.`, `그래서 ${ms0(sum)}예요.`],
-      alt: [`초로 바꾸면 ${x} + ${y} = ${sum}초, 60초씩 묶으면 ${ms0(sum)}예요.`, `두 풀이 모두 ${ms0(sum)}예요.`],
+        ? [`초끼리 ${b} + ${d} = ${b + d}초예요.`, `${b + d}초는 1분 ${b + d - 60}초라서 1분을 분 쪽으로 받아올림해요.`, `분은 ${a} + ${c} + 1 = ${answer.m}분이에요.`, `그래서 ${sc.concl ?? ''}${ms0(sum)}예요.`]
+        : [`초끼리 ${b} + ${d} = ${b + d}초예요.`, `분끼리 ${a} + ${c} = ${a + c}분이에요.`, `그래서 ${sc.concl ?? ''}${ms0(sum)}예요.`],
+      alt: [`초로 바꾸면 ${x} + ${y} = ${sum}초, 60초씩 묶으면 ${ms0(sum)}예요.`, `어느 길로 해도 답은 ${ms0(sum)}예요.`],
     },
   };
 }
 function t141Sub(x, y, scene = null) {
+  const sc = sceneOf(scene);
   const diff = x - y;
   const answer = msAns(diff);
   const [a, b, c, d] = [Math.floor(x / 60), x % 60, Math.floor(y / 60), y % 60];
   const discs = cleanDiscs(
     [
-      { value: { m: a - c - 1, s: b + 100 - d }, category: '개념', kind: 'check', feedback: '1분을 빌리면 몇 초일까요?' },
+      { value: { m: a - c - 1, s: b + 100 - d }, category: '개념', kind: 'check', feedback: '1분은 몇 초로 바꿀까요?' },
       { value: { m: a - c, s: d - b }, category: '개념', kind: 'check', feedback: `${b}초에서 ${d}초를 뺄 수 있나요?` },
       { value: { m: a - c, s: b + 60 - d }, category: '계산', kind: 'check', feedback: '분 칸을 다시 볼까요?' },
     ],
     answer,
   );
   return {
-    text: [...(scene ?? []), ...msMath(x), ' − ', ...msMath(y), ' = ?'],
+    text: [...(sc.text ?? []), ...msMath(x), ' − ', ...msMath(y), ' = ?'],
     figure: null,
     input: { kind: 'compound', fields: MS_FIELDS },
     answer,
     discriminators: discs,
     grade: cgrade(MS_FIELDS, answer, discs),
-    hints: [`${ms(x)} − ${ms(y)}를 몇 분 몇 초로 구해요.`, `초끼리 뺄 수 없으면 1분을 60초로 바꿔 빌려 와요.`, `${a}분 ${b}초는 ${a - 1}분 ${b + 60}초와 같아요.`, `${b + 60} − ${d} = ${blankAt(answer.s, answer.s >= 10 ? 1 : 0).blank}`],
+    hints: [sc.h1 ?? `${ms(x)} − ${ms(y)}를 몇 분 몇 초로 나타내는 문제예요.`, `초끼리 뺄 수 없으면 1분을 60초로 바꿔 받아내림해요.`, `${a}분 ${b}초는 ${a - 1}분 ${b + 60}초와 같아요.`, `${b + 60} − ${d} = ${blankAt(answer.s, answer.s >= 10 ? 1 : 0).blank}`],
     blank: blankAt(answer.s, answer.s >= 10 ? 1 : 0).blank,
     blankAnswer: blankAt(answer.s, answer.s >= 10 ? 1 : 0).blankAnswer,
     explain: {
-      why: [`${b}초에서 ${d}초를 뺄 수 없어서 1분을 60초로 빌려 와요.`, `초는 ${b + 60} − ${d} = ${answer.s}초, 분은 ${a - 1} − ${c} = ${answer.m}분이에요.`, `그래서 ${ms0(diff)}예요.`],
-      alt: [`초로 바꾸면 ${x} − ${y} = ${diff}초, 60초씩 묶으면 ${ms0(diff)}예요.`, `두 풀이 모두 ${ms0(diff)}예요.`],
+      why: [`${b}초에서 ${d}초를 뺄 수 없어서 1분을 60초로 바꿔 받아내림해요.`, `초는 ${b + 60} − ${d} = ${answer.s}초, 분은 ${a - 1} − ${c} = ${answer.m}분이에요.`, sc.concl ? `그래서 ${sc.concl}${ms0(diff)} 더 기다렸어요.` : `그래서 ${ms0(diff)}예요.`],
+      alt: [`초로 바꾸면 ${x} − ${y} = ${diff}초, 60초씩 묶으면 ${ms0(diff)}예요.`, `어느 길로 해도 답은 ${ms0(diff)}예요.`],
     },
   };
 }
@@ -213,7 +216,7 @@ const T14_1 = {
         ([p, q]) => p % 60 < q % 60 && Math.floor(p / 60) - Math.floor(q / 60) - 1 >= 1 && (p - q) % 60 >= 5,
         [190, 100],
       );
-      return t141Sub(x, y, ['어느 날 부암역 승강장에서 나는 열차를 ', ...msText(x), ' 기다렸고, 친구는 ', ...msText(y), ' 기다렸어요. 내가 몇 분 몇 초 더 기다렸는지 식으로 계산해요. ']);
+      return t141Sub(x, y, { text: ['부암역 승강장에서 나는 열차를 ', ...msText(x), ', 친구는 ', ...msText(y), ' 기다렸어요. 내가 친구보다 몇 분 몇 초 더 기다렸어요?', '\n'], h1: `구하는 것: 내가 친구보다 더 기다린 시간 / 알고 있는 것: 나 ${ms(x)}, 친구 ${ms(y)}`, concl: '내가 ' });
     }
     const [x, y] = draw(
       rng,
@@ -224,7 +227,7 @@ const T14_1 = {
       },
       level === 1 ? [135, 90] : [105, 30],
     );
-    return t141Add(x, y, level, ['집에서 부암역까지 ', ...msText(x), ' 걸었고, 승강장에서 열차를 ', ...msText(y), ' 기다렸어요. 모두 몇 분 몇 초인지 식으로 계산해요. ']);
+    return t141Add(x, y, level, { text: ['집에서 부암역까지 ', ...msText(x), ' 걸었고, 열차를 ', ...msText(y), ' 기다렸어요.', '\n'], h1: `구하는 것: 걷고 기다린 시간을 모두 합한 시간 / 알고 있는 것: 걸은 시간 ${ms(x)}, 기다린 시간 ${ms(y)}`, concl: '모두 ' });
   },
 };
 
@@ -234,16 +237,16 @@ function t142Level1(x, y) {
   const sum = x + y;
   const answer = msAns(sum);
   return {
-    text: ['부암역에서 서면역까지 ', ...msText(x), ', 서면역에서 갈아타는 데 ', ...msText(y), '가 걸렸어요. 모두 몇 분 몇 초예요?'],
+    text: ['부암역에서 서면역까지 ', ...msText(x), ' 걸린다고 해 봐요. 갈아타는 데는 ', ...msText(y), ' 걸렸어요. 모두 몇 분 몇 초예요?'],
     figure: { kind: 'stations', line: '2', stations: ['부암', '서면'] },
     input: { kind: 'compound', fields: MS_FIELDS },
     answer,
     discriminators: [],
     grade: cgrade(MS_FIELDS, answer, []),
-    hints: [`부암에서 서면까지 ${ms(x)}, 갈아타는 데 ${ms(y)} 걸렸어요. 모두 걸린 시간을 물어요.`, '초끼리, 분끼리 따로 모아 볼까요?', `초끼리 ${x % 60} + ${y % 60} = ${(x % 60) + (y % 60)}초예요.`, `☐분 ${answer.s}초`],
+    hints: [`구하는 것: 모두 걸린 시간 / 알고 있는 것: 부암역에서 서면역까지 ${ms(x)}, 갈아타는 데 ${ms(y)}`, '초끼리, 분끼리 따로 모아 볼까요?', `초끼리 ${x % 60} + ${y % 60} = ${(x % 60) + (y % 60)}초예요.`, `☐분 ${answer.s}초`],
     blank: '☐',
     blankAnswer: String(answer.m),
-    explain: { why: [`초끼리 ${x % 60} + ${y % 60} = ${answer.s}초예요.`, `분끼리 ${Math.floor(x / 60)} + ${Math.floor(y / 60)} = ${answer.m}분이에요.`, `그래서 모두 ${ms0(sum)}예요.`], alt: [`초로 바꾸면 ${x} + ${y} = ${sum}초예요. 60초씩 묶으면 ${ms0(sum)}예요.`, `두 풀이 모두 ${ms0(sum)}예요.`] },
+    explain: { why: [`초끼리 ${x % 60} + ${y % 60} = ${answer.s}초예요.`, `분끼리 ${Math.floor(x / 60)} + ${Math.floor(y / 60)} = ${answer.m}분이에요.`, `그래서 모두 ${ms0(sum)}예요.`], alt: [`초로 바꾸면 ${x} + ${y} = ${sum}초예요. 60초씩 묶으면 ${ms0(sum)}예요.`, `어느 길로 해도 답은 ${ms0(sum)}예요.`] },
   };
 }
 function t142Level2(x, y) {
@@ -252,22 +255,22 @@ function t142Level2(x, y) {
   const raw = { m: Math.floor(x / 60) + Math.floor(y / 60), s: (x % 60) + (y % 60) };
   const discs = cleanDiscs(
     [
-      { value: raw, category: '개념', kind: 'check', feedback: `${raw.s}초는 1분보다 길지 않나요?` },
-      { value: { m: raw.m, s: raw.s - 60 }, category: '계산', kind: 'check', feedback: '받아올린 1분은 어디 갔나요?' },
+      { value: raw, category: '개념', kind: 'check', feedback: `${raw.s}초는 1분보다 길까요?` },
+      { value: { m: raw.m, s: raw.s - 60 }, category: '계산', kind: 'check', feedback: '받아올림한 1분을 더했나요?' },
     ],
     answer,
   );
   return {
-    text: ['어느 날 서면역에서 갈아타는 데 걸은 시간이 ', ...msText(x), ', 기다린 시간이 ', ...msText(y), (y % 60 === 0 ? '이었어요.' : '였어요.') + ' 모두 몇 분 몇 초예요?'],
+    text: ['서면역에서 갈아탈 때 ', ...msText(x), ' 걷고, ', ...msText(y), ' 기다렸어요. 모두 몇 분 몇 초예요?'],
     figure: null,
     input: { kind: 'compound', fields: MS_FIELDS },
     answer,
     discriminators: discs,
     grade: cgrade(MS_FIELDS, answer, discs),
-    hints: [`걸은 시간은 ${ms(x)}, 기다린 시간은 ${ms(y)}예요. 모두 몇 분 몇 초인지 물어요.`, '초끼리 모은 다음, 60초가 넘으면 1분으로 바꿔 볼까요?', `초끼리 ${x % 60} + ${y % 60} = ${raw.s}초, 1분 ${raw.s - 60}초예요.`, `${raw.m}분 + 1분 ${raw.s - 60}초 = ☐분 ${raw.s - 60}초`],
+    hints: [`구하는 것: 걷고 기다린 시간을 모두 합한 시간 / 알고 있는 것: 걸은 시간 ${ms(x)}, 기다린 시간 ${ms(y)}`, '초끼리 모은 다음, 60초이거나 60초보다 길면 1분으로 바꿔 볼까요?', `초끼리 ${x % 60} + ${y % 60} = ${raw.s}초, 1분 ${raw.s - 60}초예요.`, `${raw.m}분 + 1분 ${raw.s - 60}초 = ☐분 ${raw.s - 60}초`],
     blank: '☐',
     blankAnswer: String(answer.m),
-    explain: { why: [`초끼리 ${x % 60} + ${y % 60} = ${raw.s}초예요.`, `${raw.s}초는 1분 ${raw.s - 60}초라서 분은 ${raw.m} + 1 = ${answer.m}분이에요.`, `그래서 모두 ${ms0(sum)}예요.`], alt: [`초로 바꾸면 ${x} + ${y} = ${sum}초, 60초씩 묶으면 ${ms0(sum)}예요.`, `두 풀이 모두 ${ms0(sum)}예요.`] },
+    explain: { why: [`초끼리 ${x % 60} + ${y % 60} = ${raw.s}초예요.`, `${raw.s}초는 1분 ${raw.s - 60}초라서 분은 ${raw.m} + 1 = ${answer.m}분이에요.`, `그래서 모두 ${ms0(sum)}예요.`], alt: [`초로 바꾸면 ${x} + ${y} = ${sum}초, 60초씩 묶으면 ${ms0(sum)}예요.`, `어느 길로 해도 답은 ${ms0(sum)}예요.`] },
   };
 }
 const CAN = ['탈 수 있어요', '탈 수 없어요'];
@@ -280,27 +283,28 @@ function t142Level3(x, y, T) {
   const rawCan = raw.m < T ? CAN[0] : CAN[1];
   const discs = cleanDiscs(
     [
-      { value: { ...raw, can: rawCan }, category: '개념', kind: 'nudge', feedbackCheck: `${raw.s}초는 1분보다 길지 않나요?`, feedback: `${raw.s}초를 분과 초로 바꿔 볼까요?` },
-      { value: raw, category: '개념', kind: 'nudge', feedbackCheck: `${raw.s}초는 1분보다 길지 않나요?`, feedback: `${raw.s}초를 분과 초로 바꿔 볼까요?` },
-      { value: { ...msAns(sum), can: can === CAN[0] ? CAN[1] : CAN[0] }, category: '개념', kind: 'check', feedback: '열차가 떠나는 때와 다시 견주어 볼까요?' },
+      { value: { ...raw, can: rawCan }, category: '개념', kind: 'nudge', feedbackCheck: `${raw.s}초는 1분보다 길까요?`, feedback: `${raw.s}초를 분과 초로 바꿔 볼까요?` },
+      { value: raw, category: '개념', kind: 'nudge', feedbackCheck: `${raw.s}초는 1분보다 길까요?`, feedback: `${raw.s}초를 분과 초로 바꿔 볼까요?` },
+      { value: { ...msAns(sum), can: can === CAN[0] ? CAN[1] : CAN[0] }, category: '개념', kind: 'check', feedback: '열차가 떠나는 때와 다시 비교해 볼까요?' },
     ],
     answer,
   );
   const ms1 = raw.s - 60;
   return {
-    text: ['부암역에서 서면역까지 ', ...msText(x), ', 서면역에서 갈아타는 데 ', ...msText(y), '가 걸려요. ', L1(), '호선 열차가 ', V(T), '분 뒤에 떠나요. 걸리는 시간은 모두 몇 분 몇 초이고, 이 열차를 탈 수 있을까요?'],
+    // '모두 몇 분 몇 초'는 칸 이름(분·초)에 맡긴다(02 문서 규칙 10).
+    text: ['부암역에서 서면역까지 ', ...msText(x), ', 갈아타는 데 ', ...msText(y), '라고 해 봐요. ', V(T), '분 뒤 떠나는 ', L1(), '호선을 탈 수 있을까요?'],
     figure: null,
     input: { kind: 'compound', fields },
     answer,
     discriminators: discs,
     grade: cgrade(fields, answer, discs),
-    hints: [`부암에서 서면까지 ${ms(x)}, 갈아타는 데 ${ms(y)} 걸려요. 열차는 ${T}분 뒤에 떠나요. 탈 수 있는지 물어요.`, `두 시간을 합한 뒤 ${T}분과 견주어 볼까요?`, `초끼리 더하면 ${x % 60} + ${y % 60} = ${raw.s}초, 1분 ${ms1}초예요.`, `${Math.floor(x / 60)}분 + ${Math.floor(y / 60)}분 + 1분 ${ms1}초 = ☐분 ${ms1}초`],
+    hints: [`구하는 것: 걸리는 시간과 열차를 탈 수 있는지 / 알고 있는 것: 부암역에서 서면역까지 ${ms(x)}, 갈아타는 데 ${ms(y)}, 열차는 ${T}분 뒤에 떠남`, `두 시간을 모은 뒤 ${T}분과 비교해 볼까요?`, `초끼리 더하면 ${x % 60} + ${y % 60} = ${raw.s}초, 1분 ${ms1}초예요.`, `${Math.floor(x / 60)}분 + ${Math.floor(y / 60)}분 + 1분 ${ms1}초 = ☐분 ${ms1}초`],
     blank: '☐',
     blankAnswer: String(answer.m),
     blankThen: '탈 수 있어요?',
     explain: {
       why: [`${ms(x)} + ${ms(y)} = ${raw.m}분 ${raw.s}초 = ${ms0(sum)}예요.`, sum <= T * 60 ? `${T}분보다 ${T * 60 - sum}초 짧아서 이 열차를 탈 수 있어요.` : `${T}분보다 ${sum - T * 60}초 길어서 이 열차는 탈 수 없어요.`, `그래서 ${ms0(sum)}, ${can}.`],
-      alt: [`초로 바꾸면 ${x}초 + ${y}초 = ${sum}초, ${T}분은 ${T * 60}초예요.`, `${sum}초와 ${T * 60}초를 견주어도 ${can}.`, `두 풀이 모두 ${can}.`],
+      alt: [`초로 바꾸면 ${x}초 + ${y}초 = ${sum}초, ${T}분은 ${T * 60}초예요.`, `${sum}초와 ${T * 60}초를 비교해도 ${can}.`, `어느 길로 해도 답은 '${can}'예요.`],
     },
   };
 }
@@ -317,18 +321,18 @@ function t142Level4(h, m, s, t) {
     answer,
   );
   return {
-    text: ['어느 날 서면역 ', L2(), '호선 승강장에 ', ...hmsText(h, m, s), '에 도착했어요. 부암역에서 ', ...msText(t), ' 걸렸어요. 부암역에서 몇 시 몇 분 몇 초에 출발했어요?'],
+    text: ['서면역에 ', ...hmsText(h, m, s), '에 도착했어요. 부암역에서 ', ...msText(t), ' 걸렸다고 해 봐요. 몇 시 몇 분 몇 초에 떠났어요?'],
     figure: null,
     input: { kind: 'compound', fields: HMS_FIELDS },
     answer,
     discriminators: discs,
     grade: cgrade(HMS_FIELDS, answer, discs),
-    hints: [`서면에 ${hms(h, m, s)}에 도착했고, 부암에서 ${ms(t)} 걸렸어요. 출발한 시각을 물어요.`, '도착 시각에서 걸린 시간만큼 거꾸로 가 볼까요? 초끼리 뺄 수 없으면 1분을 빌려 와요.', `${m}분 ${s}초는 ${m - 1}분 ${s + 60}초와 같아요.`, `초: ${s + 60} − ${b} = ${blankAt(answer.s, answer.s >= 10 ? 1 : 0).blank}`],
+    hints: [`구하는 것: 부암역에서 떠난 시각 / 알고 있는 것: 서면역 도착 ${hms(h, m, s)}, 걸린 시간 ${ms(t)}`, '도착 시각에서 걸린 시간만큼 거꾸로 가 볼까요? 초끼리 뺄 수 없으면 1분을 60초로 바꿔 받아내림해요.', `${m}분 ${s}초는 ${m - 1}분 ${s + 60}초와 같아요.`, `초: ${s + 60} − ${b} = ${blankAt(answer.s, answer.s >= 10 ? 1 : 0).blank}`],
     blank: blankAt(answer.s, answer.s >= 10 ? 1 : 0).blank,
     blankAnswer: blankAt(answer.s, answer.s >= 10 ? 1 : 0).blankAnswer,
     explain: {
-      why: [`${s}초에서 ${b}초를 뺄 수 없어서 1분을 60초로 빌려 와요.`, `초는 ${s + 60} − ${b} = ${answer.s}초, 분은 ${m - 1} − ${a} = ${answer.m}분이에요.`, `그래서 ${hms(answer.h, answer.m, answer.s)}에 출발했어요.`],
-      alt: [`${hms(answer.h, answer.m, answer.s)}에서 ${ms(t)} 뒤를 세어 보면 ${hms(h, m, s)}예요.`, `두 풀이 모두 ${hms(answer.h, answer.m, answer.s)}예요.`],
+      why: [`${s}초에서 ${b}초를 뺄 수 없어서 1분을 60초로 바꿔 받아내림해요.`, `초는 ${s + 60} − ${b} = ${answer.s}초, 분은 ${m - 1} − ${a} = ${answer.m}분이에요.`, `그래서 ${hms(answer.h, answer.m, answer.s)}에 출발했어요.`],
+      alt: [`${hms(answer.h, answer.m, answer.s)}에서 ${ms(t)} 뒤를 세어 보면 ${hms(h, m, s)}예요.`, '확인해 보면 답이 맞아요.'],
     },
   };
 }
@@ -357,7 +361,7 @@ function t142Level6(a, b, c) {
   const answer = { where: WHERE[0], ...msAns(sum) };
   const discs = cleanDiscs(
     [
-      { value: { m: a, s: b + c }, category: '개념', kind: 'check', feedback: `${b + c}초는 1분보다 길지 않나요?` },
+      { value: { m: a, s: b + c }, category: '개념', kind: 'check', feedback: `${b + c}초는 1분보다 길까요?` },
       { value: { where: WHERE[1] }, category: '개념', kind: 'check', feedback: '초 칸의 수를 다시 볼까요?' },
       { value: { where: WHERE[2] }, category: '개념', kind: 'check', feedback: `${b} + ${c}를 다시 계산해 볼까요?` },
     ],
@@ -374,7 +378,7 @@ function t142Level6(a, b, c) {
     hints: [`친구가 ${a}분 ${b}초와 ${c}초를 합해 ${a}분 ${b + c}초라고 했어요. 틀린 곳과 바른 답을 물어요.`, `${b + c}초가 1분보다 긴지 볼까요?`, `${b + c}초는 1분 ${b + c - 60}초예요.`, `${a}분 + 1분 ${b + c - 60}초 = ☐분 ${b + c - 60}초`],
     blank: '☐',
     blankAnswer: String(a + 1),
-    explain: { why: [`${b + c}초는 60초보다 길어서 1분 ${b + c - 60}초로 바꿔야 해요.`, `친구는 초를 분으로 바꾸지 않았어요.`, `그래서 바른 답은 ${ms0(sum)}예요.`], alt: [`초로 바꾸면 ${a * 60 + b} + ${c} = ${sum}초, 60초씩 묶으면 ${ms0(sum)}예요.`, `두 풀이 모두 ${ms0(sum)}예요.`] },
+    explain: { why: [`${b + c}초는 60초보다 길어서 1분 ${b + c - 60}초로 바꿔야 해요.`, `친구는 초를 분으로 바꾸지 않았어요.`, `그래서 바른 답은 ${ms0(sum)}예요.`], alt: [`초로 바꾸면 ${a * 60 + b} + ${c} = ${sum}초, 60초씩 묶으면 ${ms0(sum)}예요.`, `어느 길로 해도 답은 ${ms0(sum)}예요.`] },
   };
 }
 const T14_2 = {
@@ -437,7 +441,7 @@ function t143Add(x, y, level) {
   const discs = level === 1 ? [] : cleanDiscs([{ value: raw, category: '개념', kind: 'check', feedback: `띠에서 ${next}분 눈금을 지났나요?` }], answer);
   const up = next * 60 - x;
   return {
-    text: ['시간 띠에 ', ...msText(x), ' 막대와 ', ...msText(y), ' 막대를 이어 붙였어요. 막대의 끝은 몇 분 몇 초예요?'],
+    text: ['역까지 걸은 ', ...msText(x), '와 열차를 기다린 ', ...msText(y), '를 시간 띠에 이어 붙였어요. 끝은 몇 분 몇 초예요?'],
     figure: band([{ from: 0, to: x }, { from: x, to: sum }]),
     input: { kind: 'compound', fields: MS_FIELDS },
     answer,
@@ -445,16 +449,16 @@ function t143Add(x, y, level) {
     grade: cgrade(MS_FIELDS, answer, discs),
     hints:
       level === 1
-        ? [`${ms(x)} 막대와 ${ms(y)} 막대를 이어 붙였어요. 끝 시간을 물어요.`, '띠에서 분 눈금을 먼저 세고, 남은 초를 세어 볼까요?', `분끼리 ${Math.floor(x / 60)} + ${Math.floor(y / 60)} = ${raw.m}분이에요.`, `${raw.m}분 ${blankAt(answer.s, 1).blank}초`]
-        : [`${ms(x)} 막대와 ${ms(y)} 막대를 이어 붙였어요. 끝 시간을 물어요.`, `띠에서 ${next}분 눈금까지 몇 초가 남았는지 볼까요?`, `${ms(x)}에서 ${next}분까지는 ${up}초예요.`, `${next}분 + ${blankAt(sum - next * 60, 1).blank}초`],
+        ? [`구하는 것: 막대의 끝 시간 / 알고 있는 것: 걸은 시간 ${ms(x)}, 기다린 시간 ${ms(y)}`, '띠에서 분 눈금을 먼저 세고, 남은 초를 세어 볼까요?', `분끼리 ${Math.floor(x / 60)} + ${Math.floor(y / 60)} = ${raw.m}분이에요.`, `${raw.m}분 ${blankAt(answer.s, 1).blank}초`]
+        : [`구하는 것: 막대의 끝 시간 / 알고 있는 것: 걸은 시간 ${ms(x)}, 기다린 시간 ${ms(y)}`, `띠에서 ${next}분 눈금까지 몇 초가 남았는지 볼까요?`, `${ms(x)}에서 ${next}분까지는 ${up}초예요.`, `${next}분 + ${blankAt(sum - next * 60, 1).blank}초`],
     blank: level === 1 ? blankAt(answer.s, 1).blank : blankAt(sum - next * 60, 1).blank,
     blankAnswer: level === 1 ? blankAt(answer.s, 1).blankAnswer : blankAt(sum - next * 60, 1).blankAnswer,
     explain: {
       why:
         level === 1
-          ? [`분끼리 ${raw.m}분, 초끼리 ${raw.s}초예요.`, '초가 60을 넘지 않아서 바꿀 것이 없어요.', `그래서 끝은 ${ms0(sum)}예요.`]
+          ? [`분끼리 ${raw.m}분, 초끼리 ${raw.s}초예요.`, '초가 60보다 작아서 바꿀 것이 없어요.', `그래서 끝은 ${ms0(sum)}예요.`]
           : [`${ms(x)}에서 ${up}초 가면 ${next}분 눈금이에요.`, `${ms(y)}에서 ${up}초를 쓰고 ${sum - next * 60}초가 남아요.`, `그래서 끝은 ${ms0(sum)}예요.`],
-      alt: [`초끼리 더하면 ${raw.s}초${raw.s >= 60 ? `, 1분 ${raw.s - 60}초` : ''}예요. 분과 합치면 ${ms0(sum)}예요.`, `두 풀이 모두 ${ms0(sum)}예요.`],
+      alt: [`초끼리 더하면 ${raw.s}초${raw.s >= 60 ? `, 1분 ${raw.s - 60}초` : ''}예요. 분과 합치면 ${ms0(sum)}예요.`, `어느 길로 해도 답은 ${ms0(sum)}예요.`],
     },
   };
 }
@@ -464,22 +468,22 @@ function t143Back(E, F) {
   const [a, b, c, d] = [Math.floor(E / 60), E % 60, Math.floor(F / 60), F % 60];
   const discs = cleanDiscs(
     [
-      { value: { m: a - c - 1, s: b + 100 - d }, category: '개념', kind: 'check', feedback: '1분을 빌리면 몇 초일까요?' },
+      { value: { m: a - c - 1, s: b + 100 - d }, category: '개념', kind: 'check', feedback: '1분은 몇 초로 바꿀까요?' },
       { value: { m: a - c, s: d - b }, category: '개념', kind: 'check', feedback: `${b}초에서 ${d}초를 뺄 수 있나요?` },
     ],
     answer,
   );
   return {
-    text: ['시간 띠에 막대 두 개를 이어 붙였더니 끝이 ', ...msText(E), E % 60 === 0 ? '이에요. 앞 막대는 ' : '예요. 앞 막대는 ', ...msText(F), '예요. 뒤 막대는 몇 분 몇 초예요?'],
+    text: ['역까지 걷고 열차를 기다린 시간이 모두 ', ...msText(E), E % 60 === 0 ? '이에요. 걸은 시간이 ' : '예요. 걸은 시간이 ', ...msText(F), F % 60 === 0 ? '이면' : '면', ' 기다린 시간은 몇 분 몇 초예요?'],
     figure: band([{ from: 0, to: F }, { from: F, to: E, unknown: true }]),
     input: { kind: 'compound', fields: MS_FIELDS },
     answer,
     discriminators: discs,
     grade: cgrade(MS_FIELDS, answer, discs),
-    hints: [`막대 두 개의 끝은 ${ms(E)}, 앞 막대는 ${ms(F)}예요. 뒤 막대의 길이를 물어요.`, `띠에서 앞 막대 끝부터 ${c + 1}분 눈금까지, 그다음 끝까지 세어 볼까요?`, `${ms(F)}에서 ${c + 1}분까지는 ${(c + 1) * 60 - F}초예요.`, `${(c + 1) * 60 - F}초 + ${ms(E - (c + 1) * 60)} = ☐분 ${answer.s}초`],
+    hints: [`구하는 것: 열차를 기다린 시간(뒤 막대) / 알고 있는 것: 끝 ${ms(E)}, 걸은 시간(앞 막대) ${ms(F)}`, `띠에서 앞 막대 끝부터 ${c + 1}분 눈금까지, 그다음 끝까지 세어 볼까요?`, `${ms(F)}에서 ${c + 1}분까지는 ${(c + 1) * 60 - F}초예요.`, `${(c + 1) * 60 - F}초 + ${ms(E - (c + 1) * 60)} = ☐분 ${answer.s}초`],
     blank: '☐',
     blankAnswer: String(answer.m),
-    explain: { why: [`${ms(F)}에서 ${c + 1}분 눈금까지 ${(c + 1) * 60 - F}초예요.`, `${c + 1}분에서 끝 ${ms(E)}까지는 ${ye(ms(E - (c + 1) * 60))}.`, `그래서 뒤 막대는 ${ms0(back)}예요.`], alt: [`${ms(E)} − ${ms(F)}를 1분 빌려 계산하면 ${a - 1}분 ${b + 60}초 − ${ms(F)} = ${ms0(back)}예요.`, `두 풀이 모두 ${ms0(back)}예요.`] },
+    explain: { why: [`${ms(F)}에서 ${c + 1}분 눈금까지 ${(c + 1) * 60 - F}초예요.`, `${c + 1}분에서 끝 ${ms(E)}까지는 ${ye(ms(E - (c + 1) * 60))}.`, `그래서 기다린 시간은 ${ms0(back)}예요.`], alt: [`${ms(E)} − ${ms(F)}를 1분을 받아내림해 계산하면 ${a - 1}분 ${b + 60}초 − ${ms(F)} = ${ms0(back)}예요.`, `어느 길로 해도 답은 ${ms0(back)}예요.`] },
   };
 }
 const T14_3 = {
@@ -517,19 +521,19 @@ function fusion3(per, tr) {
     answer,
   );
   return {
-    text: [L1(), '호선 부산역에서 서면역까지는 ', n(6, { real: true, source: SRC_L1 }), '정거장이에요. 한 정거장에 ', ...msText(per), '씩 걸리고, 서면역에서 갈아타는 데 ', ...msText(tr), '가 걸려요. 부산역에서 ', L2(), '호선을 탈 때까지 모두 몇 분 몇 초예요?'],
+    text: [L1(), '호선 부산역에서 서면역까지 ', n(6, { real: true, source: SRC_L1 }), '정거장이에요. 한 정거장에 ', ...msText(per), ', 갈아타는 데 ', ...msText(tr), ' 걸린다고 해 봐요. ', L2(), '호선을 탈 때까지 몇 분 몇 초예요?'],
     figure: { kind: 'stations', stations: ['부산역', '초량', '부산진', '좌천', '범일', '범내골', '서면'] },
     input: { kind: 'compound', fields: MS_FIELDS },
     answer,
     requires: ['N25'],
     discriminators: discs,
     grade: cgrade(MS_FIELDS, answer, discs),
-    hints: [`부산역에서 서면역까지 6정거장, 한 정거장에 ${ms(per)}, 갈아타는 데 ${ms(tr)} 걸려요. 모두 걸린 시간을 물어요.`, '6정거장 동안 걸린 시간을 먼저 구한 다음 갈아타는 시간을 더해 볼까요?', `${ms(per)} × 6 = ${6 * a}분 ${6 * b}초 = ${ye(ms(6 * per))}.`, `${ms(6 * per)} + ${ms(tr)} = ☐분 ${answer.s}초`],
+    hints: [`구하는 것: 2호선을 탈 때까지 걸리는 시간 / 알고 있는 것: 6정거장, 한 정거장에 ${ms(per)}, 갈아타는 데 ${ms(tr)}`, '6정거장 동안 걸린 시간을 먼저 구한 다음 갈아타는 시간을 더해 볼까요?', `${ms(per)} × 6 = ${6 * a}분 ${6 * b}초 = ${ye(ms(6 * per))}.`, `${ms(6 * per)} + ${ms(tr)} = ☐분 ${answer.s}초`],
     blank: '☐',
     blankAnswer: String(answer.m),
     explain: {
       why: [`6정거장은 ${ms(per)} × 6 = ${6 * a}분 ${6 * b}초예요.`, `${6 * b}초는 ${rase(ms(6 * b))} ${ye(ms(6 * per))}.`, `갈아타는 ${ms(tr)}를 더하면 ${ms0(total)}예요.`, `그래서 모두 ${ms0(total)}예요.`],
-      alt: [`초로 바꾸면 ${per} × 6 + ${tr} = ${total}초, 60초씩 묶으면 ${ms0(total)}예요.`, `두 풀이 모두 ${ms0(total)}예요.`],
+      alt: [`초로 바꾸면 ${per} × 6 + ${tr} = ${total}초, 60초씩 묶으면 ${ms0(total)}예요.`, `어느 길로 해도 답은 ${ms0(total)}예요.`],
     },
   };
 }
@@ -542,25 +546,21 @@ function fusion4(rng, h, m, s, g) {
   const rh = Math.floor(ready / 3600);
   const rm = Math.floor((ready % 3600) / 60);
   const answer = show(trains[1]);
-  const textTrains = [];
-  trains.forEach((t, i) => {
-    textTrains.push(...hmsText(Math.floor(t / 3600), Math.floor((t % 3600) / 60)));
-    textTrains.push(i < 2 ? ', ' : '에 떠나요. ');
-  });
   return {
-    text: ['어느 날 ', L1(), '호선이 서면역에 ', ...hmsText(h, m, s), '에 도착했어요. 갈아타는 데 ', V(g), '분 걸렸어요. 이 문제의 ', L2(), '호선 열차는 ', ...textTrains, '탈 수 있는 첫 열차는 몇 시 몇 분 열차예요?'],
+    // 2호선 열차 시각은 표가 보여 준다(02 문서 규칙 10).
+    text: [L1(), '호선 열차가 서면역에 ', ...hmsText(h, m, s), '에 도착했어요. 갈아타는 데 ', V(g), '분 걸렸어요. 탈 수 있는 첫 ', L2(), '호선 열차를 표에서 골라요.'],
     figure: { kind: 'table', columns: ['이 문제의 2호선 열차', '떠나는 시각'], rows: trains.map((t, i) => [`${i + 1}`, show(t)]) },
     input: { kind: 'choice', options: trains.map(show) },
     answer,
     requires: ['N25'],
-    discriminators: [{ value: show(trains[0]), category: '개념', kind: 'check', feedback: `${hms(rh, rm, s)}에 ${rh}시 ${rm}분 열차가 있나요?` }],
-    hints: [`${hms(h, m, s)}에 도착해서 갈아타는 데 ${g}분 걸려요. 탈 수 있는 첫 열차를 물어요.`, '2호선 승강장에 닿는 시각을 먼저 구해 볼까요?', `${hms(h, m, s)}에서 ${g}분 뒤예요.`, `승강장에 닿는 시각: ☐시 ${rm}분 ${s}초`],
+    discriminators: [{ value: show(trains[0]), category: '개념', kind: 'check', feedback: `승강장에 닿을 때 ${show(trains[0])} 열차가 있을까요?` }],
+    hints: [`구하는 것: 탈 수 있는 첫 2호선 열차 / 알고 있는 것: 서면역 도착 ${hms(h, m, s)}, 갈아타는 데 ${g}분`, '2호선 승강장에 닿는 시각을 먼저 구해 볼까요?', `${hms(h, m, s)}에서 ${g}분 뒤예요.`, `승강장에 닿는 시각: ☐시 ${rm}분 ${s}초`],
     blank: '☐',
     blankAnswer: String(rh),
     blankThen: '탈 수 있는 첫 열차는?',
     explain: {
       why: [`${hms(h, m, s)}에서 ${g}분 뒤는 ${hms(rh, rm, s)}예요.`, `${show(trains[0])} 열차는 그보다 ${s}초 먼저 떠나요.`, `그래서 탈 수 있는 첫 열차는 ${answer} 열차예요.`],
-      alt: [`열차마다 떠나기 ${g}분 전까지 서면역에 도착해야 해요.`, `${show(trains[0])} 열차는 ${g}분 전이 도착보다 앞이라 못 타고, ${answer} 열차는 탈 수 있어요.`, `두 풀이 모두 ${answer} 열차예요.`],
+      alt: [`열차마다 떠나기 ${g}분 전까지 서면역에 도착해야 해요.`, `${show(trains[0])} 열차는 ${g}분 전이 도착보다 앞이라 못 타고, ${answer} 열차는 탈 수 있어요.`, `어느 길로 해도 답은 ${answer} 열차예요.`],
     },
   };
 }
@@ -592,7 +592,7 @@ const T14_F2 = {
 };
 
 // ── 급행 통과 진단 ──
-const D1 = { id: 'G14-D1', node: 'G14', title: '급행 진단: 1분 45초 + 30초', repr: '식', minLevel: 2, maxLevel: 2, diagnostic: true, generate: () => asDiag(t141Add(105, 30, 2, ['부암역까지 ', ...msText(105), ' 걷고 열차를 ', ...msText(30), ' 기다렸어요. '])) };
+const D1 = { id: 'G14-D1', node: 'G14', title: '급행 진단: 1분 45초 + 30초', repr: '식', minLevel: 2, maxLevel: 2, diagnostic: true, generate: () => asDiag(t141Add(105, 30, 2, { text: ['부암역까지 ', ...msText(105), ' 걷고 열차를 ', ...msText(30), ' 기다렸어요.', '\n'], concl: '모두 ' })) };
 const D2 = { id: 'G14-D2', node: 'G14', title: '급행 진단: 이 열차를 탈 수 있을까', repr: '문장', minLevel: 3, maxLevel: 3, diagnostic: true, generate: () => asDiag(t142Level3(110, 205, 5)) };
 const D3 = { id: 'G14-D3', node: 'G14', title: '급행 진단(예비): 출발 시각 거꾸로', repr: '문장', minLevel: 4, maxLevel: 4, diagnostic: true, generate: () => asDiag(t142Level4(7, 12, 5, 220)) };
 

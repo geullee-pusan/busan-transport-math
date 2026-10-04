@@ -152,6 +152,6 @@ ${shortRoute({})}
 <h2>9. 문제 판 오른쪽 위 도구 · 바탕</h2>
 <div class="v2-problem"><div class="pp-tools"><button class="pp-tool" aria-label="읽어 주기">${svgIcon('read', { size: 28 })}<span>읽어 주기</span></button><button class="pp-tool" aria-label="이 문제 이상해요">${svgIcon('report', { size: 28 })}<span>이상해요</span></button></div>
 <p class="problem-text">다대포해수욕장역에서 <b>373</b>명, 다대포항역에서 <b>108</b>명이 탔어요. 두 역에서 탄 사람은 모두 몇 명이에요?</p></div>
-<p class="small">문제 판 바탕 #FFFDF8(아주 옅은 크림): 글자 대비 12.8:1(흰 바탕 13.0과 거의 같음). 도구는 보이는 크기 56, 누르는 영역 84(판 모서리까지).</p>
+<p class="small">문제 판 바탕 #FFFDF8(아주 옅은 크림): 글자 대비 12.8:1(흰 바탕 13.0과 거의 같음). 도구는 보이는 판 64(아이콘 28 + 이름표 16px), 누르는 영역 92(판 모서리까지).</p>
 `;
 }

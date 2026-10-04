@@ -3,20 +3,49 @@
   "$id": "concept-graph.schema.json",
   "title": "부산 교통 수학 개념 그래프",
   "type": "object",
-  "required": ["version", "rules", "lines", "nodes"],
+  "required": [
+    "version",
+    "rules",
+    "lines",
+    "nodes"
+  ],
   "properties": {
-    "$schema": { "type": "string" },
-    "version": { "type": "string" },
-    "source": { "type": "string" },
+    "$schema": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string"
+    },
     "rules": {
       "type": "object",
-      "required": ["prereqDefault", "masteryLevel"],
+      "required": [
+        "prereqDefault",
+        "masteryLevel"
+      ],
       "properties": {
-        "prereqDefault": { "const": "mastered", "description": "minLevel이 없는 선수 조건은 그 노드의 개통(숙달)을 뜻한다" },
-        "minLevelNote": { "type": "string" },
-        "masteryLevel": { "type": "integer", "minimum": 1, "maximum": 11, "description": "개통 판정에 쓰는 최소 문제 단계" },
+        "prereqDefault": {
+          "const": "mastered",
+          "description": "minLevel이 없는 선수 조건은 그 노드의 개통(숙달)을 뜻한다"
+        },
+        "minLevelNote": {
+          "type": "string"
+        },
+        "masteryLevel": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 11,
+          "description": "개통 판정에 쓰는 최소 문제 단계"
+        },
         "levelsWithinCommentary": {
-          "type": "array", "items": { "type": "integer" }, "minItems": 2, "maxItems": 2,
+          "type": "array",
+          "items": {
+            "type": "integer"
+          },
+          "minItems": 2,
+          "maxItems": 2,
           "description": "원문 해설·적용 시 고려 사항 안에서 만들어야 하는 단계 범위"
         }
       }
@@ -25,61 +54,200 @@
       "type": "object",
       "additionalProperties": {
         "type": "object",
-        "required": ["name"],
+        "required": [
+          "name"
+        ],
         "properties": {
-          "name": { "type": "string" },
-          "domain": { "type": "string" },
-          "stations": { "type": ["array", "null"], "items": { "type": "string" }, "description": "실제 역 이름(노선 순서). 아직 배치하지 않은 노선은 null" },
-          "stationCount": { "type": "integer" }
+          "name": {
+            "type": "string"
+          },
+          "domain": {
+            "type": "string"
+          },
+          "stations": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "실제 역 이름(노선 순서). 아직 배치하지 않은 노선은 null"
+          },
+          "stationCount": {
+            "type": "integer"
+          }
         }
       }
     },
     "nodes": {
       "type": "array",
-      "items": { "$ref": "#/$defs/node" }
+      "items": {
+        "$ref": "#/$defs/node"
+      }
     }
   },
   "$defs": {
     "prereq": {
       "type": "object",
-      "required": ["node"],
+      "required": [
+        "node"
+      ],
       "additionalProperties": false,
       "properties": {
-        "node": { "type": "string", "pattern": "^[BNGRDX][0-9]{2}$" },
-        "minLevel": { "type": "integer", "minimum": 1, "maximum": 11, "description": "있으면 그 단계까지 푼 것으로 충족. 없으면 개통" }
+        "node": {
+          "type": "string",
+          "pattern": "^[BNGRDX][0-9]{2}$"
+        },
+        "minLevel": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 11,
+          "description": "있으면 그 단계까지 푼 것으로 충족. 없으면 개통"
+        }
       }
     },
     "node": {
       "type": "object",
-      "required": ["id", "title", "codes", "line", "order", "station", "strand", "prereqs", "ceiling", "scope"],
+      "required": [
+        "id",
+        "title",
+        "codes",
+        "line",
+        "order",
+        "station",
+        "strand",
+        "prereqs",
+        "ceiling",
+        "scope"
+      ],
       "additionalProperties": false,
       "properties": {
-        "id": { "type": "string", "pattern": "^[BNGRDX][0-9]{2}$" },
-        "title": { "type": "string" },
+        "id": {
+          "type": "string",
+          "pattern": "^[BNGRDX][0-9]{2}$"
+        },
+        "title": {
+          "type": "string"
+        },
         "codes": {
           "type": "array",
-          "items": { "type": "string", "pattern": "^[246]수0[1-4]-[0-9]{2}$" },
+          "items": {
+            "type": "string",
+            "pattern": "^[246]수0[1-4]-[0-9]{2}$"
+          },
           "description": "2022 개정 성취기준 코드. 경시 노드는 빈 배열"
         },
-        "gradeBand": { "type": ["string", "null"], "enum": ["1-2", "3-4", "5-6", null], "description": "참고용(부모 화면). 잠금에 쓰지 않는다" },
-        "line": { "type": "string", "enum": ["DEPOT", "L1", "L2", "L3", "L4", "DH"] },
-        "order": { "type": "integer", "minimum": 1, "description": "노선 위 추천 순서(1호선은 역 번호와 같다)" },
-        "station": { "type": ["string", "null"], "description": "실제 역 이름. 미배치·곁가지는 null" },
-        "strand": { "type": "string", "enum": ["foundation", "whole", "fraction", "decimal", "geometry-measurement", "change-relation", "data-chance", "contest"] },
-        "prereqs": { "type": "array", "items": { "$ref": "#/$defs/prereq" } },
-        "floor": { "type": "integer", "minimum": 1, "maximum": 11, "description": "이 노드의 가장 낮은 단계(경시 노드는 4)" },
-        "ceiling": { "type": "integer", "minimum": 1, "maximum": 11, "description": "이 역에서 낼 수 있는 가장 높은 단계" },
-        "scope": { "type": "string", "enum": ["in", "contest", "beyond"], "description": "in = 성취기준 안, contest = 경시형(성취기준 도구로 풀림), beyond = 초등 성취기준에 없음" },
+        "gradeBand": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "1-2",
+            "3-4",
+            "5-6",
+            null
+          ],
+          "description": "참고용(부모 화면). 잠금에 쓰지 않는다"
+        },
+        "line": {
+          "type": "string",
+          "enum": [
+            "DEPOT",
+            "L1",
+            "L2",
+            "L3",
+            "L4",
+            "DH"
+          ]
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "노선 위 추천 순서(1호선은 역 번호와 같다)"
+        },
+        "station": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "실제 역 이름. 미배치·곁가지는 null"
+        },
+        "strand": {
+          "type": "string",
+          "enum": [
+            "foundation",
+            "whole",
+            "fraction",
+            "decimal",
+            "geometry-measurement",
+            "change-relation",
+            "data-chance",
+            "contest"
+          ]
+        },
+        "prereqs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/prereq"
+          }
+        },
+        "floor": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 11,
+          "description": "이 노드의 가장 낮은 단계(경시 노드는 4)"
+        },
+        "ceiling": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 11,
+          "description": "이 역에서 낼 수 있는 가장 높은 단계"
+        },
+        "scope": {
+          "type": "string",
+          "enum": [
+            "in",
+            "contest",
+            "beyond"
+          ],
+          "description": "in = 성취기준 안, contest = 경시형(성취기준 도구로 풀림), beyond = 초등 성취기준에 없음"
+        },
         "transfer": {
           "type": "object",
-          "required": ["withLine", "fusionWith"],
+          "required": [
+            "withLine",
+            "fusionWith"
+          ],
           "properties": {
-            "withLine": { "type": "string" },
-            "fusionWith": { "type": "array", "items": { "type": "string" } }
+            "withLine": {
+              "type": "string"
+            },
+            "fusionWith": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
           },
           "description": "실제 환승역(FACTS)에서 섞어 낼 상대 노선 노드"
         },
-        "provisional": { "type": "boolean", "description": "자문 초안. 역 배치·천장이 아직 확정되지 않음" }
+        "provisional": {
+          "type": "boolean",
+          "description": "자문 초안. 역 배치·천장이 아직 확정되지 않음"
+        },
+        "templateNeeds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "이 노드에 반드시 있어야 하는 템플릿 종류(02 문서 8절, knowledge.md 6절)"
+        },
+        "explain": {
+          "type": "boolean",
+          "description": "\"방법을 설명할 수 있다\" 성취기준 노드. 이유·설명 고르기 템플릿 필수"
+        }
       }
     }
   }

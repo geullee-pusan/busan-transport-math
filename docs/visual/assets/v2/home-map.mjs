@@ -98,9 +98,9 @@ export function homeMap(o) {
   sts.forEach((s, i) => { if (done(s.id)) out.push(stationTail(...pos[i], pos[i - 1] ?? null, pos[i + 1] ?? null, l1.color, tier, { u })); });
 
   // 역 점(목적지는 맨 위에 따로)
-  // 섬 사이 역(학생 #1 ⑥): 목적지 뒤, 마지막 켜진 역 앞의 꺼진 역 = "갈 수 있음"(진한 빈 원). 섬 밖은 "아직 못 감"(회색)
+  // 섬 사이 역(학생 #1 ⑥): 목적지가 아닌 꺼진 역은 섬 사이에서도 "아직"(회색 빈 원) — 목적지는 늘 가장 앞의 꺼진 역 하나(UX 8차 5a)
   const lastLit = Math.max(-1, ...sts.map((s, i) => (done(s.id) ? i : -1)));
-  const stateOf = (s, i = sts.indexOf(s)) => (s.id === o.dest ? (o.check?.has(s.id) ? 'check-dest' : 'dest') : o.confirmed?.has(s.id) ? 'confirmed' : o.check?.has(s.id) ? 'check' : o.passed?.has(s.id) ? 'passed' : o.lit.has(s.id) ? 'lit' : i > di && i < lastLit ? 'reachable' : 'locked');
+  const stateOf = (s, i = sts.indexOf(s)) => (s.id === o.dest ? (o.check?.has(s.id) ? 'check-dest' : 'dest') : o.confirmed?.has(s.id) ? 'confirmed' : o.check?.has(s.id) ? 'check' : o.passed?.has(s.id) ? 'passed' : o.lit.has(s.id) ? 'lit' : 'locked');
   sts.forEach((s, i) => { if (s.id !== o.dest) out.push(stationMark(...pos[i], stateOf(s), l1.color, tier, { u, terminal: i === 0 || i === sts.length - 1 })); });
 
   // 역 이름: 단계에 따라(zoom = 모두, 그 밖 = 켜진 역 양 끝·목적지·종점·환승). 흰 테두리로 지형 위에서도 읽힘

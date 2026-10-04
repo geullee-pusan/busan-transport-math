@@ -105,7 +105,7 @@ function mulDiscs(a, m) {
     { value: t * 10 + u * m, category: '개념', kind: 'nudge', feedbackCheck: '십의 자리를 다시 볼까요?', feedback: `${a}의 ${t * 10}도 ${m}배 했나요?` },
     { value: a + m, category: '식', kind: 'nudge', feedbackCheck: '문제를 다시 읽어 볼까요?', feedback: '곱셈이에요. 몇 번 더하는 셈일까요?' },
   ];
-  if (c > 0) list.unshift({ value: (t + c) * m * 10 + ((u * m) % 10), category: '개념', kind: 'check', feedback: '올린 수는 언제 더했나요?' });
+  if (c > 0) list.unshift({ value: (t + c) * m * 10 + ((u * m) % 10), category: '개념', kind: 'check', feedback: '받아올림한 수는 언제 더했나요?' });
   return uniq(list.filter((d) => c > 0 || d.category === '식'), P);
 }
 
@@ -116,54 +116,62 @@ function mulHints(a, m, lead) {
   const bl = blankAt(P, 1);
   if (u === 0) {
     return {
-      hints: [lead, `${eun(a)} 10이 ${t}개예요. ${m}배 하면 10이 몇 개일까요?`, `${t} × ${m} = ${ieyo(t * m)}.`, `${a} × ${m} = ${bl.blank}`],
+      hints: [lead, `10이 몇 개인지 생각해 볼까요? 그 수를 ${m}배 해요.`, `${eun(a)} 10이 ${t}개예요.`, `${a} × ${m} = ${bl.blank}`],
       blank: bl.blank,
       blankAnswer: bl.blankAnswer,
     };
   }
   return {
-    hints: [lead, `${eul(a)} ${wa(t * 10)} ${u}${roOnly(u)} 나눠서 각각 ${m}배 해 볼까요? ${eul(a)} ${m}번 더해도 돼요.`, `${u} × ${m} = ${u * m}, ${t * 10} × ${m} = ${ieyo(t * 10 * m)}.`, `${t * 10 * m} + ${u * m} = ${bl.blank}`],
+    hints: [lead, `${eul(a)} ${wa(t * 10)} ${u}${roOnly(u)} 갈라서 각각 ${m}배 해 볼까요? ${eul(a)} ${m}번 더해도 돼요.`, `${u} × ${m} = ${u * m}, ${t * 10} × ${m} = ${ieyo(t * 10 * m)}.`, `${t * 10 * m} + ${u * m} = ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
   };
 }
 
+/** 해설. unit이 있으면(장면 문제) 마지막 줄을 "그래서 모두 ~명이에요."로 장면과 잇는다. */
 function mulExplain(a, m, unit = '') {
   const t = Math.floor(a / 10);
   const u = a % 10;
   const P = a * m;
+  const c = Math.floor((u * m) / 10);
+  const ansWord = unit ? `${P}${unit}이에요` : ieyo(P);
+  const end = unit ? [`${a} × ${m} = ${ieyo(P)}.`, `그래서 모두 ${P}${unit}이에요.`] : [`그래서 ${a} × ${m} = ${ieyo(P)}.`];
   if (u === 0) {
     return {
-      why: [`${eun(a)} 10이 ${t}개예요.`, `${m}배 하면 10이 ${t * m}개라서 ${ieyo(P)}.`, `그래서 ${a} × ${m} = ${ieyo(P)}.`],
-      alt: [`${eul(a)} ${m}번 더해도 ${ieyo(P)}.`, `어느 길로 해도 답은 ${ro(P)} 같아요.`],
+      why: [`${eun(a)} 10이 ${t}개예요.`, `${m}배 하면 10이 ${t} × ${m} = ${t * m}개예요.`, ...end],
+      alt: [`${eul(a)} ${m}번 더해도 ${ieyo(P)}.`, `어느 길로 해도 답은 ${ansWord}.`],
     };
   }
   const up = (t + 1) * 10;
+  // 받아올림이 있으면 세로셈에서 받아올림한 수를 언제 더하는지 짚는다(대표 오답: 받아올림한 수를 먼저 더하거나 빠뜨림).
+  const carry = c > 0 ? [`세로셈에서는 일의 자리 ${u * m}의 ${eul(c)} 십의 자리로 받아올림해요.`, `받아올림한 ${eun(c)} ${t} × ${m} = ${t * m}에 더해서 ${t * m + c}${jo(t * m + c, '이', '가')} 돼요.`] : [];
   return {
-    why: [`${a} × ${m}${jo(m, '은', '는')} ${t * 10} × ${wa(m)} ${u} × ${eul(m)} 합친 거예요.`, `${t * 10 * m} + ${u * m} = ${ieyo(P)}.`, `그래서 ${a} × ${m} = ${P}${unit}${unit ? '이에요' : jo(P, '이에요', '예요')}.`],
-    alt: [`${up} × ${m} = ${up * m}에서 ${10 - u} × ${m} = ${eul((10 - u) * m)} 빼요.`, `${up * m} − ${(10 - u) * m} = ${ieyo(P)}.`, `어느 길로 해도 답은 ${ro(P)} 같아요.`],
+    why: [`${a} × ${m}${jo(m, '은', '는')} ${t * 10} × ${wa(m)} ${u} × ${eul(m)} 합친 거예요.`, `${t * 10 * m} + ${u * m} = ${ieyo(P)}.`, ...carry, ...end.slice(unit ? 1 : 0)],
+    alt:
+      m <= 3
+        ? [`${eul(a)} ${m}번 더해도 돼요.`, `${Array(m).fill(a).join(' + ')} = ${ieyo(P)}.`, `어느 길로 해도 답은 ${ansWord}.`]
+        : [`${up} × ${m} = ${up * m}에서 ${10 - u} × ${m} = ${eul((10 - u) * m)} 빼요.`, `${up * m} − ${(10 - u) * m} = ${ieyo(P)}.`, `어느 길로 해도 답은 ${ansWord}.`],
   };
 }
 
-/** 정비창 점검 장면: 칸마다 a명씩 m칸(1호선은 8량이라 m < 8이면 "앞 m칸", 9면 열차 9대) */
-function mulScene(a, m, level) {
-  const day = level >= 3 ? '어느 날 ' : '';
-  if (m === 9) return [day + '신평역에 열차가 설 때마다 ', V(a), '명씩 탔어요. 열차 ', V(m), '대가 섰을 때 탄 사람은 모두 몇 명인지 식으로 계산해요. '];
-  const cars = m === 8 ? [L1(), '호선 ', CARS(), '칸에'] : ['앞 ', V(m), '칸에'];
-  return [day + '신평역에서 칸마다 ', V(a), '명씩 탔어요. ', ...cars, ' 탄 사람은 모두 몇 명인지 식으로 계산해요. '];
+/** 정비창 점검 장면: a명씩 m칸(1호선은 8칸이라 m < 8이면 "앞 m칸", 9면 열차 9대 — 지어낸 규칙이라 "~라고 해 봐요") */
+function mulScene(a, m) {
+  if (m === 9) return ['신평역에 서는 열차마다 ', V(a), '명씩 탔다고 해 봐요. 열차 ', V(m), '대가 섰어요.'];
+  if (m === 8) return ['신평역에서 ', L1(), '호선 열차 ', CARS(), '칸에 칸마다 ', V(a), '명씩 탔어요.'];
+  return ['신평역에서 앞 ', V(m), '칸에 ', V(a), '명씩 탔어요.'];
 }
 
 /** scene = { text: 식 앞 교통 장면 조각, unit } (없으면 식만) */
 function buildMul(a, m, scene = null) {
   const P = a * m;
   return {
-    text: [...(scene?.text ?? []), n(a), ' × ', n(m), ' = ?'],
+    text: [...(scene?.text ? [...scene.text, '\n'] : []), n(a), ' × ', n(m), ' = ?'],
     figure: { kind: 'vertical', op: '×', a, b: m },
     input: scene?.unit ? { kind: 'number', unit: scene.unit } : { kind: 'number' },
     answer: P,
     discriminators: mulDiscs(a, m),
     ...mulHints(a, m, `${wa(a)} ${m}의 곱을 물어요.`),
-    explain: mulExplain(a, m),
+    explain: mulExplain(a, m, scene?.unit ?? ''),
   };
 }
 
@@ -193,7 +201,7 @@ const T7_1 = {
       },
       level === 1 ? [32, 3] : level === 2 ? [27, 3] : [68, 7],
     );
-    return buildMul(a, m, { text: mulScene(a, m, level), unit: '명' });
+    return buildMul(a, m, { text: mulScene(a, m), unit: '명' });
   },
 };
 
@@ -202,7 +210,7 @@ function t72Level1(c) {
   const P = c * 8;
   const bl = blankAt(P, 1);
   return {
-    text: [L1(), '호선은 ', CARS(), '량이에요. 어느 날 칸마다 ', V(c), '명씩 탔어요. 열차에 탄 사람은 모두 몇 명이에요?'],
+    text: ['신평역에서 ', L1(), '호선 열차 ', CARS(), '칸에 칸마다 ', V(c), '명씩 탔어요. 열차에 탄 사람은 모두 몇 명이에요?'],
     figure: { kind: 'train', cars: 8 },
     input: { kind: 'number', unit: '명' },
     answer: P,
@@ -213,12 +221,12 @@ function t72Level1(c) {
       ],
       P,
     ),
-    hints: [`열차는 8칸이고, 칸마다 ${c}명씩 탔어요. 열차에 탄 사람 수를 물어요.`, `${c}명씩 8칸이에요. 10이 몇 개인지 생각해 볼까요?`, `${c / 10} × 8 = ${ieyo((c / 10) * 8)}.`, `${c} × 8 = ${bl.blank}`],
+    hints: [`구하는 것: 열차에 탄 사람 수 / 알고 있는 것: 8칸, 칸마다 ${c}명`, `${c}명씩 8칸이에요. 10이 몇 개인지 생각해 볼까요?`, `${eun(c)} 10이 ${c / 10}개예요.`, `${c} × 8 = ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     explain: {
-      why: [`${c}명씩 8칸이니 ${c} × 8을 해요.`, `${eun(c)} 10이 ${c / 10}개라서 10이 ${(c / 10) * 8}개가 돼요.`, `그래서 모두 ${P}명이에요.`],
-      alt: [`${c}을 8번 더해도 ${ieyo(P)}.`.replace(`${c}을`, eul(c)), `어느 길로 해도 답은 ${ro(P)} 같아요.`],
+      why: [`${c}명씩 8칸이니 ${c} × 8을 해요.`, `${eun(c)} 10이 ${c / 10}개예요.`, `${c} × 8은 10이 ${c / 10} × 8 = ${(c / 10) * 8}개라서 ${ieyo(P)}.`, `그래서 모두 ${P}명이에요.`],
+      alt: [`${eul(c)} 8번 더해도 ${ieyo(P)}.`, `어느 길로 해도 답은 ${P}명이에요.`],
     },
   };
 }
@@ -226,16 +234,16 @@ function t72Level1(c) {
 /** T7-2 2단계: 앞 k칸에 x명씩 */
 function t72Level2(k, x) {
   const P = x * k;
-  const h = mulHints(x, k, `앞 ${k}칸에 한 칸마다 ${x}명씩 탔어요. 앞 ${k}칸에 탄 사람 수를 모두 물어요.`);
+  const h = mulHints(x, k, `구하는 것: 앞 ${k}칸에 탄 사람 수 / 알고 있는 것: 앞 ${k}칸에 ${x}명씩 탐`);
   const e = mulExplain(x, k, '명');
   return {
-    text: ['어느 날 ', L1(), '호선 열차 앞 ', V(k), '칸에 ', V(x), '명씩 탔어요. 앞 ', V(k), '칸에 탄 사람은 모두 몇 명이에요?'],
+    text: ['토요일에 ', L1(), '호선 열차 앞 ', V(k), '칸에 ', V(x), '명씩 탔어요. 앞 ', V(k), '칸에 탄 사람은 모두 몇 명이에요?'],
     figure: { kind: 'train', cars: 8, highlight: Array.from({ length: k }, (_, i) => i) },
     input: { kind: 'number', unit: '명' },
     answer: P,
     discriminators: mulDiscs(x, k),
     ...h,
-    explain: { why: [...e.why.slice(0, -1), `그래서 모두 ${P}명이에요.`], alt: e.alt },
+    explain: e,
   };
 }
 
@@ -247,54 +255,54 @@ function t72Level3(a, k, b) {
   const bl = blankAt(na, 0);
   const rest = 8 - k;
   return {
-    text: ['두 열차가 있어요. 가 열차는 ', CARS(), '량 모두에 ', V(a), '명씩, 나 열차는 ', CARS(), '량 중 ', V(k), '칸에만 ', V(b), '명씩 탔어요. 사람이 더 많이 탄 열차는 어느 쪽이에요?'],
-    figure: { kind: 'trains', trains: [{ name: '가 열차', cars: 8 }, { name: '나 열차', cars: 8, filled: k }] },
-    input: { kind: 'compound', fields: [{ key: 'ga', label: '가 열차' }, { key: 'na', label: '나 열차' }, { key: 'more', label: '더 많은 열차', options: ['가', '나'] }] },
+    text: ['(가) 열차는 ', CARS(), '칸에 칸마다 ', V(a), '명씩, (나) 열차는 ', CARS(), '칸 중 ', V(k), '칸에만 ', V(b), '명씩 탔어요. 어느 열차에 더 많이 탔어요?'],
+    figure: { kind: 'trains', trains: [{ name: '(가) 열차', cars: 8 }, { name: '(나) 열차', cars: 8, filled: k }] },
+    input: { kind: 'compound', fields: [{ key: 'ga', label: '(가) 열차' }, { key: 'na', label: '(나) 열차' }, { key: 'more', label: '더 많은 열차', options: ['가', '나'] }] },
     answer: { ga, na, more },
     discriminators: [
-      { key: 'na', value: b * 8, category: '읽기', kind: 'check', feedback: '나 열차는 몇 칸에 탔나요?' },
-      { key: 'more', value: more === '가' ? '나' : '가', category: '개념', kind: 'check', feedback: `${wa(ga)} ${eul(na)} 견주어 볼까요?` },
+      { key: 'na', value: b * 8, category: '읽기', kind: 'check', feedback: '(나) 열차는 몇 칸에 탔나요?' },
+      { key: 'more', value: more === '가' ? '나' : '가', category: '개념', kind: 'check', feedback: `${wa(ga)} ${eul(na)} 비교해 볼까요?` },
     ],
-    hints: [`가 열차는 8칸에 ${a}명씩, 나 열차는 ${k}칸에 ${b}명씩 탔어요. 어느 열차에 사람이 더 많은지 물어요.`, '두 열차에 탄 사람을 각각 구해서 견주어 볼까요?', `가 열차는 ${a} × 8 = ${ga}명이에요.`, `나 열차는 ${b} × ${k} = ${bl.blank}명`],
+    hints: [`구하는 것: 사람이 더 많이 탄 열차 / 알고 있는 것: (가) 8칸에 ${a}명씩, (나) ${k}칸에 ${b}명씩`, '두 열차에 탄 사람을 각각 구해서 비교해 볼까요?', `(가) 열차는 ${a} × 8 = ${ga}명이에요.`, `(나) 열차는 ${b} × ${k} = ${bl.blank}명`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     blankThen: '더 많은 열차는 어느 쪽이에요?',
     explain: {
-      why: [`가 열차는 ${a} × 8 = ${ga}명, 나 열차는 ${b} × ${k} = ${na}명이에요.`, `${more} 열차가 ${Math.abs(ga - na)}명 더 많아요.`, `그래서 더 많이 탄 열차는 ${more} 열차예요.`],
+      why: [`(가) 열차는 ${a} × 8 = ${ga}명, (나) 열차는 ${b} × ${k} = ${na}명이에요.`, `(${more}) 열차가 ${Math.abs(ga - na)}명 더 많아요.`, `그래서 더 많이 탄 열차는 (${more}) 열차예요.`],
       alt: [
-        `${k}칸끼리 견주면 나 열차가 한 칸에 ${b - a}명씩, 모두 ${(b - a) * k}명 더 많아요.`,
-        `가 열차는 남은 ${rest}칸에 ${a * rest}명이 더 있어요.`,
-        `${(b - a) * k}${jo((b - a) * k, '과', '와')} ${a * rest}${jo(a * rest, '을', '를')} 견주면 ${more} 열차가 더 많아요.`,
-        `어느 길로 해도 답은 ${more} 열차로 같아요.`,
+        `${k}칸끼리 비교하면 (나) 열차가 한 칸에 ${b - a}명씩, 모두 ${(b - a) * k}명 더 많아요.`,
+        `(가) 열차는 남은 ${rest}칸에 ${a * rest}명이 더 있어요.`,
+        `${(b - a) * k}${jo((b - a) * k, '과', '와')} ${a * rest}${jo(a * rest, '을', '를')} 비교하면 (${more}) 열차가 더 많아요.`,
+        `어느 길로 해도 답은 (${more}) 열차예요.`,
       ],
     },
   };
 }
 
-/** T7-2 4단계: ×를 +로 잘못 눌렀어요 */
+/** T7-2 4단계: 동생이 계산기에서 × 대신 +를 눌렀어요 */
 function t72Level4(m, x) {
   const w = x + m;
   const P = x * m;
   const bl = blankAt(P, 1);
   return {
-    text: ['어느 날 앞 ', V(m), '칸에 같은 수만큼 탔어요. 역무원이 한 칸 사람 수에 ', V(m), jo(m, '을', '를'), ' 곱해야 하는데, 계산기에서 × 대신 +를 눌러 ', V(w), jo(w, '이', '가'), ' 나왔어요. 바르게 계산하면 얼마예요?'],
+    text: ['앞 ', V(m), '칸에 같은 수씩 탔어요. 동생이 계산기로 한 칸 사람 수에 ', V(m), jo(m, '을', '를'), ' 곱하다가 +를 눌러 ', V(w), jo(w, '이', '가'), ' 나왔어요. 바른 답은 몇 명이에요?'],
     figure: null,
     input: { kind: 'number' },
     answer: P,
     discriminators: uniq(
       [
-        { value: w * m, category: '식', kind: 'nudge', feedbackCheck: `${eun(w)} 무엇을 곱한 결과예요?`, feedback: `${eun(w)} 잘못 나온 수예요. 한 칸 사람 수는요?` },
-        { value: x, category: '식', kind: 'nudge', feedbackCheck: '무엇을 물었는지 다시 볼까요?', feedback: `${x}명을 찾았어요. 다음엔요?` },
-        { value: w - m, category: '식', kind: 'nudge', feedbackCheck: '무엇을 물었는지 다시 볼까요?', feedback: `${x}명을 찾았어요. 다음엔요?` },
+        { value: w * m, category: '식', kind: 'nudge', feedbackCheck: `${eun(w)} 잘못 나온 수예요. 다시 볼까요?`, feedback: '한 칸 사람 수부터 찾아볼까요?' },
+        { value: x, category: '식', kind: 'nudge', feedbackCheck: '무엇을 물었는지 다시 볼까요?', feedback: `${x}명은 한 칸이에요. ${m}칸이면요?` },
+        { value: w - m, category: '식', kind: 'nudge', feedbackCheck: '무엇을 물었는지 다시 볼까요?', feedback: `${x}명은 한 칸이에요. ${m}칸이면요?` },
       ],
       P,
     ),
-    hints: [`칸은 ${m}칸이에요. 계산기에서 잘못 누른 결과가 ${ieyo(w)}. 바르게 계산한 값을 물어요.`, '잘못 누른 계산을 거꾸로 해서 한 칸 사람 수부터 찾아볼까요?', `한 칸 사람 수는 ${w} − ${m} = ${ieyo(x)}.`, `${x} × ${m} = ${bl.blank}`],
+    hints: [`구하는 것: 바르게 계산한 사람 수 / 알고 있는 것: 앞 ${m}칸, 잘못 누른 결과 ${w}`, '잘못 누른 계산을 거꾸로 해서 한 칸 사람 수부터 찾아볼까요?', `한 칸 사람 수는 ${w} − ${m} = ${ieyo(x)}.`, `${x} × ${m} = ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     explain: {
-      why: [`+를 눌러 ${w}${jo(w, '이', '가')} 나왔으니 한 칸 사람 수는 ${w} − ${m} = ${ieyo(x)}.`, `바르게 계산하면 ${x} × ${m} = ${ieyo(P)}.`, `그래서 답은 ${ieyo(P)}.`],
-      alt: [`${eul(x)} ${m}번 더해도 ${ieyo(P)}.`, `어느 길로 해도 답은 ${ro(P)} 같아요.`],
+      why: [`+를 눌러 ${w}${jo(w, '이', '가')} 나왔으니 한 칸 사람 수는 ${w} − ${m} = ${ieyo(x)}.`, `바르게 계산하면 ${x} × ${m} = ${ieyo(P)}.`, `그래서 모두 ${P}명이에요.`],
+      alt: [`${eul(x)} ${m}번 더해도 ${ieyo(P)}.`, `어느 길로 해도 답은 ${P}명이에요.`],
     },
   };
 }
@@ -313,7 +321,7 @@ function t72Level5(u, m, k, T) {
     answer,
     discriminators: discs,
     grade: multiGrade(answer, discs),
-    hints: [`□${u}에 ${m}배 한 값이 ${T}보다 작게 되는 □를 모두 찾아요.`, '□에 1부터 차례로 넣어 볼까요? 조건이 바뀌는 곳을 찾아봐요.', `□가 ${k}이면 ${k}${u} × ${m} = ${ieyo((10 * k + u) * m)}.`.replace(`${k}이면`, `${k}${jo(k, '이면', '면')}`), '들어갈 수 있는 수: 1부터 ☐까지'],
+    hints: [`□${u}${jo(u, '을', '를')} ${m}배 한 값이 ${T}보다 작게 되는 □를 모두 찾아요.`, '□에 1부터 차례로 넣어 볼까요? 조건이 바뀌는 곳을 찾아봐요.', `□가 ${k}이면 ${k}${u} × ${m} = ${ieyo((10 * k + u) * m)}.`.replace(`${k}이면`, `${k}${jo(k, '이면', '면')}`), '들어갈 수 있는 수: 1부터 ☐까지'],
     blank: '1부터 ☐까지',
     blankAnswer: String(k),
     explain: {
@@ -322,7 +330,7 @@ function t72Level5(u, m, k, T) {
         `${k + 1}${u} × ${m} = ${ro((10 * (k + 1) + u) * m)} ${T}보다 커요.`,
         `그래서 들어갈 수 있는 수는 1부터 ${k}까지예요.`,
       ],
-      alt: [`어림해서 □0 × ${m}부터 보고, 경계의 수만 정확히 계산해도 돼요.`, `어느 길로 해도 답은 1부터 ${k}까지로 같아요.`],
+      alt: [`어림해서 □0 × ${m}부터 보고, 경계의 수만 정확히 계산해도 돼요.`, `어느 길로 해도 답은 1부터 ${k}까지예요.`],
     },
   };
 }
@@ -349,12 +357,12 @@ function t72Level6(cards) {
     input: { kind: 'number' },
     answer: best,
     discriminators: uniq([{ value: wrong, category: '개념', kind: 'check', feedback: '다른 자리에도 놓아 봤나요?' }], best),
-    hints: ['카드 세 장으로 두 자리 수 하나와 한 자리 수 하나를 만들어요. 두 수의 곱이 가장 클 때를 물어요.', '가장 큰 숫자를 한 자리 수 자리에 놓으면 어떨까요? 여러 가지로 놓아 견주어 봐요.', `${d[0] * 10 + d[1]} × ${d[2]} = ${ieyo(wrong)}.`, `${pair[0]} × ${pair[1]} = ${bl.blank}`],
+    hints: [`구하는 것: 가장 큰 곱 / 알고 있는 것: 숫자 카드 ${cards.join(', ')}${jo(cards[2], '을', '를')} 한 번씩 씀`, '가장 큰 숫자를 한 자리 수 자리에 놓으면 어떨까요? 여러 가지로 놓아 비교해 봐요.', `${d[0] * 10 + d[1]} × ${d[2]} = ${ieyo(wrong)}.`, `${pair[0]} × ${pair[1]} = ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     explain: {
-      why: ['한 자리 수는 두 자리 수 전체에 곱해져서 힘이 커요.', `여섯 가지를 모두 견주면 ${pair[0]} × ${pair[1]} = ${ro(best)} 가장 커요.`, `그래서 가장 큰 곱은 ${ieyo(best)}.`],
-      alt: [`${d[0] * 10 + d[1]} × ${d[2]} = ${ieyo(wrong)}. ${best}보다 작아요.`.replace(`${best}보다`, `${best}보다`), `어느 길로 해도 답은 ${ro(best)} 같아요.`],
+      why: ['큰 숫자를 한 자리 수로 두면 두 자리 수 전체에 곱해져요.', `여섯 가지를 모두 비교하면 ${pair[0]} × ${pair[1]} = ${ro(best)} 가장 커요.`, `그래서 가장 큰 곱은 ${ieyo(best)}.`],
+      alt: [`확인해 보면 가장 큰 두 자리 수를 만든 ${d[0] * 10 + d[1]} × ${d[2]} = ${ieyo(wrong)}.`, `${best}보다 작아요.`],
     },
   };
 }
@@ -422,13 +430,13 @@ const T7_2 = {
 const D1 = {
   id: 'N07-D1',
   node: 'N07',
-  title: '급행 진단: 올림이 두 번',
+  title: '급행 진단: 받아올림이 두 번',
   repr: '식',
   minLevel: 3,
   maxLevel: 3,
   diagnostic: true,
   generate() {
-    return { ...buildMul(68, 7, { text: ['신평역에서 앞 ', V(7), '칸에 칸마다 ', V(68), '명씩 탔어요. '], unit: '명' }), hints: [], blank: null };
+    return { ...buildMul(68, 7, { text: ['신평역에서 앞 ', V(7), '칸에 ', V(68), '명씩 탔어요.'], unit: '명' }), hints: [], blank: null };
   },
 };
 const D2 = {
@@ -472,10 +480,10 @@ function t74(a, m) {
   ];
   const alt =
     m <= 4
-      ? [`${Array(m).fill(a).join(' + ')} = ${ieyo(P)}.`, `두 풀이 모두 ${P}개예요.`]
-      : [`${(t + 1) * 10} × ${m} = ${(t + 1) * 10 * m}에서 ${10 - u} × ${m} = ${eul((10 - u) * m)} 빼요.`, `${(t + 1) * 10 * m} − ${(10 - u) * m} = ${ieyo(P)}.`, `두 풀이 모두 ${P}개예요.`];
+      ? [`${Array(m).fill(a).join(' + ')} = ${ieyo(P)}.`, `어느 길로 해도 답은 ${P}개예요.`]
+      : [`${(t + 1) * 10} × ${m} = ${(t + 1) * 10 * m}에서 ${10 - u} × ${m} = ${eul((10 - u) * m)} 빼요.`, `${(t + 1) * 10 * m} − ${(10 - u) * m} = ${ieyo(P)}.`, `어느 길로 해도 답은 ${P}개예요.`];
   return {
-    text: ['역 대합실에 의자가 한 줄에 ', V(a), '개씩 ', V(m), '줄 있어요. 그림을 나눠서 의자 수를 구해요.'],
+    text: ['역 대합실에 의자가 한 줄에 ', V(a), '개씩 ', V(m), '줄 있어요. 그림을 두 부분으로 갈라서 의자 수를 구해요.'],
     figure: { kind: 'areaModel', parts: [[T, u], [m]] },
     input: {
       kind: 'compound',
@@ -488,7 +496,7 @@ function t74(a, m) {
     answer: { p1, p2, total: P },
     discriminators: discs,
     hints: [
-      `한 줄에 ${a}개씩 ${m}줄이에요. 그림은 ${wa(T)} ${u}${roOnly(u)} 나뉘어 있어요. 의자 수를 물어요.`,
+      `구하는 것: 의자 수 / 알고 있는 것: 한 줄에 ${a}개씩 ${m}줄, 그림은 ${wa(T)} ${u}${roOnly(u)} 갈라져 있음`,
       '그림의 두 부분을 각각 구해 볼까요? 두 부분을 합치면 전체예요.',
       `${T} × ${m} = ${ieyo(p1)}.`,
       `${u} × ${m} = ${bl.blank}`,
@@ -497,7 +505,7 @@ function t74(a, m) {
     blankAnswer: bl.blankAnswer,
     blankThen: '"모두" 칸도 채워요.',
     explain: {
-      why: [`${a} × ${m}${jo(m, '은', '는')} ${T} × ${wa(m)} ${u} × ${m}${roOnly(m)} 나눌 수 있어요.`, `${p1} + ${p2} = ${P}개예요.`, `그래서 의자는 ${P}개예요.`],
+      why: [`${a} × ${m}${jo(m, '은', '는')} ${T} × ${wa(m)} ${u} × ${m}${roOnly(m)} 갈라 볼 수 있어요.`, `${p1} + ${p2} = ${P}개예요.`, `그래서 의자는 ${P}개예요.`],
       alt,
     },
   };

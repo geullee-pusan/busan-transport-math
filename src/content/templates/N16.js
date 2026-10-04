@@ -84,7 +84,7 @@ const d3 = (v) => [Math.floor(v / 100), Math.floor(v / 10) % 10, v % 10];
 // ── T16-1 정비창 점검 (식) — 1~3단계 ──
 
 /** 몫이 세 자리이고 나머지 없음(1단계: 자리마다 나누어떨어짐, 2단계: 몫 가운데 0) */
-/** scene = { text: 식 앞 교통 장면 조각, unit } (없으면 식만) */
+/** scene = { text: 식 앞 교통 장면 조각, unit, lead: 힌트 ①, conclude: 해설 결론 } (없으면 식만). 식은 새 줄에 둔다. */
 function buildDiv(N, d, scene = null) {
   const q = N / d;
   const H = Math.floor(N / 100) * 100;
@@ -99,20 +99,59 @@ function buildDiv(N, d, scene = null) {
     : [{ value: N * d, category: '식', kind: 'check', feedback: '나누면 커질까요?' }];
   const restQ = rest / d;
   const bl = restQ >= 10 ? blankAt(restQ, 0) : { blank: '☐', blankAnswer: String(restQ) };
+  // 몫 가운데 0: 백의 자리는 나누어떨어지고(a × d < 10), 나누어지는 수의 십의 자리 t는 d보다 작다.
+  const t = Math.floor(rest / 10);
+  const why = mid0
+    ? [
+        `백의 자리: ${H} ÷ ${d} = ${ieyo(H / d)}.`,
+        t > 0 ? `십의 자리 ${eun(t)} ${ro(d)} 나눌 수 없어서 몫의 십의 자리에 0을 써요.` : '십의 자리가 0이라서 몫의 십의 자리에 0을 써요.',
+        t > 0 ? `일의 자리까지 함께 보면 ${rest} ÷ ${d} = ${ieyo(restQ)}.` : `일의 자리: ${rest} ÷ ${d} = ${ieyo(restQ)}.`,
+      ]
+    : [`${H} ÷ ${d} = ${H / d}, ${rest} ÷ ${d} = ${ieyo(restQ)}.`, `몫은 ${H / d} + ${restQ} = ${ieyo(q)}.`];
   return {
-    text: [...(scene?.text ?? []), n(N), ' ÷ ', n(d), ' = ?'],
+    text: [...(scene?.text ? [...scene.text, '\n'] : []), n(N), ' ÷ ', n(d), ' = ?'],
     figure: null,
     input: scene?.unit ? { kind: 'number', unit: scene.unit } : { kind: 'number' },
     answer: q,
     discriminators: uniq(discs, q),
-    hints: [`${eul(N)} ${ro(d)} 나눈 몫을 물어요.`, mid0 ? '백의 자리부터 차례로 나눠 볼까요? 나눌 수 없는 자리에는 몫에 0을 써요.' : `${eul(N)} ${wa(H)} ${ro(rest)} 나눠서 각각 ${ro(d)} 나눠 볼까요?`, `${H} ÷ ${d} = ${ieyo(H / d)}.`, `${rest} ÷ ${d} = ${bl.blank}`],
+    hints: [scene?.lead ?? `${N} ÷ ${d}의 몫을 물어요.`, mid0 ? '백의 자리부터 차례로 나눠 볼까요? 나눌 수 없는 자리에는 몫에 0을 써요.' : `${eul(N)} ${wa(H)} ${ro(rest)} 갈라 볼까요? 둘 다 ${ro(d)} 나누기 쉬워요.`, `${H} ÷ ${d} = ${ieyo(H / d)}.`, `${rest} ÷ ${d} = ${bl.blank}`],
     blank: `${rest} ÷ ${d} = ${bl.blank}`,
     blankAnswer: bl.blankAnswer,
     blankThen: '몫은 얼마예요?',
     explain: {
-      why: [`${H} ÷ ${d} = ${H / d}, ${rest} ÷ ${d} = ${ieyo(restQ)}.`, mid0 ? `몫은 ${H / d} + ${restQ} = ${q}, 십의 자리에 나눌 것이 없어서 0이 들어가요.` : `몫은 ${H / d} + ${restQ} = ${ieyo(q)}.`, `그래서 ${N} ÷ ${d} = ${ieyo(q)}.`],
-      alt: [`${d} × ${H / d} = ${H}, ${d} × ${restQ} = ${rest}라서 ${d} × ${q} = ${ieyo(N)}.`, `두 풀이 모두 ${ieyo(q)}.`],
+      why: [...why, scene?.conclude ? scene.conclude(q) : `그래서 ${N} ÷ ${d} = ${ieyo(q)}.`],
+      alt: [`${d}에 몇을 곱하면 ${N}${jo(N, '이', '가')} 될까요?`, `${d} × ${H / d} = ${H}, ${d} × ${restQ} = ${rest}${jo(rest, '이라서', '라서')} ${d} × ${q} = ${ieyo(N)}.`, `어느 길로 해도 답은 ${ieyo(q)}.`],
     },
+  };
+}
+
+/**
+ * T16-1 1·2단계 장면(04 문서 2절): 승객이 열차 여러 대에 나눠 타는 일은 없으니
+ * 나누는 수가 8이고 한 칸 인원이 130명 안이면 1호선 한 열차의 8칸으로, 아니면 역에서 승차권·안내 책자를 똑같이 나누는 장면으로.
+ */
+function divScene(N, d) {
+  const q = N / d;
+  if (d === 8 && q <= 130) {
+    return {
+      text: ['자갈치역에서 열차 한 대에 ', V(N), '명이 탔어요. ', L1(), '호선 ', CARS(), '칸에 똑같이 나눠 탔다면 한 칸에 몇 명이에요?'],
+      unit: '명',
+      lead: `구하는 것: 한 칸에 탄 사람 수 / 알고 있는 것: ${N}명, 8칸에 똑같이 나눠 탐`,
+      conclude: (qq) => `그래서 한 칸에 ${qq}명이에요.`,
+    };
+  }
+  if (N % 2 === 0) {
+    return {
+      text: ['자갈치역 역무실에서 승차권 ', V(N), '장을 ', V(d), '묶음으로 똑같이 나눴어요. 한 묶음은 몇 장이에요?'],
+      unit: '장',
+      lead: `구하는 것: 한 묶음의 승차권 수 / 알고 있는 것: 승차권 ${N}장, ${d}묶음으로 똑같이 나눔`,
+      conclude: (qq) => `그래서 한 묶음은 ${qq}장이에요.`,
+    };
+  }
+  return {
+    text: ['자갈치역에서 안내 책자 ', V(N), '권을 상자 ', V(d), '개에 똑같이 나눠 담았어요. 한 상자에 몇 권이에요?'],
+    unit: '권',
+    lead: `구하는 것: 한 상자의 안내 책자 수 / 알고 있는 것: 안내 책자 ${N}권, 상자 ${d}개에 똑같이 나눔`,
+    conclude: (qq) => `그래서 한 상자에 ${qq}권이에요.`,
   };
 }
 
@@ -122,7 +161,7 @@ function t161Level3(N, d, scene = null) {
   const r = N % d;
   const answer = { q, r };
   return {
-    text: [...(scene?.text ?? []), n(N), ' ÷ ', n(d), ' = ', unknown('□'), ' … ', unknown('□')],
+    text: [...(scene?.text ? [...scene.text, '\n'] : []), n(N), ' ÷ ', n(d), ' = ', unknown('□'), ' … ', unknown('□')],
     figure: null,
     input: { kind: 'compound', fields: [{ key: 'q', label: '몫' }, { key: 'r', label: '나머지' }] },
     answer,
@@ -134,13 +173,13 @@ function t161Level3(N, d, scene = null) {
       ],
       answer,
     ),
-    hints: [`${eul(N)} ${ro(d)} 나눈 몫과 나머지를 물어요.`, '백의 자리부터 차례로 나누고, 남은 수는 다음 자리와 합쳐서 나눠 볼까요?', `${d} × ${q} = ${ieyo(d * q)}.`, `${N} − ${d * q} = ☐`],
+    hints: [scene?.lead ?? `${N} ÷ ${d}의 몫과 나머지를 물어요.`, '백의 자리부터 차례로 나누고, 남은 수는 다음 자리와 합쳐서 나눠 볼까요?', `${d} × ${q} = ${ieyo(d * q)}.`, `${N} − ${d * q} = ☐`],
     blank: `${N} − ${d * q} = ☐`,
     blankAnswer: String(r),
     blankThen: '몫과 나머지를 써요.',
     explain: {
-      why: [`${d} × ${q} = ${d * q}${jo(d * q, '이고', '고')}, ${N} − ${d * q} = ${ieyo(r)}.`, `나머지 ${eun(r)} ${d}보다 작아요.`, `그래서 ${N} ÷ ${d} = ${q} … ${ieyo(r)}.`],
-      alt: [`${d} × ${q} + ${r} = ${N}${roOnly(N)} 확인해요.`, `두 풀이 모두 몫 ${q}, 나머지 ${ieyo(r)}.`],
+      why: [`${d} × ${q} = ${d * q}${jo(d * q, '이고', '고')}, ${N} − ${d * q} = ${ieyo(r)}.`, `나머지 ${eun(r)} ${d}보다 작아요.`, scene?.conclude ? scene.conclude(q, r) : `그래서 ${N} ÷ ${d} = ${q} … ${ieyo(r)}.`],
+      alt: [`${d} × ${q} + ${r} = ${N}${roOnly(N)} 확인해요.`, '확인해 보면 답이 맞아요.'],
     },
   };
 }
@@ -174,10 +213,15 @@ const T16_1 = {
   generate(rng, level) {
     if (level === 3) {
       const [N, d] = draw(rng, () => [rng.int(300, 999), rng.int(3, 9)], ([NN, dd]) => NN % dd !== 0 && Math.floor(NN / dd) >= 100 && Math.floor(NN / dd) % 10 !== 0, [745, 6]);
-      return t161Level3(N, d, { text: ['어느 날 자갈치역에서 승객 ', V(N), '명이 열차 ', V(d), '대에 똑같이 나눠 타고, 남은 사람은 다음 열차를 기다렸어요. 한 대에 몇 명씩 타고 몇 명이 남았는지 식으로 계산해요. '] });
+      // 나머지가 자연스러운 포함제(04 문서 2절): 안내지를 d장씩 묶고 남는 장이 생긴다.
+      return t161Level3(N, d, {
+        text: ['오늘 자갈치역에서 안내지 ', V(N), '장을 ', V(d), '장씩 묶었어요. 몇 묶음이 되고 몇 장이 남아요?'],
+        lead: `구하는 것: 묶음 수와 남는 장 수 / 알고 있는 것: 안내지 ${N}장, ${d}장씩 묶음`,
+        conclude: (qq, rr) => `그래서 ${N} ÷ ${d} = ${qq} … ${rr}, ${qq}묶음이 되고 ${rr}장이 남아요.`,
+      });
     }
     const [N, d] = pickDiv3(rng, level);
-    return buildDiv(N, d, { text: ['자갈치역에서 승객 ', V(N), '명이 열차 ', V(d), '대에 똑같이 나눠 탔어요. 열차 한 대에 몇 명인지 식으로 계산해요. '], unit: '명' });
+    return buildDiv(N, d, divScene(N, d));
   },
 };
 
@@ -190,24 +234,24 @@ function t162Level1(N, d) {
   const part1 = d * tq;
   const part2 = N - part1;
   return {
-    text: ['어느 날 자갈치시장 가게에서 오징어 ', V(N), '마리를 ', V(d), '마리씩 한 묶음으로 묶었어요. 몇 묶음이에요?'],
+    text: ['아침에 자갈치시장 가게에서 오징어 ', V(N), '마리를 ', V(d), '마리씩 한 묶음으로 묶었어요. 몇 묶음이에요?'],
     figure: null,
     input: { kind: 'number', unit: '묶음' },
     answer: q,
     discriminators: uniq(
       [
         { value: swap2(q), category: '계산', kind: 'check', feedback: `${d} × ${swap2(q)}${jo(swap2(q), '이', '가')} ${N}일까요?` },
-        { value: N * d, category: '식', kind: 'check', feedback: '묶음이 마리보다 많을까요?' },
+        { value: N * d, category: '식', kind: 'check', feedback: '묶음 수가 오징어 수보다 많을까요?' },
       ],
       q,
     ),
-    hints: [`오징어는 ${N}마리이고, ${d}마리씩 한 묶음이에요. 묶음 수를 물어요.`, `${eul(N)} ${wa(part1)} ${ro(part2)} 나눠 볼까요? 둘 다 ${d}마리씩 묶기 쉬워요.`, `${part1}마리는 ${tq}묶음이에요.`, `${part2} ÷ ${d} = ☐`],
+    hints: [`구하는 것: 오징어 묶음 수 / 알고 있는 것: 오징어 ${N}마리, ${d}마리씩 한 묶음`, `${eul(N)} ${wa(part1)} ${ro(part2)} 갈라 볼까요? 둘 다 ${d}마리씩 묶기 쉬워요.`, `${part1}마리는 ${tq}묶음이에요.`, `${part2} ÷ ${d} = ☐`],
     blank: `${part2} ÷ ${d} = ☐`,
     blankAnswer: String(q % 10),
     blankThen: '모두 몇 묶음이에요?',
     explain: {
-      why: [`${N}마리를 ${d}마리씩 묶으면 ${N} ÷ ${d}이에요.`, `${part1} ÷ ${d} = ${tq}, ${part2} ÷ ${d} = ${q % 10}, 합치면 ${ieyo(q)}.`, `그래서 ${q}묶음이에요.`],
-      alt: [`${d} × ${q} = ${N}${roOnly(N)} 확인해요.`, `어느 길로 해도 답은 ${q}묶음이에요.`],
+      why: [`${N}마리를 ${d}마리씩 묶으면 ${N} ÷ ${d}${jo(d, '이에요', '예요')}.`, `${part1} ÷ ${d} = ${tq}, ${part2} ÷ ${d} = ${q % 10}, 합치면 ${ieyo(q)}.`, `그래서 ${q}묶음이에요.`],
+      alt: [`${d} × ${q} = ${N}${roOnly(N)} 확인해요.`, '확인해 보면 답이 맞아요.'],
     },
   };
 }
@@ -218,10 +262,10 @@ function t162Level2(N, d) {
   const q = N / d;
   return {
     ...base,
-    text: ['어느 날 자갈치시장에서 생선 ', V(N), '마리를 상자 ', V(d), '개에 똑같이 나눠 담았어요. 한 상자에 몇 마리예요?'],
+    text: ['오늘 자갈치시장에서 생선 ', V(N), '마리를 상자 ', V(d), '개에 똑같이 나눠 담았어요. 한 상자에 몇 마리예요?'],
     input: { kind: 'number', unit: '마리' },
-    hints: [`생선 ${N}마리를 상자 ${d}개에 똑같이 담아요. 한 상자의 마리 수를 물어요.`, ...base.hints.slice(1)],
-    explain: { why: [...base.explain.why.slice(0, 2), `그래서 한 상자에 ${q}마리예요.`], alt: base.explain.alt },
+    hints: [`구하는 것: 한 상자의 생선 수 / 알고 있는 것: 생선 ${N}마리, 상자 ${d}개에 똑같이 담음`, ...base.hints.slice(1)],
+    explain: { why: [...base.explain.why.slice(0, -1), `그래서 한 상자에 ${q}마리예요.`], alt: base.explain.alt },
   };
 }
 
@@ -232,7 +276,7 @@ function t162Level3(bigName, a, p, smallName, b, q) {
   const answer = { big: p, small: q, more: smallName };
   const bl = blankAt(q, 0);
   return {
-    text: ['어느 날 자갈치시장에서 ', bigName, ' ', V(a), '상자는 ', V(P), '만 원, ', smallName, ' ', V(b), '상자는 ', V(Q), '만 원이었어요. 한 상자 값이 더 비싼 생선은 어느 쪽이에요?'],
+    text: ['자갈치시장에서 ', bigName, ' ', V(a), '상자는 ', V(P), '만 원, ', smallName, ' ', V(b), '상자는 ', V(Q), '만 원이에요. 한 상자 값은 어느 생선이 더 비싸요?'],
     figure: null,
     input: {
       kind: 'compound',
@@ -243,14 +287,14 @@ function t162Level3(bigName, a, p, smallName, b, q) {
       ],
     },
     answer,
-    discriminators: uniqK([{ key: 'more', value: bigName, category: '개념', kind: 'check', feedback: '한 상자 값을 다시 견주어 볼까요?' }], answer),
-    hints: [`${jw(bigName, '은', '는')} ${a}상자에 ${P}만 원, ${jw(smallName, '은', '는')} ${b}상자에 ${Q}만 원이에요. 한 상자 값이 더 비싼 생선을 물어요.`, '생선마다 한 상자 값을 먼저 구해 볼까요?', `${bigName} 한 상자는 ${P} ÷ ${a} = ${p}만 원이에요.`, `${smallName} 한 상자는 ${Q} ÷ ${b} = ${bl.blank}만 원`],
+    discriminators: uniqK([{ key: 'more', value: bigName, category: '개념', kind: 'check', feedback: '한 상자 값을 다시 비교해 볼까요?' }], answer),
+    hints: [`구하는 것: 생선마다 한 상자 값과 더 비싼 생선 / 알고 있는 것: ${bigName} ${a}상자 ${P}만 원, ${smallName} ${b}상자 ${Q}만 원`, '생선마다 한 상자 값을 먼저 구해 볼까요?', `${bigName} 한 상자는 ${P} ÷ ${a} = ${p}만 원이에요.`, `${smallName} 한 상자는 ${Q} ÷ ${b} = ${bl.blank}만 원`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     blankThen: '더 비싼 생선은 어느 쪽이에요?',
     explain: {
       why: [`${bigName} 한 상자는 ${P} ÷ ${a} = ${p}만 원, ${smallName} 한 상자는 ${Q} ÷ ${b} = ${q}만 원이에요.`, `전체 값은 ${jw(bigName, '이', '가')} 크지만, 한 상자는 ${jw(smallName, '이', '가')} ${q - p}만 원 더 비싸요.`, `그래서 한 상자 값이 더 비싼 생선은 ${jw(smallName, '이에요', '예요')}.`],
-      alt: [`${smallName} 한 상자가 ${p}만 원이라면 ${b}상자는 ${p * b}만 원이에요. 실제로는 ${Q}만 원이라 더 비싸요.`, `두 풀이 모두 ${jw(smallName, '이에요', '예요')}.`],
+      alt: [`${smallName} 한 상자가 ${p}만 원이라면 ${b}상자는 ${p * b}만 원이에요. 실제로는 ${Q}만 원이라 더 비싸요.`, `어느 길로 해도 답은 ${jw(smallName, '이에요', '예요')}.`],
     },
   };
 }
@@ -262,7 +306,7 @@ function t162Level4(d, w, m, r) {
   const r2 = N % d;
   const answer = { q2, r2 };
   return {
-    text: ['어느 날 오징어를 ', V(d), '마리씩 묶어야 하는데 잘못해서 ', V(w), '마리씩 묶었더니 ', V(m), '묶음이 되고 ', V(r), '마리가 남았어요. 바르게 ', V(d), '마리씩 묶으면 몇 묶음이 되고 몇 마리가 남아요?'],
+    text: ['오징어를 ', V(d), '마리씩 묶어야 하는데 잘못해서 ', V(w), '마리씩 묶었더니 ', V(m), '묶음이고 ', V(r), '마리가 남았어요. 바르게 묶으면 몇 묶음이고 몇 마리가 남아요?'],
     figure: null,
     input: { kind: 'compound', fields: [{ key: 'q2', label: '묶음' }, { key: 'r2', label: '남은 마리' }] },
     answer,
@@ -270,18 +314,18 @@ function t162Level4(d, w, m, r) {
       [
         { key: 'q2', value: N, category: '식', kind: 'nudge', feedbackCheck: '무엇을 물었는지 다시 볼까요?', feedback: `오징어 ${N}마리를 찾았어요. 다음엔요?` },
         { key: 'q2', value: m, category: '읽기', kind: 'check', feedback: `${m}묶음은 ${w}마리씩 묶었을 때예요.` },
-        { key: 'q2', value: Math.floor((w * m) / d), category: '개념', kind: 'nudge', feedbackCheck: `${r}마리는 어디에 들어갔나요?`, feedback: `남은 ${r}마리도 오징어예요.` },
+        { key: 'q2', value: Math.floor((w * m) / d), category: '개념', kind: 'nudge', feedbackCheck: `${r}마리는 어디에 들어갔나요?`, feedback: `남은 ${r}마리도 넣었나요?` },
         { key: 'r2', value: 0, category: '계산', kind: 'check', feedback: '남은 마리를 다시 볼까요?' },
       ],
       answer,
     ),
-    hints: [`${w}마리씩 묶어 ${m}묶음과 ${r}마리가 남았어요. 바르게 ${d}마리씩 묶을 때의 묶음과 남은 마리를 물어요.`, '오징어가 모두 몇 마리인지부터 구해 볼까요?', `오징어는 ${w} × ${m} + ${r} = ${N}마리예요.`, `${N} ÷ ${d}의 나머지: ☐`],
+    hints: [`구하는 것: ${d}마리씩 묶을 때 묶음 수와 남은 마리 수 / 알고 있는 것: 잘못해서 ${w}마리씩 묶어 ${m}묶음, ${r}마리 남음`, '오징어가 모두 몇 마리인지부터 구해 볼까요?', `오징어는 ${w} × ${m} + ${r} = ${N}마리예요.`, `${N} ÷ ${d}의 나머지: ☐`],
     blank: '나머지: ☐',
     blankAnswer: String(r2),
     blankThen: '묶음과 남은 마리를 써요.',
     explain: {
       why: [`오징어는 ${w} × ${m} + ${r} = ${N}마리예요.`, `${N} ÷ ${d} = ${q2} … ${ieyo(r2)}.`, `그래서 ${q2}묶음이 되고 ${r2}마리가 남아요.`],
-      alt: [`${d} × ${q2} + ${r2} = ${N}${roOnly(N)} 확인해요.`, `두 풀이 모두 ${q2}묶음, ${r2}마리예요.`],
+      alt: [`${d} × ${q2} + ${r2} = ${N}${roOnly(N)} 확인해요.`, '확인해 보면 답이 맞아요.'],
     },
   };
 }
@@ -354,7 +398,7 @@ function t163Level5(d) {
     blankAnswer: bl.blankAnswer,
     explain: {
       why: [`999 ÷ ${d} = ${Math.floor(999 / d)} … ${r}, 999는 나누어떨어지지 않아요.`, `나머지 ${r}만큼 줄인 ${ans}${jo(ans, '은', '는')} ${d} × ${Math.floor(999 / d)}${jo(Math.floor(999 / d), '이에요', '예요')}.`, `그래서 가장 큰 수는 ${ieyo(ans)}.`],
-      alt: [`${ans} + ${d} = ${ans + d}${jo(ans + d, '은', '는')} 네 자리 수라서 ${ans}${jo(ans, '이', '가')} 가장 커요.`, `두 풀이 모두 ${ieyo(ans)}.`],
+      alt: [`${ans} + ${d} = ${ans + d}${jo(ans + d, '은', '는')} 네 자리 수라서 ${ans}${jo(ans, '이', '가')} 가장 커요.`, `어느 길로 해도 답은 ${ieyo(ans)}.`],
     },
   };
 }
@@ -374,12 +418,12 @@ function t163Level6(xy, d) {
     answer,
     discriminators: uniq(discs, answer),
     grade: multiGrade(answer, discs),
-    hints: [`□${tail}${jo(xy % 10, '을', '를')} ${ro(d)} 나눈 몫이 두 자리 수가 되는 □를 모두 물어요.`, `몫이 세 자리가 되려면 나뉠 수가 ${d} × 100 = ${d * 100}보다 크거나 같아야 해요. □를 넣어 견주어 볼까요?`, `□가 ${d}${jo(d, '이면', '면')} ${d}${tail}${jo(xy % 10, '이', '가')} ${d * 100}보다 커요.`, '1부터 ☐까지'],
+    hints: [`□${tail} ÷ ${d}의 몫이 두 자리 수가 되는 □를 모두 물어요.`, `몫이 세 자리가 되려면 나누어지는 수가 ${d} × 100 = ${d * 100}${jo(d * 100, '과', '와')} 같거나 커야 해요. □를 넣어 비교해 볼까요?`, `□가 ${d}${jo(d, '이면', '면')} ${d}${tail}${jo(xy % 10, '이', '가')} ${d * 100}보다 커요.`, '1부터 ☐까지'],
     blank: '1부터 ☐까지',
     blankAnswer: String(d - 1),
     explain: {
-      why: [`나뉠 수가 ${d * 100}보다 작으면 몫은 두 자리예요.`, `□${tail}${jo(xy % 10, '이', '가')} ${d * 100}보다 작으려면 □는 ${d}보다 작아야 해요.`, `그래서 □는 1부터 ${d - 1}까지예요.`],
-      alt: [`${d - 1}${tail} ÷ ${wa(d)} ${d}${tail} ÷ ${eul(d)} 직접 나눠 몫의 자리 수를 견주어도 돼요.`, `어느 길로 해도 답은 1부터 ${d - 1}까지로 같아요.`],
+      why: [`나누어지는 수가 ${d * 100}보다 작으면 몫은 두 자리예요.`, `□${tail}${jo(xy % 10, '이', '가')} ${d * 100}보다 작으려면 □는 ${d}보다 작아야 해요.`, `그래서 □는 1부터 ${d - 1}까지예요.`],
+      alt: [`${d - 1}${tail} ÷ ${wa(d)} ${d}${tail} ÷ ${eul(d)} 직접 나눠 몫의 자리 수를 비교해도 돼요.`, `어느 길로 해도 답은 1부터 ${d - 1}까지예요.`],
     },
   };
 }
@@ -391,7 +435,7 @@ function t163Level7(d, r) {
   const answer = { min, max };
   const bl = blankAt(qmin, 0);
   return {
-    text: ['세 자리 수를 ', n(d), jo(d, '으로', '로').replace('으로', roOnly(d)), ' 나눴더니 몫은 두 자리 수, 나머지는 ', n(r), jo(r, '이에요', '예요'), '. 나뉠 수가 될 수 있는 가장 작은 수와 가장 큰 수는 얼마예요?'],
+    text: ['세 자리 수를 ', n(d), jo(d, '으로', '로').replace('으로', roOnly(d)), ' 나눴더니 몫은 두 자리 수, 나머지는 ', n(r), jo(r, '이에요', '예요'), '. 나누어지는 수가 될 수 있는 가장 작은 수와 가장 큰 수는 얼마예요?'],
     figure: null,
     challenge: true,
     input: { kind: 'compound', fields: [{ key: 'min', label: '가장 작은 수' }, { key: 'max', label: '가장 큰 수' }] },
@@ -404,13 +448,13 @@ function t163Level7(d, r) {
       ],
       answer,
     ),
-    hints: [`세 자리 수를 ${ro(d)} 나누면 몫은 두 자리, 나머지는 ${ieyo(r)}. 나뉠 수의 가장 작은 수와 가장 큰 수를 물어요.`, `나뉠 수 = ${d} × (몫) + ${ieyo(r)}. 몫이 될 수 있는 가장 작은 수와 가장 큰 수를 먼저 생각해 볼까요?`, `몫이 99이면 ${d} × 99 + ${r} = ${ieyo(max)}.`, `나뉠 수가 세 자리가 되는 가장 작은 몫: ${bl.blank}`],
+    hints: [`세 자리 수를 ${ro(d)} 나누면 몫은 두 자리, 나머지는 ${ieyo(r)}. 나누어지는 수의 가장 작은 수와 가장 큰 수를 물어요.`, `나누어지는 수 = ${d} × (몫) + ${ieyo(r)}. 몫이 될 수 있는 가장 작은 수와 가장 큰 수를 먼저 생각해 볼까요?`, `몫이 99이면 ${d} × 99 + ${r} = ${ieyo(max)}.`, `나누어지는 수가 세 자리가 되는 가장 작은 몫: ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     blankThen: '가장 작은 수와 가장 큰 수를 써요.',
     explain: {
-      why: [`몫이 10이면 ${d} × 10 + ${r} = ${d * 10 + r}${roOnly(d * 10 + r)} 세 자리가 아니에요.`, `몫이 ${qmin}부터 세 자리가 되어 ${d} × ${qmin} + ${r} = ${min}, 몫이 99이면 ${ieyo(max)}.`, `그래서 가장 작은 수는 ${min}, 가장 큰 수는 ${ieyo(max)}.`],
-      alt: [`${min} ÷ ${d} = ${qmin} … ${r}, ${max} ÷ ${d} = 99 … ${r}${roOnly(r)} 확인해요.`, `두 풀이 모두 ${wa(min)} ${ieyo(max)}.`],
+      why: [`몫이 10이면 ${d} × 10 + ${r} = ${d * 10 + r}${jo(d * 10 + r, '이라서', '라서')} 세 자리가 아니에요.`, `몫이 ${qmin}부터 세 자리가 되어 ${d} × ${qmin} + ${r} = ${min}, 몫이 99이면 ${ieyo(max)}.`, `그래서 가장 작은 수는 ${min}, 가장 큰 수는 ${ieyo(max)}.`],
+      alt: [`${min} ÷ ${d} = ${qmin} … ${r}, ${max} ÷ ${d} = 99 … ${r}${roOnly(r)} 확인해요.`, '확인해 보면 답이 맞아요.'],
     },
   };
 }
@@ -441,13 +485,13 @@ function t164Level1(N, d) {
     input: { kind: 'number' },
     answer: q,
     discriminators: uniq([{ value: N * d, category: '식', kind: 'check', feedback: '나누면 커질까요?' }, { value: (H / d) * 100 + (T / d) * 10, category: '개념', kind: 'check', feedback: '일 모형도 나눴나요?' }], q),
-    hints: [`수 모형은 백 모형 ${H}개, 십 모형 ${T}개, 일 모형 ${U}개예요. ${d}명이 똑같이 가질 때 한 사람 몫을 물어요.`, '백 모형부터 한 사람에게 똑같이 나눠 줘 볼까요? 그다음 십 모형, 일 모형도 나눠 줘요.', `백 모형은 한 사람에게 ${H / d}개씩이에요.`, '십 모형은 한 사람에게 ☐개'],
+    hints: [`구하는 것: 한 사람이 받는 몫 / 알고 있는 것: 백 모형 ${H}개, 십 모형 ${T}개, 일 모형 ${U}개, ${d}명이 똑같이 가짐`, '백 모형부터 한 사람에게 똑같이 나눠 줘 볼까요? 그다음 십 모형, 일 모형도 나눠 줘요.', `백 모형은 한 사람에게 ${H / d}개씩이에요.`, '십 모형은 한 사람에게 ☐개'],
     blank: '십 모형 ☐개',
     blankAnswer: String(T / d),
     blankThen: '한 사람에게 얼마씩이에요?',
     explain: {
       why: [`백 모형 ${H / d}개, 십 모형 ${T / d}개, 일 모형 ${U / d}개씩 나눠 가져요.`, `한 사람에게 ${(H / d) * 100} + ${(T / d) * 10} + ${U / d} = ${ieyo(q)}.`, `그래서 ${N} ÷ ${d} = ${ieyo(q)}.`],
-      alt: [`${d} × ${q} = ${N}${roOnly(N)} 확인해요.`, `두 풀이 모두 ${ieyo(q)}.`],
+      alt: [`${d} × ${q} = ${N}${roOnly(N)} 확인해요.`, '확인해 보면 답이 맞아요.'],
     },
   };
 }
@@ -459,7 +503,7 @@ function t164Level2(N, d) {
   const answer = { tens: 0, q };
   const noZero = (H / d) * 10 + (10 * T + U) / d;
   return {
-    text: [n(N), jo(N, '을', '를'), ' 수 모형으로 나타냈어요. ', n(d), '명이 똑같이 나누어 가져요. 한 사람이 받는 십 모형은 몇 개이고, 한 사람에게 얼마씩이에요?'],
+    text: [n(N), jo(N, '을', '를'), ' 수 모형으로 나타냈어요. ', n(d), '명이 똑같이 나누어 가지면 한 사람에게 얼마씩이에요?'],
     figure: { kind: 'base10', hundreds: H, tens: T, ones: U },
     input: { kind: 'compound', fields: [{ key: 'tens', label: '한 사람이 받는 십 모형' }, { key: 'q', label: '한 사람 몫' }] },
     answer,
@@ -470,13 +514,13 @@ function t164Level2(N, d) {
       ],
       answer,
     ),
-    hints: [`수 모형은 백 모형 ${H}개, 십 모형 ${T}개, 일 모형 ${U}개예요. ${d}명이 똑같이 가질 때 한 사람이 받는 십 모형 수와 한 사람 몫을 물어요.`, '백 모형부터 나눠 줘 볼까요? 모자라서 나눠 줄 수 없는 모형은 아래 모형으로 바꿔요.', `백 모형은 한 사람에게 ${H / d}개씩이에요.`, '십 모형을 일 모형으로 바꿔 나누면 한 사람에게 일 모형 ☐개'],
+    hints: [`구하는 것: 한 사람이 받는 십 모형 수와 한 사람 몫 / 알고 있는 것: 백 모형 ${H}개, 십 모형 ${T}개, 일 모형 ${U}개, ${d}명이 똑같이 가짐`, '백 모형부터 나눠 줘 볼까요? 모자라서 나눠 줄 수 없는 십 모형은 일 모형 10개로 바꿔요.', `백 모형은 한 사람에게 ${H / d}개씩이에요.`, '십 모형을 일 모형으로 바꿔 나누면 한 사람에게 일 모형 ☐개'],
     blank: '일 모형 ☐개',
     blankAnswer: String((10 * T + U) / d),
     blankThen: '두 칸을 채워요.',
     explain: {
       why: [`백 모형은 ${H / d}개씩이에요. 십 모형 ${T}개는 ${d}명에게 나눠 줄 수 없어서 일 모형 ${10 * T}개로 바꿔요.`, `일 모형 ${10 * T + U}개를 나누면 ${(10 * T + U) / d}개씩, 몫의 십의 자리는 0이에요.`, `그래서 십 모형은 0개, 한 사람에게 ${ieyo(q)}.`],
-      alt: [`${d} × ${q} = ${N}${roOnly(N)} 확인해요.`, `두 풀이 모두 ${ieyo(q)}.`],
+      alt: [`${d} × ${q} = ${N}${roOnly(N)} 확인해요.`, '확인해 보면 답이 맞아요.'],
     },
   };
 }
@@ -489,24 +533,24 @@ function t164Level3(N, d) {
   const answer = { change: left, q };
   const dropped = Math.floor(H / d) * 100 + Math.floor(T / d) * 10 + Math.floor(U / d);
   return {
-    text: [n(N), jo(N, '을', '를'), ' 수 모형으로 나타냈어요. ', n(d), '명이 똑같이 나누어 가져요. 십 모형으로 바꿔야 하는 백 모형은 몇 개이고, 한 사람에게 얼마씩이에요?'],
+    text: [n(N), jo(N, '을', '를'), ' 수 모형으로 나타냈어요. ', n(d), '명이 똑같이 나누어 가지면 한 사람에게 얼마씩이에요?'],
     figure: { kind: 'base10', hundreds: H, tens: T, ones: U },
-    input: { kind: 'compound', fields: [{ key: 'change', label: '바꾸는 백 모형' }, { key: 'q', label: '한 사람 몫' }] },
+    input: { kind: 'compound', fields: [{ key: 'change', label: '십 모형으로 바꾸는 백 모형' }, { key: 'q', label: '한 사람 몫' }] },
     answer,
     discriminators: uniqK(
       [
-        { key: 'change', value: 0, category: '개념', kind: 'check', feedback: '백 모형이 남지 않나요?' },
+        { key: 'change', value: 0, category: '개념', kind: 'check', feedback: '남는 백 모형이 있나요?' },
         { key: 'q', value: dropped, category: '개념', kind: 'nudge', feedbackCheck: '남은 백 모형을 다시 볼까요?', feedback: '남은 백 모형은 십 모형 10개로 바꿔 볼까요?' },
       ],
       answer,
     ),
-    hints: [`수 모형은 백 모형 ${H}개, 십 모형 ${T}개, 일 모형 ${U}개예요. ${d}명이 똑같이 가질 때 바꿔야 하는 백 모형 수와 한 사람 몫을 물어요.`, '백 모형부터 똑같이 나눠 줘 볼까요? 남은 백 모형은 십 모형 10개로 바꿔서 나눠요.', `백 모형은 한 사람에게 ${Math.floor(H / d)}개씩 나눠 줄 수 있어요.`, '남은 백 모형을 바꾼 십 모형까지 나누면 한 사람에게 십 모형 ☐개'],
+    hints: [`구하는 것: 십 모형으로 바꾸는 백 모형 수와 한 사람 몫 / 알고 있는 것: 백 모형 ${H}개, 십 모형 ${T}개, 일 모형 ${U}개, ${d}명이 똑같이 가짐`, '백 모형부터 똑같이 나눠 줘 볼까요? 남은 백 모형은 십 모형 10개로 바꿔서 나눠요.', `백 모형은 한 사람에게 ${Math.floor(H / d)}개씩 나눠 줄 수 있어요.`, '바꾼 십 모형과 처음 십 모형을 함께 나누면: 한 사람에게 십 모형 ☐개'],
     blank: '십 모형 ☐개',
     blankAnswer: String(Math.floor((10 * left + T) / d)),
     blankThen: '두 칸을 채워요.',
     explain: {
       why: [`백 모형 ${H}개를 ${d}명이 나누면 ${Math.floor(H / d)}개씩이고 ${left}개가 남아요.`, `남은 ${left}개를 십 모형 ${10 * left}개로 바꿔 십 모형 ${10 * left + T}개를 나누고, 남는 것은 일 모형으로 바꿔 나눠요.`, `그래서 백 모형 ${left}개를 바꾸고, 한 사람에게 ${ieyo(q)}.`],
-      alt: [`${d} × ${q} = ${N}${roOnly(N)} 확인해요.`, `두 풀이 모두 ${ieyo(q)}.`],
+      alt: [`${d} × ${q} = ${N}${roOnly(N)} 확인해요.`, '확인해 보면 답이 맞아요.'],
     },
   };
 }
@@ -551,7 +595,7 @@ const D1 = {
   maxLevel: 2,
   diagnostic: true,
   generate() {
-    return { ...buildDiv(624, 6, { text: ['자갈치역에서 ', V(624), '명이 열차 ', V(6), '대에 똑같이 나눠 탔어요. '], unit: '명' }), hints: [], blank: null };
+    return { ...buildDiv(624, 6, divScene(624, 6)), hints: [], blank: null };
   },
 };
 const D2 = {

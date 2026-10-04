@@ -79,6 +79,8 @@ function multiGrade(answer, discs) {
 }
 
 const SEO = () => n(13, { real: true, source: SRC_ORDER });
+/** 역 번호(다대포해수욕장 095 … 서대신 107). 화면에 세 자리로 보이게 문자열 값 */
+const ST = (v) => n(v, { real: true, source: '역 번호: src/data/busan.json(공공데이터 3033564), 화면 표기 세 자리' });
 const STATIONS13 = ['다대포해수욕장', '다대포항', '낫개', '신장림', '장림', '동매', '신평', '하단', '당리', '사하', '괴정', '대티', '서대신'];
 /** 두 자리 × 두 자리를 잘못 계산한 값들 */
 function twoByTwoDiscs(x, y) {
@@ -99,9 +101,9 @@ function twoByTwoDiscs(x, y) {
 }
 
 // ── T13-1 정비창 점검 (식) — 1~3단계 ──
-/** 정비창 점검 장면: 서대신역에 열차가 설 때마다 x명씩, 열차 y대 */
-function trainScene(x, y, level) {
-  return { text: [level >= 3 ? '어느 날 서대신역에 열차가 설 때마다 ' : '서대신역에 열차가 설 때마다 ', V(x), '명씩 탔어요. 열차 ', V(y), '대가 섰을 때 탄 사람은 모두 몇 명인지 식으로 계산해요. '], unit: '명' };
+/** 정비창 점검 장면: 서대신역에 서는 열차마다 x명씩 탔다고 해 봐요(지어낸 규칙은 가정으로), 열차 y대 */
+function trainScene(x, y) {
+  return { text: ['서대신역에 서는 열차마다 ', V(x), '명씩 탔다고 해 봐요. 열차 ', V(y), '대가 섰어요.', '\n'], unit: '명' };
 }
 const numInput = (scene) => (scene?.unit ? { kind: 'number', unit: scene.unit } : { kind: 'number' });
 
@@ -128,8 +130,8 @@ function t131Level1(a, b, scene = null) {
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     explain: {
-      why: [`${A} × ${eun(B)} ${a} × ${b}에 10 × 10 = 100을 곱한 것과 같아요.`, `${a} × ${b} = ${ieyo(a * b)}.`, `그래서 ${A} × ${B} = ${ieyo(P)}.`],
-      alt: [`${A} × ${b} = ${A * b}, 그것을 10배 하면 ${ieyo(P)}.`, `어느 길로 해도 답은 ${ro(P)} 같아요.`],
+      why: [`${A} × ${eun(B)} ${a} × ${b}에 100을 곱한 것과 같아요.`, `${a} × ${b} = ${a * b}, 100배 하면 ${ieyo(P)}.`, scene?.unit ? `그래서 모두 ${P}${scene.unit}이에요.` : `그래서 ${A} × ${B} = ${ieyo(P)}.`],
+      alt: [`${A} × ${b} = ${A * b}, 그것을 10배 하면 ${ieyo(P)}.`, `어느 길로 해도 답은 ${ieyo(P)}.`],
     },
   };
 }
@@ -154,8 +156,8 @@ function t131Level2(x, b, scene = null) {
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     explain: {
-      why: [`${x} × ${eun(B)} ${x} × ${b}의 10배예요.`, `${x} × ${b} = ${x * b}, 10배 하면 ${ieyo(P)}.`, `그래서 ${x} × ${B} = ${ieyo(P)}.`],
-      alt: [`${eul(x)} ${Math.floor(x / 10) * 10}${jo(Math.floor(x / 10) * 10, '과', '와')} ${ro(x % 10)} 나눠요. ${Math.floor(x / 10) * 10} × ${B} = ${Math.floor(x / 10) * 10 * B}, ${x % 10} × ${B} = ${ieyo((x % 10) * B)}.`, `어느 길로 해도 답은 ${ro(P)} 같아요.`],
+      why: [`${x} × ${eun(B)} ${x} × ${b}의 10배예요.`, `${x} × ${b} = ${x * b}, 10배 하면 ${ieyo(P)}.`, scene?.unit ? `그래서 모두 ${P}${scene.unit}이에요.` : `그래서 ${x} × ${B} = ${ieyo(P)}.`],
+      alt: [`${eul(x)} ${Math.floor(x / 10) * 10}${jo(Math.floor(x / 10) * 10, '과', '와')} ${ro(x % 10)} 갈라요. ${Math.floor(x / 10) * 10} × ${B} = ${Math.floor(x / 10) * 10 * B}, ${x % 10} × ${B} = ${(x % 10) * B}, 합치면 ${ieyo(P)}.`, `어느 길로 해도 답은 ${ieyo(P)}.`],
     },
   };
 }
@@ -173,12 +175,12 @@ function buildTwo(x, y, scene = null) {
     input: numInput(scene),
     answer: P,
     discriminators: twoByTwoDiscs(x, y),
-    hints: [`${wa(x)} ${y}의 곱을 물어요.`, `${eul(y)} ${wa(t * 10)} ${ro(u)} 나눠서 ${x}에 각각 곱해 볼까요?`, `${x} × ${u} = ${x * u}, ${x} × ${t * 10} = ${ieyo(x * t * 10)}.`, `${x * u} + ${x * t * 10} = ${bl.blank}`],
+    hints: [`${wa(x)} ${y}의 곱을 물어요.`, `${eul(y)} ${wa(t * 10)} ${ro(u)} 갈라서 ${x}에 하나씩 곱해 볼까요?`, `${x} × ${u} = ${x * u}, ${x} × ${t * 10} = ${ieyo(x * t * 10)}.`, `${x * u} + ${x * t * 10} = ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     explain: {
-      why: [`${x} × ${eun(y)} ${x} × ${wa(t * 10)} ${x} × ${eul(u)} 합친 거예요.`, `${x * t * 10} + ${x * u} = ${ieyo(P)}.`, `그래서 ${x} × ${y} = ${ieyo(P)}.`],
-      alt: [`${eul(x)} ${wa(xt)} ${ro(xu)} 나눠요. ${xt} × ${y} = ${xt * y}, ${xu} × ${y} = ${xu * y}, ${xt * y} + ${xu * y} = ${ieyo(P)}.`, `두 풀이 모두 ${ieyo(P)}.`],
+      why: [`${x} × ${eun(y)} ${x} × ${wa(t * 10)} ${x} × ${eul(u)} 합친 거예요.`, `${x * t * 10} + ${x * u} = ${ieyo(P)}.`, scene?.unit ? `그래서 모두 ${P}${scene.unit}이에요.` : `그래서 ${x} × ${y} = ${ieyo(P)}.`],
+      alt: [`${eul(x)} ${wa(xt)} ${ro(xu)} 갈라요. ${xt} × ${y} = ${xt * y}, ${xu} × ${y} = ${xu * y}, ${xt * y} + ${xu * y} = ${ieyo(P)}.`, `어느 길로 해도 답은 ${ieyo(P)}.`],
     },
   };
 }
@@ -193,14 +195,14 @@ const T13_1 = {
   generate(rng, level) {
     if (level === 1) {
       const [a, b] = draw(rng, () => [rng.int(2, 9), rng.int(2, 9)], ([p, q]) => p !== q && (p * q) % 10 !== 0, [3, 4]);
-      return t131Level1(a, b, trainScene(a * 10, b * 10, level));
+      return t131Level1(a, b, trainScene(a * 10, b * 10));
     }
     if (level === 2) {
       const [x, b] = draw(rng, () => [rng.int(12, 98), rng.int(2, 9)], ([p, q]) => p % 10 > 1 && p !== q * 10 && (p * q) % 10 !== 0, [23, 4]);
-      return t131Level2(x, b, trainScene(x, b * 10, level));
+      return t131Level2(x, b, trainScene(x, b * 10));
     }
     const [x, y] = draw(rng, () => [rng.int(12, 49), rng.int(12, 39)], ([p, q]) => p % 10 > 1 && q % 10 > 1 && p !== q && (p * q) % 10 !== q % 10, [23, 14]);
-    return buildTwo(x, y, trainScene(x, y, level));
+    return buildTwo(x, y, trainScene(x, y));
   },
 };
 
@@ -209,7 +211,7 @@ function t132Level1(c) {
   const P = 13 * c;
   const bl = blankAt(P, 0);
   return {
-    text: ['다대포해수욕장부터 서대신까지는 ', SEO(), '역이에요. 어느 날 역마다 ', V(c), '명씩 탔어요. 모두 몇 명이에요?'],
+    text: ['첫차에 다대포해수욕장역부터 역마다 ', V(c), '명씩 탔어요. 서대신역까지 ', SEO(), '역에서 탄 사람은 모두 몇 명이에요?'],
     figure: null,
     input: { kind: 'number', unit: '명' },
     answer: P,
@@ -220,12 +222,12 @@ function t132Level1(c) {
       ],
       P,
     ),
-    hints: [`다대포해수욕장부터 서대신까지 13역이고, 역마다 ${c}명씩 탔어요. 모두 몇 명인지 물어요.`, `${c}명씩 13역이에요. ${eun(c)} 10이 ${c / 10}개라는 것을 써 볼까요?`, `13 × ${c / 10} = ${ieyo(13 * (c / 10))}.`, `13 × ${c} = ${bl.blank}`],
+    hints: [`구하는 것: 13역에서 탄 사람이 모두 몇 명인지 / 알고 있는 것: 13역, 역마다 ${c}명`, `${c}명씩 13역이에요. ${eun(c)} 10이 ${c / 10}개예요. 13 × ${c / 10}부터 생각해 볼까요?`, `13 × ${c / 10} = ${ieyo(13 * (c / 10))}.`, `13 × ${c} = ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     explain: {
       why: [`${c}명씩 13역이니 13 × ${eul(c)} 해요.`, `13 × ${c / 10} = ${13 * (c / 10)}, 10배 하면 ${ieyo(P)}.`, `그래서 모두 ${P}명이에요.`],
-      alt: [`13을 10과 3으로 나눠요. 10 × ${c} = ${10 * c}, 3 × ${c} = ${3 * c}, 합치면 ${ieyo(P)}.`, `어느 길로 해도 답은 ${ro(P)} 같아요.`],
+      alt: [`13을 10과 3으로 갈라요. 10 × ${c} = ${10 * c}, 3 × ${c} = ${3 * c}, 합치면 ${ieyo(P)}.`, `어느 길로 해도 답은 ${P}명이에요.`],
     },
   };
 }
@@ -234,7 +236,7 @@ function t132Level2(c) {
   const P = 13 * c;
   const bl = blankAt(P, 1);
   return {
-    text: ['어느 날 역마다 ', V(c), '명씩 탔어요. 다대포해수욕장부터 서대신까지 ', SEO(), '역에서 탄 사람은 모두 몇 명이에요?'],
+    text: ['노포 쪽으로 가는 열차에 역마다 ', V(c), '명씩 탔어요. 다대포해수욕장역부터 서대신역까지 ', SEO(), '역에서 탄 사람은 모두 몇 명이에요?'],
     figure: null,
     input: { kind: 'number', unit: '명' },
     answer: P,
@@ -247,26 +249,26 @@ function t132Level2(c) {
       ],
       P,
     ),
-    hints: [`13역에서 역마다 ${c}명씩 탔어요. 모두 몇 명인지 물어요.`, `13을 10과 3으로 나눠서 ${c}에 각각 곱해 볼까요?`, `${c} × 10 = ${c * 10}, ${c} × 3 = ${ieyo(c * 3)}.`, `${c * 10} + ${c * 3} = ${bl.blank}`],
+    hints: [`구하는 것: 13역에서 탄 사람이 모두 몇 명인지 / 알고 있는 것: 13역, 역마다 ${c}명`, `13을 10과 3으로 갈라서 ${c}에 하나씩 곱해 볼까요?`, `${c} × 10 = ${c * 10}, ${c} × 3 = ${ieyo(c * 3)}.`, `${c * 10} + ${c * 3} = ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     explain: {
       why: [`${c}명씩 13역이니 ${c} × 13을 해요.`, `${c} × 10 = ${c * 10}, ${c} × 3 = ${c * 3}, 합치면 ${ieyo(P)}.`, `그래서 모두 ${P}명이에요.`],
-      alt: [`${eul(c)} ${Math.floor(c / 10) * 10}${jo(Math.floor(c / 10) * 10, '과', '와')} ${ro(c % 10)} 나눠요. ${Math.floor(c / 10) * 10} × 13 = ${Math.floor(c / 10) * 130}, ${c % 10} × 13 = ${ieyo((c % 10) * 13)}.`, `어느 길로 해도 답은 ${ro(P)} 같아요.`],
+      alt: [`${eul(c)} ${Math.floor(c / 10) * 10}${jo(Math.floor(c / 10) * 10, '과', '와')} ${ro(c % 10)} 갈라요. ${Math.floor(c / 10) * 10} × 13 = ${Math.floor(c / 10) * 130}, ${c % 10} × 13 = ${(c % 10) * 13}, 합치면 ${ieyo(P)}.`, `어느 길로 해도 답은 ${ieyo(P)}.`],
     },
   };
 }
 
-/** 3단계: 그림에서 역 수 세기(양 끝 포함) + 곱 */
+/** 3단계: 역 수 세기(양 끝 포함, 역 번호 빼기 또는 그림 세기) + 곱 */
 function t132Level3(x) {
   const P = 13 * x;
   const bl = blankAt(P, 1);
   const answer = { count: 13, total: P };
   const fb = '다대포해수욕장도 사람이 탄 역인가요?';
   return {
-    text: ['어느 날 다대포해수욕장부터 서대신까지 역마다 ', V(x), '명씩 탔어요. 두 역을 포함해 몇 역이고, 모두 몇 명이 탔어요?'],
+    text: ['노포 쪽으로 가는 열차에 다대포해수욕장역(', ST('095'), ')부터 역마다 ', V(x), '명씩 탔어요. 내린 사람은 없었어요. 서대신역(', ST('107'), ')을 떠날 때 몇 명이 타 있어요?'],
     figure: { kind: 'stations', stations: STATIONS13 },
-    input: { kind: 'compound', fields: [{ key: 'count', label: '역 수' }, { key: 'total', label: '모두' }] },
+    input: { kind: 'compound', fields: [{ key: 'count', label: '사람이 탄 역 수' }, { key: 'total', label: '타 있는 사람' }] },
     answer,
     discriminators: uniqK(
       [
@@ -276,13 +278,13 @@ function t132Level3(x) {
       answer,
     ),
     counting: true,
-    hints: [`다대포해수욕장부터 서대신까지 역마다 ${x}명씩 탔어요. 역 수와 모두 탄 사람 수를 물어요.`, '그림에서 역을 하나씩 짚으며 세어 볼까요? 양 끝 역도 사람이 탄 역이에요.', '다대포해수욕장이 1번째, 다대포항이 2번째 역이에요.', '서대신은 1☐번째 역'],
+    hints: [`구하는 것: 사람이 탄 역 수, 서대신역을 떠날 때 타 있는 사람 수 / 알고 있는 것: 다대포해수욕장역 095, 서대신역 107, 역마다 ${x}명`, '역 번호의 차로 역 사이 간격 수를 구해 볼까요? 양 끝 역도 사람이 탄 역이에요.', '107 − 95 = 12, 역 사이 간격은 12개예요.', '다대포해수욕장역부터 서대신역까지 1☐역'],
     blank: '1☐',
     blankAnswer: '3',
-    blankThen: '역 수와 모두 탄 사람 수를 써요.',
+    blankThen: '역 수와 타 있는 사람 수를 써요.',
     explain: {
-      why: ['다대포해수욕장부터 서대신까지 역은 13개예요(정거장 간격은 12개).', `${x} × 13 = ${x * 10} + ${x * 3} = ${ieyo(P)}.`, `그래서 13역, 모두 ${P}명이에요.`],
-      alt: [`${x} × 13 = ${x} × 10 + ${x} × 3 = ${x * 10} + ${x * 3} = ${ieyo(P)}.`, `두 풀이 모두 ${P}명이에요.`],
+      why: ['역 번호로 보면 107 − 95 = 12, 역 사이 간격이 12개예요.', '양 끝 역도 사람이 탔으니 역은 12 + 1 = 13개예요.', `${x} × 13 = ${x * 10} + ${x * 3} = ${ieyo(P)}.`, `그래서 13역, 모두 ${P}명이에요.`],
+      alt: ['그림에서 다대포해수욕장을 1번째로 하나씩 세어도 서대신은 13번째 역이에요.', `어느 길로 해도 답은 13역, ${P}명이에요.`],
     },
   };
 }
@@ -296,7 +298,7 @@ function t132Level4(t, u, v) {
   const P = 13 * p;
   const bl = blankAt(P, 0);
   return {
-    text: ['다대포해수욕장부터 서대신까지 ', SEO(), '역에서 역마다 같은 수만큼 탔어요. 어느 날 역무원이 장부에서 한 역의 사람 수 일의 자리 ', V(u), jo(u, '을', '를'), ' ', V(v), roOnly(v), ' 잘못 보고 계산했더니 ', V(W), '명이 나왔어요. 바르게 계산하면 몇 명이에요?'],
+    text: ['서대신역까지 ', SEO(), '역에서 역마다 같은 수의 사람이 탔어요. ', u % 2 ? '동생이' : '내가', ' 한 역의 사람 수 일의 자리 ', V(u), jo(u, '을', '를'), ' ', V(v), roOnly(v), ' 잘못 보고 계산해서 ', V(W), '명이 나왔어요. 바르게 계산하면 몇 명이에요?'],
     figure: null,
     input: { kind: 'number', unit: '명' },
     answer: P,
@@ -309,12 +311,12 @@ function t132Level4(t, u, v) {
       ],
       P,
     ),
-    hints: [`13역에서 역마다 같은 수만큼 탔어요. 일의 자리 ${eul(u)} ${v}${roOnly(v)} 잘못 보고 계산한 결과가 ${W}명이에요. 바르게 계산한 수를 물어요.`, '한 역에서 몇 명씩 더 세었을까요? 13역이면 모두 몇 명을 더 센 걸까요?', `한 역에서 ${d}명씩, 13역이면 ${13 * d}명을 더 셌어요.`, `${W} − ${13 * d} = ${bl.blank}`],
+    hints: [`구하는 것: 바르게 계산한 사람 수 / 알고 있는 것: 13역, 일의 자리 ${eul(u)} ${v}${roOnly(v)} 봄, 잘못 계산한 결과 ${W}명`, '한 역에서 몇 명씩 더 세었을까요? 13역이면 모두 몇 명을 더 센 걸까요?', `한 역에서 ${d}명씩, 13역이면 ${13 * d}명을 더 셌어요.`, `${W} − ${13 * d} = ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     explain: {
       why: [`${eul(u)} ${v}${roOnly(v)} 보면 한 역에서 ${d}명씩 더 센 거예요.`, `13역이면 ${d} × 13 = ${13 * d}명을 더 세었으니 ${W} − ${13 * d} = ${ieyo(P)}.`, `그래서 바르게 계산하면 ${P}명이에요.`],
-      alt: [`잘못 본 수는 ${q}명이니 한 역의 바른 수는 ${p}명이에요. ${p} × 13 = ${ieyo(P)}.`, `두 풀이 모두 ${P}명이에요.`],
+      alt: [`13 × □ = ${W}에서 잘못 본 수는 ${q}명이에요. 바른 수는 ${p}명이니 ${p} × 13 = ${ieyo(P)}.`, `어느 길로 해도 답은 ${P}명이에요.`],
     },
   };
 }
@@ -352,12 +354,12 @@ function t133Level5(a, y, k, T) {
     answer,
     discriminators: uniq(discs, answer),
     grade: multiGrade(answer, discs),
-    hints: [`${a}□에 ${eul(y)} 곱한 값이 ${T}보다 작게 되는 □를 모두 찾아요.`, `어림해서 ${a}0 × ${y}부터 볼까요? 경계 근처의 수만 정확히 계산해 봐요.`, `□가 ${k + 1}${jo(k + 1, '이면', '면')} ${a}${k + 1} × ${y} = ${ro(val(k + 1))} ${T}보다 커요.`, '들어갈 수 있는 수: 0부터 ☐까지'],
+    hints: [`구하는 것: □에 들어갈 수 있는 수 모두 / 알고 있는 것: ${a}□ × ${y}${jo(y, '이', '가')} ${T}보다 작아요`, `어림해서 ${a}0 × ${y}부터 볼까요? 답이 바뀌는 곳 근처의 수만 정확히 계산해 봐요.`, `□가 ${k + 1}${jo(k + 1, '이면', '면')} ${a}${k + 1} × ${y} = ${ro(val(k + 1))} ${T}보다 커요.`, '들어갈 수 있는 수: 0부터 ☐까지'],
     blank: '0부터 ☐까지',
     blankAnswer: String(k),
     explain: {
       why: [`${a}${k} × ${y} = ${ro(val(k))} ${T}보다 작아요.`, `${a}${k + 1} × ${y} = ${ro(val(k + 1))} ${T}보다 커요.`, `그래서 들어갈 수 있는 수는 0부터 ${k}까지예요.`],
-      alt: [`□에 0부터 차례로 넣어 곱을 적어 봐도 돼요.`, `어느 길로 해도 답은 0부터 ${k}까지로 같아요.`],
+      alt: [`□에 0부터 차례로 넣어 곱을 적어 봐도 돼요.`, `어느 길로 해도 답은 0부터 ${k}까지예요.`],
     },
   };
 }
@@ -376,17 +378,17 @@ function t133Level6(cards) {
     answer: best,
     discriminators: uniq(
       [
-        { value: wrong, category: '개념', kind: 'nudge', feedbackCheck: '다른 짝도 견주어 봤나요?', feedback: `${10 * d[0] + d[3]} × ${10 * d[1] + d[2]}도 계산해 봤나요?` },
-        { value: wrong2, category: '개념', kind: 'check', feedback: '다른 짝도 견주어 봤나요?' },
+        { value: wrong, category: '개념', kind: 'nudge', feedbackCheck: '다른 짝도 비교해 봤나요?', feedback: `${10 * d[0] + d[3]} × ${10 * d[1] + d[2]}도 계산해 봤나요?` },
+        { value: wrong2, category: '개념', kind: 'check', feedback: '다른 짝도 비교해 봤나요?' },
       ],
       best,
     ),
-    hints: ['카드 네 장으로 두 자리 수 두 개를 만들어요. 두 수의 곱이 가장 클 때를 물어요.', '큰 숫자 두 개는 십의 자리에 놓아요. 남은 두 숫자를 어느 쪽에 붙일지 견주어 볼까요?', `${10 * d[0] + d[2]} × ${10 * d[1] + d[3]} = ${ieyo(wrong)}.`, `${10 * d[0] + d[3]} × ${10 * d[1] + d[2]} = ${bl.blank}`],
+    hints: [`구하는 것: 가장 큰 곱 / 알고 있는 것: 숫자 카드 ${cards.join(', ')}, (두 자리 수) × (두 자리 수)`, '큰 숫자 두 개는 십의 자리에 놓아요. 남은 두 숫자를 어느 쪽에 붙일지 비교해 볼까요?', `${10 * d[0] + d[2]} × ${10 * d[1] + d[3]} = ${ieyo(wrong)}.`, `${10 * d[0] + d[3]} × ${10 * d[1] + d[2]} = ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     explain: {
       why: [`십의 자리에는 큰 숫자 ${wa(d[0])} ${eul(d[1])} 놓아요.`, `남은 숫자를 두 가지로 붙여 보면 ${10 * d[0] + d[3]} × ${10 * d[1] + d[2]} = ${best}, ${10 * d[0] + d[2]} × ${10 * d[1] + d[3]} = ${ieyo(wrong)}.`, `그래서 가장 큰 곱은 ${ieyo(best)}.`],
-      alt: ['두 수의 차이가 작을수록 곱이 커져요. 그래서 큰 십의 자리 쪽에 작은 일의 자리를 붙여요.', `어느 길로 해도 답은 ${ro(best)} 같아요.`],
+      alt: ['두 수의 차이가 작을수록 곱이 커져요. 그래서 큰 십의 자리 쪽에 작은 일의 자리를 붙여요.', `어느 길로 해도 답은 ${ieyo(best)}.`],
     },
   };
 }
@@ -418,13 +420,13 @@ function t133Level7(p, q) {
       if (a * b === P) return { correct: false, category: '개념', kind: 'check', feedback: '두 수 모두 두 자리 수인가요?' };
       return { correct: false, category: null, kind: 'check', feedback: null };
     },
-    hints: [`두 자리 수 두 개의 곱이 ${ieyo(P)}. 그 두 수를 물어요.`, `곱의 일의 자리가 ${u}${jo(u, '이', '가')} 되는 두 일의 자리 숫자를 찾아볼까요? 그다음 어림으로 좁혀 봐요.`, `일의 자리 짝은 ${unitPairs(u).map(([a, b]) => `${a}·${b}`).join(', ')} 중 하나예요.`, `${p} × ☐${q % 10} = ${P}`],
+    hints: [`구하는 것: 곱해서 ${P}${jo(P, '이', '가')} 되는 두 자리 수 두 개 / 알고 있는 것: 두 수의 곱 ${P}`, `곱의 일의 자리가 ${u}${jo(u, '이', '가')} 되는 두 일의 자리 숫자를 찾아볼까요? 그다음 어림으로 좁혀 봐요.`, `일의 자리 짝은 ${unitPairs(u).map(([a, b]) => `${a}·${b}`).join(', ')} 중 하나예요.`, `${p} × ☐${q % 10} = ${P}`],
     blank: `☐${q % 10}`,
     blankAnswer: String(Math.floor(q / 10)),
     blankThen: '두 수를 써요.',
     explain: {
       why: [`곱의 일의 자리 ${u}${jo(u, '이', '가')} 나오려면 두 수의 일의 자리는 ${p % 10}${jo(p % 10, '과', '와')} ${q % 10} 같은 짝이어야 해요.`, `어림으로 좁혀 곱해 보면 ${p} × ${q} = ${ieyo(P)}.`, `그래서 두 수는 ${wa(p)} ${ieyo(q)}.`],
-      alt: [`${eul(P)} 작은 수로 차례로 나눠 보아도 ${wa(p)} ${q}만 두 자리 수끼리의 곱이에요.`, `두 풀이 모두 ${wa(p)} ${ieyo(q)}.`],
+      alt: [`곱이 ${P}${jo(P, '이', '가')} 되는 두 자리 수끼리의 곱셈은 ${p} × ${q} 하나뿐이에요.`, '확인해 보면 답이 맞아요.'],
     },
   };
 }
@@ -481,7 +483,7 @@ function t134(x, y) {
     answer,
   );
   return {
-    text: ['역 대합실 바닥에 타일을 가로 ', V(x), '장, 세로 ', V(y), '줄로 깐다고 해 봐요. 그림처럼 네 부분으로 나눠서 타일 수를 구해요.'],
+    text: ['역 대합실 바닥에 타일을 가로 ', V(x), '장, 세로 ', V(y), '줄로 깐다고 해 봐요. 그림처럼 네 부분으로 생각해서 타일 수를 구해요.'],
     figure: { kind: 'areaModel', parts: [[xt, xu], [yt, yu]] },
     input: {
       kind: 'compound',
@@ -495,13 +497,13 @@ function t134(x, y) {
     },
     answer,
     discriminators: discs,
-    hints: [`타일은 가로 ${x}장씩 세로 ${y}줄이에요. 그림은 네 부분으로 나뉘어 있어요. 네 부분의 타일 수와 모두를 물어요.`, '네 부분을 각각 구해 볼까요? 네 부분을 합치면 전체예요.', `${xt} × ${yt} = ${answer.a}, ${xu} × ${yt} = ${answer.b}, ${xt} × ${yu} = ${ieyo(answer.c)}.`, `${xu} × ${yu} = ${bl.blank}`],
+    hints: [`구하는 것: 네 부분의 타일 수와 모두 합한 수 / 알고 있는 것: 가로 ${x}장씩 세로 ${y}줄, 네 부분`, '네 부분을 각각 구해 볼까요? 네 부분을 합치면 전체예요.', `${xt} × ${yt} = ${answer.a}, ${xu} × ${yt} = ${answer.b}, ${xt} × ${yu} = ${ieyo(answer.c)}.`, `${xu} × ${yu} = ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     blankThen: '"모두" 칸도 채워요.',
     explain: {
-      why: [`${x} × ${eun(y)} 네 부분 ${xt} × ${yt}, ${xu} × ${yt}, ${xt} × ${yu}, ${xu} × ${yu}${roOnly(yu)} 나뉘어요.`, `${answer.a} + ${answer.b} + ${answer.c} + ${answer.d} = ${ieyo(P)}.`, `그래서 타일은 ${P}장이에요.`],
-      alt: [`${y}${jo(y, '을', '를')} ${wa(yt)} ${ro(yu)} 나눠요. ${x} × ${yt} = ${x * yt}, ${x} × ${yu} = ${x * yu}, 합치면 ${ieyo(P)}.`, `두 풀이 모두 ${P}장이에요.`],
+      why: [`${x} × ${eun(y)} 네 부분 ${xt} × ${yt}, ${xu} × ${yt}, ${xt} × ${yu}, ${xu} × ${yu}${roOnly(yu)} 갈라 생각할 수 있어요.`, `${answer.a} + ${answer.b} + ${answer.c} + ${answer.d} = ${ieyo(P)}.`, `그래서 타일은 ${P}장이에요.`],
+      alt: [`${y}${jo(y, '을', '를')} ${wa(yt)} ${ro(yu)} 갈라요. ${x} × ${yt} = ${x * yt}, ${x} × ${yu} = ${x * yu}, 합치면 ${ieyo(P)}.`, `어느 길로 해도 답은 ${P}장이에요.`],
     },
   };
 }
@@ -541,7 +543,7 @@ const D1 = {
   maxLevel: 3,
   diagnostic: true,
   generate() {
-    return { ...buildTwo(23, 14, { text: ['서대신역에서 열차 ', V(14), '대에 ', V(23), '명씩 탔어요. '], unit: '명' }), hints: [], blank: null };
+    return { ...buildTwo(23, 14, { text: ['서대신역에서 열차 ', V(14), '대에 ', V(23), '명씩 탔어요.', '\n'], unit: '명' }), hints: [], blank: null };
   },
 };
 const D2 = {
@@ -559,7 +561,7 @@ const D2 = {
 const D3 = {
   id: 'N13-D3',
   node: 'N13',
-  title: '급행 진단(예비): 잘못 본 장부',
+  title: '급행 진단(예비): 일의 자리를 잘못 본 계산',
   repr: '문장',
   minLevel: 4,
   maxLevel: 4,

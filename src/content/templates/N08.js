@@ -132,17 +132,17 @@ function t81Level1(k) {
     { value: fr(8, k), category: '개념', kind: 'nudge', feedbackCheck: '분모와 분자를 다시 볼까요?', feedback: '전체 칸 수는 위에 쓸까요, 아래에 쓸까요?' },
   ].filter((d) => d.value !== ans);
   return {
-    text: [L1(), '호선 ', CARS(), '량 열차 그림이에요. ', V(k), '량이 꽉 찼어요. 꽉 찬 칸은 전체의 얼마인지 분수로 나타내요.'],
+    text: [L1(), '호선 열차 ', CARS(), '칸 그림이에요. ', V(k), '칸이 사람으로 꽉 찼어요. 꽉 찬 칸은 전체의 얼마인지 분수로 나타내요.'],
     figure: { kind: 'train', cars: 8, filled: k },
     input: { kind: 'fraction' },
     answer: ans,
     discriminators: discs,
     grade: fracGrade(k, 8, discs, REASK8),
-    hints: [`열차는 8량이에요. 그중 ${k}량이 꽉 찼어요. 꽉 찬 칸이 전체의 얼마인지 물어요.`, '분모는 전체 칸 수, 분자는 꽉 찬 칸 수예요. 그림의 칸을 세어 봐요.', '전체는 8칸이에요.', '☐/8'],
+    hints: [`구하는 것: 꽉 찬 칸이 전체의 얼마인지 / 알고 있는 것: 열차 8칸, 꽉 찬 칸 ${k}칸`, '분모는 전체 칸 수, 분자는 꽉 찬 칸 수예요. 그림의 칸을 세어 봐요.', '전체는 8칸이에요.', '☐/8'],
     blank: '☐/8',
     blankAnswer: String(k),
     explain: {
-      why: ['분수는 전체를 똑같이 나눈 것 중 몇 개인지 나타내요.', '1호선 8량은 크기가 같은 8칸이라 한 칸이 1/8이에요.', `그래서 꽉 찬 ${k}칸은 ${ieyo(ans)}.`],
+      why: ['분수는 전체를 똑같이 나눈 것 중 몇 개인지 나타내요.', '1호선 열차 8칸은 크기가 같아서 한 칸이 1/8이에요.', `그래서 꽉 찬 ${k}칸은 ${ieyo(ans)}.`],
       alt: [`1/8이 ${k}개면 ${ieyo(ans)}.`, `어느 길로 해도 답은 ${ans}${roOnly(ans)} 같아요.`],
     },
   };
@@ -152,7 +152,7 @@ function t81Level1(k) {
 function t81Level2(p) {
   const f = fr(p, 8);
   return {
-    text: [L1(), '호선 ', CARS(), '량 그림에 ', n(f), '만큼 색칠해요.'],
+    text: [L1(), '호선 열차 ', CARS(), '칸 그림에 ', n(f), '만큼 색칠해요.'],
     figure: { kind: 'train', cars: 8, paint: true },
     input: { kind: 'paint', cells: 8 },
     answer: p,
@@ -163,7 +163,7 @@ function t81Level2(p) {
       ],
       p,
     ),
-    hints: [`8칸 중 ${f}만큼 색칠하라고 해요. 색칠할 칸 수를 물어요.`, '분모 8은 전체 칸 수예요. 분자는 무엇을 뜻할까요?', '한 칸이 1/8이에요.', `${f}은 1/8이 ☐개`.replace(`${f}은`, `${f}${jo(f, '은', '는')}`)],
+    hints: [`구하는 것: 색칠할 칸 수 / 알고 있는 것: 열차 8칸, ${f}만큼 색칠`, '분모 8은 전체 칸 수예요. 분자는 무엇을 뜻할까요?', '한 칸이 1/8이에요.', `${f}은 1/8이 ☐개`.replace(`${f}은`, `${f}${jo(f, '은', '는')}`)],
     blank: `${f}${jo(f, '은', '는')} 1/8이 ☐개`,
     blankAnswer: String(p),
     explain: {
@@ -182,20 +182,20 @@ function t81Level3(widths) {
   const rCount = `조각이 ${p}개예요`;
   const yn = equal ? '예' : '아니요';
   return {
-    text: ['띠를 ', n(p), '조각으로 나누고 한 조각을 색칠했어요. 색칠한 조각을 ', n(fr(1, p)), '이라고 할 수 있어요? 이유도 골라요.'],
+    text: ['띠를 ', n(p), '조각으로 나누고 한 조각을 색칠했어요. 색칠한 조각을 ', n(fr(1, p)), '이라고 할 수 있어요? 까닭도 골라요.'],
     figure: { kind: 'strip', parts: widths, shaded: [0] },
-    input: { kind: 'compound', fields: [{ key: 'yn', label: '할 수 있어요?', options: ['예', '아니요'] }, { key: 'why', label: '이유', options: [R_EQ, R_NEQ, rCount] }] },
+    input: { kind: 'compound', fields: [{ key: 'yn', label: '할 수 있어요?', options: ['예', '아니요'] }, { key: 'why', label: '까닭', options: [R_EQ, R_NEQ, rCount] }] },
     answer: { yn, why: equal ? R_EQ : R_NEQ },
     discriminators: equal
-      ? [{ key: 'yn', value: '아니요', category: '개념', kind: 'nudge', feedbackCheck: '그림을 다시 볼까요?', feedback: '조각의 크기를 견주어 볼까요?' }, { key: 'why', value: rCount, category: '개념', kind: 'check', feedback: '조각 수만 세면 될까요?' }]
+      ? [{ key: 'yn', value: '아니요', category: '개념', kind: 'nudge', feedbackCheck: '그림을 다시 볼까요?', feedback: '조각의 크기를 비교해 볼까요?' }, { key: 'why', value: rCount, category: '개념', kind: 'check', feedback: '조각 수만 세면 될까요?' }]
       : [{ key: 'yn', value: '예', category: '개념', kind: 'check', feedback: '조각의 크기가 모두 같나요?' }, { key: 'why', value: rCount, category: '개념', kind: 'check', feedback: '조각 수만 세면 될까요?' }],
-    hints: [`띠는 ${p}조각이고 그중 한 조각을 색칠했어요. 그 조각을 1/${p}이라고 할 수 있는지, 그 까닭을 물어요.`, '조각들의 길이를 견주어 볼까요? 분수는 똑같이 나눈 것으로 나타내요.', equal ? '조각의 길이가 모두 같아요.' : '조각의 길이가 서로 달라요.', `1/${p}이 되려면 띠를 ☐조각으로 똑같이 나눠야 해요.`],
+    hints: [`구하는 것: 색칠한 조각을 1/${p}이라고 할 수 있는지와 그 까닭 / 알고 있는 것: 띠 ${p}조각, 한 조각 색칠`, '조각들의 길이를 비교해 볼까요? 분수는 똑같이 나눈 것으로 나타내요.', equal ? '조각의 길이가 모두 같아요.' : '조각의 길이가 서로 달라요.', `1/${p}이 되려면 띠를 ☐조각으로 똑같이 나눠야 해요.`],
     blank: `띠를 ☐조각으로 똑같이`,
     blankAnswer: String(p),
     blankThen: `1/${p}이라고 할 수 있어요?`,
     explain: {
       why: ['분수는 전체를 똑같이 나눈 것 중 몇 개인지 나타내요.', equal ? `이 띠는 ${p}조각의 크기가 모두 같아요.` : '이 띠는 조각의 크기가 서로 달라요.', equal ? `그래서 1/${p}이라고 할 수 있어요.` : `그래서 1/${p}이라고 할 수 없어요.`],
-      alt: [`똑같이 ${p}조각으로 나눈 띠와 나란히 놓고 견주어 봐요.`, `어느 길로 해도 답은 '${yn}'로 같아요.`],
+      alt: [`똑같이 ${p}조각으로 나눈 띠와 나란히 놓고 비교해 봐요.`, `어느 길로 해도 답은 '${yn}'로 같아요.`],
     },
   };
 }
@@ -211,17 +211,17 @@ function t81Level4(k) {
     { value: fr(8, r), category: '개념', kind: 'nudge', feedbackCheck: '분모와 분자를 다시 볼까요?', feedback: '전체 칸 수는 위에 쓸까요, 아래에 쓸까요?' },
   ].filter((d) => d.value !== ans);
   return {
-    text: [L1(), '호선 ', CARS(), '량 그림에서 ', V(k), '량을 색칠했어요. 색칠하지 않은 칸은 전체의 얼마예요?'],
+    text: [L1(), '호선 열차 ', CARS(), '칸 그림에서 ', V(k), '칸을 색칠했어요. 색칠하지 않은 칸은 전체의 얼마예요?'],
     figure: { kind: 'train', cars: 8, shaded: k },
     input: { kind: 'fraction' },
     answer: ans,
     discriminators: discs,
     grade: fracGrade(r, 8, discs, REASK8),
-    hints: [`열차는 8량이에요. 색칠한 칸은 ${k}량이에요. 색칠하지 않은 칸이 전체의 얼마인지 물어요.`, '색칠하지 않은 칸을 손가락으로 세어 볼까요? 분모는 전체 칸 수예요.', `색칠하지 않은 칸은 ${r}칸이에요.`, '☐/8'],
+    hints: [`구하는 것: 색칠하지 않은 칸이 전체의 얼마인지 / 알고 있는 것: 열차 8칸, 색칠한 칸 ${k}칸`, '색칠하지 않은 칸을 손가락으로 세어 볼까요? 분모는 전체 칸 수예요.', '전체는 8칸이라 분모는 8이에요.', '☐/8'],
     blank: '☐/8',
     blankAnswer: String(r),
     explain: {
-      why: ['분수는 전체를 똑같이 나눈 것 중 몇 개인지 나타내요.', `1호선 8량은 크기가 같은 8칸이라 한 칸이 1/8이에요.`, `그래서 색칠하지 않은 ${r}칸은 ${ieyo(ans)}.`],
+      why: ['분수는 전체를 똑같이 나눈 것 중 몇 개인지 나타내요.', '1호선 열차 8칸은 크기가 같아서 한 칸이 1/8이에요.', `그래서 색칠하지 않은 ${r}칸은 ${ieyo(ans)}.`],
       alt: [`색칠한 칸이 ${k}/8이고 전체는 8/8이에요.`, `남은 칸은 ${ieyo(ans)}.`, `어느 길로 해도 답은 ${ans}${roOnly(ans)} 같아요.`],
     },
   };
@@ -242,7 +242,7 @@ function t81Level5(d, k) {
       [k, d, d + k].map((v) => ({ value: v, category: '개념', kind: 'check', feedback: `${d}/${d}${jo(d, '은', '는')} 몇 칸일까요?` })),
       ans,
     ),
-    hints: [`띠의 ${u}이 ${k}칸이에요. 띠 전체가 몇 칸인지 물어요.`, `${u}이 몇 개 모이면 띠 전체가 될까요? 그림에 이어 그려 봐요.`, `${u}이 ${d}개면 전체예요.`, `${k} × ${d} = ${bl.blank}`],
+    hints: [`구하는 것: 띠 전체의 칸 수 / 알고 있는 것: 띠의 ${u}이 ${k}칸`, `${u}이 몇 개 모이면 띠 전체가 될까요? 그림에 이어 그려 봐요.`, `${u}이 ${d}개면 전체예요.`, `${k} × ${d} = ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     explain: {
@@ -279,7 +279,7 @@ function t81Level6(items) {
     const d = discs.find((x) => key(x.value) === key(r));
     return d ? { correct: false, category: d.category, kind: d.kind ?? 'check', feedbackCheck: d.feedbackCheck, feedback: d.feedback } : { correct: false, category: null, kind: 'check', feedback: null };
   };
-  const list = answer.join(', ');
+  const list = answer.map((x) => `'${x}'`).join(', ');
   return {
     text: ['정사각형을 여러 가지로 나눈 그림 ', n(4), '개가 있어요. ', n('1/4'), '을 바르게 색칠한 것을 모두 골라요.'],
     figure: { kind: 'squares', items: labeled.map(({ label, split, shaded }) => ({ label, split, shaded })) },
@@ -287,7 +287,7 @@ function t81Level6(items) {
     answer,
     discriminators: discs,
     grade,
-    hints: ['정사각형 그림 네 개 중 1/4을 바르게 색칠한 것을 모두 물어요.', '조각의 크기가 모두 같은지, 4조각 중 1조각만 색칠했는지 봐요.', `똑같이 4조각으로 나눈 그림은 ${eq4.join(', ')}예요.`, '바르게 색칠한 그림은 ☐개'],
+    hints: ['구하는 것: 1/4을 바르게 색칠한 그림 모두 / 알고 있는 것: 여러 가지로 나눈 정사각형 그림 4개', '조각의 크기가 모두 같은지, 4조각 중 1조각만 색칠했는지 봐요.', `똑같이 4조각으로 나눈 그림은 ${eq4.map((x) => `(${x})`).join(', ')}예요.`, '바르게 색칠한 그림은 ☐개'],
     blank: '바르게 색칠한 그림은 ☐개',
     blankAnswer: String(answer.length),
     blankThen: '어느 그림이에요?',
@@ -389,16 +389,16 @@ function t82Level1(k, d, rng) {
     input: { kind: 'choice', options: rng.shuffle([right, swapped, plain]) },
     answer: right,
     discriminators: [
-      { value: swapped, category: '개념', kind: 'nudge', feedbackCheck: '읽는 차례를 다시 볼까요?', feedback: '분모부터 읽어요' },
-      { value: plain, category: '개념', kind: 'nudge', feedbackCheck: '읽는 차례를 다시 볼까요?', feedback: '분모를 먼저 읽고 "분의"를 붙여요' },
+      { value: swapped, category: '개념', kind: 'nudge', feedbackCheck: '읽는 차례를 다시 볼까요?', feedback: '어느 수를 먼저 읽을까요?' },
+      { value: plain, category: '개념', kind: 'nudge', feedbackCheck: '읽는 차례를 다시 볼까요?', feedback: '"분의"는 어디에 붙일까요?' },
     ],
-    hints: [`분수 ${f}${jo(f, '을', '를')} 읽는 말을 물어요. 보기는 세 개예요.`, '분모는 아래, 분자는 위에 있는 수예요. 어느 수를 먼저 읽을까요?', `${f}의 분모는 ${ieyo(d)}.`, '분모: ☐'],
-    blank: '분모: ☐',
+    hints: [`구하는 것: ${f}${jo(f, '을', '를')} 바르게 읽은 말 / 알고 있는 것: 보기 세 개`, '분수를 읽는 차례를 떠올려 볼까요? 분모를 먼저, 분자를 나중에 읽어요.', '분모는 아래에 있는 수예요.', '먼저 읽는 수: ☐'],
+    blank: '먼저 읽는 수: ☐',
     blankAnswer: String(d),
     blankThen: '바르게 읽은 것은 어느 것이에요?',
     explain: {
       why: ['분수는 분모를 먼저 읽고 "분의"를 붙인 다음 분자를 읽어요.', `${f}의 분모는 ${d}, 분자는 ${ieyo(k)}.`, `그래서 ${f}${jo(f, '은', '는')} "${right}"라고 읽어요.`],
-      alt: [`${d}칸으로 똑같이 나눈 것 중 ${k}칸이라고 생각하고 "${KN[d]}분의"부터 말해요.`, `두 생각 모두 "${right}"예요.`],
+      alt: [`${d}칸으로 똑같이 나눈 것 중 ${k}칸이라고 생각하고 "${KN[d]}분의"부터 말해요.`, `어느 길로 해도 답은 "${right}"예요.`],
     },
   };
 }
@@ -415,12 +415,12 @@ function t82Level2(k, d) {
     answer: ans,
     discriminators: discs,
     grade: fracGrade(k, d, discs, `"${r}" 그대로 분모와 분자를 써 볼까요?`),
-    hints: [`"${r}"${jo(k, '을', '를')} 분수로 쓰는 것을 물어요.`, '"분의" 앞에 읽은 수가 분모예요. 분모는 아래에 써요.', `분모는 ${ieyo(d)}.`, `☐/${d}`],
+    hints: [`구하는 것: "${r}"${jo(k, '을', '를')} 쓴 분수 / 알고 있는 것: 읽는 말 "${r}"`, '"분의" 앞에 읽은 수가 분모예요. 분모는 아래에 써요.', `분모는 ${ieyo(d)}.`, `☐/${d}`],
     blank: `☐/${d}`,
     blankAnswer: String(k),
     explain: {
       why: ['"몇분의 몇"에서 앞의 수가 분모, 뒤의 수가 분자예요.', `"${r}"의 분모는 ${d}, 분자는 ${ieyo(k)}.`, `그래서 ${ieyo(ans)}.`],
-      alt: [`${d}칸으로 똑같이 나눈 것 중 ${k}칸을 떠올려도 돼요.`, `두 생각 모두 ${ieyo(ans)}.`],
+      alt: [`${d}칸으로 똑같이 나눈 것 중 ${k}칸을 떠올려도 돼요.`, `어느 길로 해도 답은 ${ieyo(ans)}.`],
     },
   };
 }
@@ -429,7 +429,7 @@ function t82Level2(k, d) {
 function t82Level3(k) {
   const ans = fr(k, 8);
   return {
-    text: [L1(), '호선 ', CARS(), '량 열차 중 ', V(k), '량에 냉방이 강하게 나와요. 냉방이 강한 칸은 열차 전체의 얼마예요? 분모와 분자도 써요.'],
+    text: [L1(), '호선 열차 ', CARS(), '칸 중 ', V(k), '칸에 냉방이 강하게 나와요. 냉방이 강한 칸은 전체의 얼마예요? 분모와 분자도 써요.'],
     figure: null,
     input: {
       kind: 'compound',
@@ -444,15 +444,15 @@ function t82Level3(k) {
       { key: 'frac', value: fr(k, 8 - k), category: '개념', kind: 'nudge', feedbackCheck: '분모가 무엇을 나타내는지 볼까요?', feedback: '분모는 전체 칸 수예요. 모두 몇 칸이에요?' },
       { key: 'frac', value: fr(8, k), category: '개념', kind: 'nudge', feedbackCheck: '분모와 분자를 다시 볼까요?', feedback: '전체 칸 수는 위에 쓸까요, 아래에 쓸까요?' },
       { key: 'den', value: k, category: '개념', kind: 'nudge', feedbackCheck: '분모가 무엇을 나타내는지 볼까요?', feedback: '분모는 전체 칸 수예요. 모두 몇 칸이에요?' },
-      { key: 'num', value: 8, category: '개념', kind: 'nudge', feedbackCheck: '분자가 무엇을 나타내는지 볼까요?', feedback: '분자는 냉방이 강한 칸 수예요' },
+      { key: 'num', value: 8, category: '개념', kind: 'nudge', feedbackCheck: '분자가 무엇을 나타내는지 볼까요?', feedback: '냉방이 강한 칸은 몇 칸일까요?' },
     ],
-    hints: [`열차는 8량이에요. 그중 ${k}량에 냉방이 강하게 나와요. 전체의 얼마인지 물어요.`, '열차를 똑같이 몇 칸으로 나눈 것인지 먼저 볼까요?', '전체는 8칸이라 분모는 8이에요.', '분자: ☐'],
+    hints: [`구하는 것: 냉방이 강한 칸이 전체의 얼마인지, 분모, 분자 / 알고 있는 것: 열차 8칸, 냉방이 강한 칸 ${k}칸`, '열차를 똑같이 몇 칸으로 나눈 것인지 먼저 볼까요?', '전체는 8칸이라 분모는 8이에요.', '분자: ☐'],
     blank: '분자: ☐',
     blankAnswer: String(k),
     blankThen: '분수와 분모도 써요.',
     explain: {
-      why: ['1호선 8량은 크기가 같은 8칸이에요.', `그중 ${k}칸이라 ${ans}, 분모는 8, 분자는 ${ieyo(k)}.`, `그래서 냉방이 강한 칸은 전체의 ${ieyo(ans)}.`],
-      alt: [`한 칸이 1/8이니 ${k}칸은 1/8이 ${k}개, 곧 ${ieyo(ans)}.`, `두 생각 모두 ${ieyo(ans)}.`],
+      why: ['1호선 열차 8칸은 크기가 같아요.', `그중 ${k}칸이라 ${ans}, 분모는 8, 분자는 ${ieyo(k)}.`, `그래서 냉방이 강한 칸은 전체의 ${ieyo(ans)}.`],
+      alt: [`한 칸이 1/8이니 ${k}칸은 1/8이 ${k}개, 곧 ${ieyo(ans)}.`, `어느 길로 해도 답은 ${ieyo(ans)}.`],
     },
   };
 }
@@ -488,11 +488,11 @@ function t83(d, k, figure, opts = {}) {
   const answer = pick ? { pick, whole: d, part: k, frac: f } : { whole: d, part: k, frac: f };
   const discs = [
     ...(pick ? [{ key: 'pick', value: pick === '가' ? '나' : '가', category: '개념', kind: 'check', feedback: "'똑같이' 나눴나요?" }] : []),
-    { key: 'whole', value: k, category: '개념', kind: 'nudge', feedbackCheck: '처음 칸이 무엇을 나타내는지 볼까요?', feedback: '처음 칸은 전체 칸 수예요' },
+    { key: 'whole', value: k, category: '개념', kind: 'nudge', feedbackCheck: '말 틀의 첫째 빈칸을 다시 볼까요?', feedback: '첫째 빈칸에는 무엇을 쓸까요?' },
     { key: 'frac', value: fr(d, k), category: '개념', kind: 'nudge', feedbackCheck: '분모와 분자를 다시 볼까요?', feedback: '전체 칸 수는 위에 쓸까요, 아래에 쓸까요?' },
   ];
   return {
-    text: [pick ? `두 그림 중 이 말 틀을 쓸 수 있는 그림을 고르고, 말 틀을 채워요. ${FRAME}` : `${opts.lead ?? ''}그림을 보고 말 틀을 채워요. ${FRAME}`],
+    text: [pick ? '말 틀을 쓸 수 있는 그림을 고르고, 말 틀을 채워요.' : `${opts.lead ?? ''}그림을 보고 말 틀을 채워요.`, '\n', FRAME],
     figure,
     input: { kind: 'compound', fields },
     answer,
@@ -500,7 +500,7 @@ function t83(d, k, figure, opts = {}) {
     hints: [
       opts.hint1,
       pick ? '조각의 크기가 모두 같은지 먼저 볼까요? 그다음 전체 조각 수와 색칠한 조각 수를 세어요.' : '전체 칸 수와 색칠한 칸 수를 각각 세어 볼까요?',
-      pick ? `${pick} 그림은 크기가 같은 ${d}조각으로 나뉘어 있어요.` : `전체는 ${d}칸이에요.`,
+      pick ? `(${pick}) 그림은 크기가 같은 ${d}조각으로 나뉘어 있어요.` : `전체는 ${d}칸이에요.`,
       '색칠한 칸: ☐칸',
     ],
     blank: '색칠한 칸: ☐칸',
@@ -508,11 +508,11 @@ function t83(d, k, figure, opts = {}) {
     blankThen: '말 틀을 모두 채워요.',
     explain: {
       why: [
-        ...(pick ? [`${pick} 그림만 똑같이 나뉘어 있어요. 분수는 똑같이 나눈 것으로 나타내요.`] : []),
+        ...(pick ? [`(${pick}) 그림만 똑같이 나뉘어 있어요. 분수는 똑같이 나눈 것으로 나타내요.`] : []),
         '분모는 전체 칸 수, 분자는 색칠한 칸 수예요.',
         `그래서 전체를 똑같이 ${d}칸으로 나눈 것 중 ${k}칸이라 ${ieyo(f)}.`,
       ],
-      alt: [`한 칸이 1/${d}이고 ${k}칸이니 ${ieyo(f)}.`, `두 생각 모두 ${ieyo(f)}.`],
+      alt: [`한 칸이 1/${d}이고 ${k}칸이니 ${ieyo(f)}.`, `어느 길로 해도 답은 ${ieyo(f)}.`],
     },
   };
 }
@@ -528,19 +528,19 @@ const T8_3 = {
   generate(rng, level) {
     if (level === 1) {
       const k = rng.int(1, 7);
-      return t83(8, k, { kind: 'train', cars: 8, full: Array.from({ length: k }, (_, i) => i) }, { hint1: `열차는 8칸이고, 그중 ${k}칸이 색칠되어 있어요. 말 틀을 채우는 문제예요.` });
+      return t83(8, k, { kind: 'train', cars: 8, full: Array.from({ length: k }, (_, i) => i) }, { lead: '열차 ', hint1: `구하는 것: 말 틀의 빈칸 / 알고 있는 것: 열차 8칸, 색칠한 칸 ${k}칸` });
     }
     if (level === 2) {
       const d = rng.pick([3, 4, 5, 6, 7, 9, 10]);
       const k = rng.int(1, d - 1);
-      return t83(d, k, { kind: 'strip', parts: Array(d).fill(1), shaded: Array.from({ length: k }, (_, i) => i) }, { hint1: `띠가 ${d}칸으로 똑같이 나뉘었고, ${k}칸이 색칠되어 있어요. 말 틀을 채우는 문제예요.` });
+      return t83(d, k, { kind: 'strip', parts: Array(d).fill(1), shaded: Array.from({ length: k }, (_, i) => i) }, { hint1: `구하는 것: 말 틀의 빈칸 / 알고 있는 것: 똑같이 ${d}칸으로 나눈 띠, 색칠한 칸 ${k}칸` });
     }
     const k = rng.int(1, 3);
     const eqFirst = rng.next() < 0.5;
     const eq = { split: rng.pick(['grid2x2', 'cols4', 'rows4', 'diagonals']), shaded: k };
     const uneven = { split: 'uneven4', shaded: k };
     const [first, second] = eqFirst ? [eq, uneven] : [uneven, eq];
-    return t83(4, k, { kind: 'squares', items: [{ label: '가', ...first }, { label: '나', ...second }] }, { pick: eqFirst ? '가' : '나', hint1: '정사각형 그림 두 개가 있어요. 말 틀을 쓸 수 있는 그림을 고르고 말 틀을 채우는 문제예요.' });
+    return t83(4, k, { kind: 'squares', items: [{ label: '가', ...first }, { label: '나', ...second }] }, { pick: eqFirst ? '가' : '나', hint1: '구하는 것: 말 틀을 쓸 수 있는 그림과 말 틀의 빈칸 / 알고 있는 것: 정사각형 그림 두 개' });
   },
 };
 

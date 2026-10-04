@@ -132,14 +132,14 @@ function t61Level1(x, byEight) {
   const d = byEight ? 8 : x;
   const ans = byEight ? x : 8;
   return {
-    text: [n(8), ' × ', n(x), ' = ', n(P), jo(P, '을', '를'), ' 보고 빈칸을 채워요. ', n(P), ' ÷ ', n(d), ' = ', unknown('□')],
+    text: ['열차 ', CARS(), '칸에 ', V(x), '명씩 탔어요. ', n(8), ' × ', n(x), ' = ', n(P), jo(P, '을', '를'), ' 보고 빈칸을 채워요.', '\n', n(P), ' ÷ ', n(d), ' = ', unknown('□')],
     figure: { kind: 'train', cars: 8, perCar: x },
     allowAnswerInText: true, // 곱셈식의 수가 그대로 나눗셈의 몫이 되는 것이 이 단계의 핵심이다.
     input: { kind: 'number' },
     answer: ans,
     discriminators: uniq(
       [
-        { value: P * d, category: '식', kind: 'check', feedback: `${eun(P)} ${d}로 나누면 커질까요?`.replace(`${d}로`, `${d}${roOnly(d)}`) },
+        { value: P * d, category: '식', kind: 'check', feedback: `${eul(P)} ${d}${roOnly(d)} 나누면 커질까요?` },
         { value: P - d, category: '식', kind: 'nudge', feedbackCheck: '몫을 곱해서 확인해 볼까요?', feedback: '나눗셈식이에요. 곱셈식에서 찾아볼까요?' },
       ],
       ans,
@@ -149,7 +149,7 @@ function t61Level1(x, byEight) {
     blankAnswer: String(ans),
     explain: {
       why: [`8 × ${x} = ${eun(P)} ${d}${jo(d, '이', '가')} ${ans}묶음이면 ${P}이라는 뜻이에요.`.replace(`${P}이라는`, `${P}${jo(P, '이라는', '라는')}`), `그래서 ${P} ÷ ${d} = ${ieyo(ans)}.`],
-      alt: [`${P}에서 ${d}씩 빼면 ${ans}번 만에 0이 돼요.`, `어느 길로 해도 답은 ${ro(ans)} 같아요.`],
+      alt: [`${P}에서 ${d}씩 빼면 ${ans}번 만에 0이 돼요.`, `어느 길로 해도 답은 ${ieyo(ans)}.`],
     },
   };
 }
@@ -160,7 +160,7 @@ function t61Level2(x) {
   const isA = (e) => e?.op === '÷' && num(e.left) === P && num(e.right) === 8 && num(e.result) === x;
   const isB = (e) => e?.op === '÷' && num(e.left) === P && num(e.right) === x && num(e.result) === 8;
   return {
-    text: [n(8), ' × ', n(x), ' = ', n(P), jo(P, '을', '를'), ' 보고 나눗셈식 두 개를 만들어요.'],
+    text: ['열차 ', CARS(), '칸에 ', V(x), '명씩 탔어요. ', n(8), ' × ', n(x), ' = ', n(P), jo(P, '을', '를'), ' 보고 나눗셈식 두 개를 만들어요.'],
     figure: null,
     input: { kind: 'compound', fields: [{ key: 'eq1', label: '나눗셈식 1', kind: 'equation' }, { key: 'eq2', label: '나눗셈식 2', kind: 'equation' }] },
     answer: { eq1: { left: P, op: '÷', right: 8, result: x }, eq2: { left: P, op: '÷', right: x, result: 8 } },
@@ -182,7 +182,7 @@ function t61Level2(x) {
     blankAnswer: '8',
     explain: {
       why: [`8 × ${x} = ${eun(P)} 8씩 ${x}묶음이에요.`, `그래서 ${P} ÷ 8 = ${x}, ${P} ÷ ${x} = 8이에요.`],
-      alt: [`${x} × 8 = ${P}로 생각해도 두 식이 나와요.`.replace(`${P}로`, `${P}${roOnly(P)}`), `어느 길로 해도 답은 ${P} ÷ 8 = ${x}, ${P} ÷ ${x} = 8로 같아요.`],
+      alt: [`${x} × 8 = ${P}로 생각해도 두 식이 나와요.`.replace(`${P}로`, `${P}${roOnly(P)}`), `어느 길로 해도 답은 ${P} ÷ 8 = ${x}, ${P} ÷ ${x} = 8이에요.`],
     },
   };
 }
@@ -203,7 +203,7 @@ function t61Level3(d, q) {
     q,
   );
   return {
-    text: [n(P), ' ÷ ', n(d), ' = ', unknown('□'), '. 곱셈구구 몇 단을 보면 되는지도 써요.'],
+    text: ['승강장에서 ', V(P), '명이 ', V(d), '줄로 똑같이 섰어요.', '\n', n(P), ' ÷ ', n(d), ' = ', unknown('□'), '. 곱셈구구 몇 단을 보면 되는지도 써요.'],
     figure: null,
     input: { kind: 'compound', fields: [{ key: 'q', label: '몫' }, { key: 'dan', label: '몇 단' }] },
     answer: { q, dan: d },
@@ -216,7 +216,7 @@ function t61Level3(d, q) {
     blankThen: '곱셈구구 몇 단이에요?',
     explain: {
       why: [`${d} × ${q} = ${eun(P)} ${d}${jo(d, '이', '가')} ${q}묶음이면 ${P}${jo(P, '이라는', '라는')} 뜻이에요.`, `그래서 ${P} ÷ ${d} = ${q}이고, ${d}단을 보면 돼요.`],
-      alt: [`${P}에서 ${d}씩 빼면 ${q}번 만에 0이 돼요.`, `어느 길로 해도 답은 ${ro(q)} 같아요.`],
+      alt: [`${P}에서 ${d}씩 빼면 ${q}번 만에 0이 돼요.`, `어느 길로 해도 답은 ${ieyo(q)}.`],
     },
   };
 }
@@ -231,13 +231,13 @@ function t61Level4(d, q) {
     challenge: true,
     input: { kind: 'number' },
     answer: P,
-    discriminators: uniq([{ value: d + q, category: '식', kind: 'check', feedback: null }], P),
+    discriminators: uniq([{ value: d + q, category: '식', kind: 'check', feedback: `${eul(d + q)} ${d}${roOnly(d)} 나누면 ${q}${jo(q, '이', '가')} 될까요?` }], P),
     hints: [`어떤 수를 ${d}${roOnly(d)} 나눈 몫이 ${ieyo(q)}. 그 어떤 수를 물어요.`, `□는 ${d}씩 ${q}묶음이에요. 곱셈식으로 바꿔 볼까요?`, `${d} × ${q - 1} = ${ieyo(d * (q - 1))}.`, `${d} × ${q} = ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     explain: {
-      why: [`□ ÷ ${d} = ${eun(q)} □를 ${d}씩 묶으면 ${q}묶음이라는 뜻이에요.`, `${d} × ${q} = ${ieyo(P)}.`, `그래서 □는 ${ieyo(P)}.`],
-      alt: [`확인해 봐요: ${P} ÷ ${d} = ${ieyo(q)}.`, `어느 길로 해도 답은 ${ro(P)} 같아요.`],
+      why: [`□ ÷ ${d} = ${eun(q)} □를 ${d}씩 묶으면 ${q}묶음이라는 뜻이에요.`, `${d} × ${q} = ${ieyo(P)}.`, `확인해 보면 ${P} ÷ ${d} = ${ieyo(q)}.`, `그래서 □는 ${ieyo(P)}.`],
+      alt: [`${d}씩 ${q}번 뛰어 세어도 돼요.`, `${Array.from({ length: q }, (_, i) => d * (i + 1)).join(', ')}.`, `어느 길로 해도 답은 ${ieyo(P)}.`],
     },
   };
 }
@@ -254,12 +254,15 @@ function t61Level5(N, rng) {
     if (a - 1 >= 2 && (a - 1) * b !== N) distract.push([a - 1, b]);
   }
   const seen = new Set();
-  const dis = rng.shuffle(distract).filter(([a, b]) => {
+  const pool = rng.shuffle(distract).filter(([a, b]) => {
     const k = `${a},${b}`;
     if (seen.has(k)) return false;
     seen.add(k);
     return true;
-  }).slice(0, 3);
+  });
+  // "2칸 N/2명"(두 자리 수) 보기는 판별 오답이 기대는 보기라 늘 남긴다(예전에는 잘려서 보기에 없을 때가 있었다).
+  const twoDigit = pool.find(([a, b]) => a === 2 && b >= 10);
+  const dis = twoDigit ? [twoDigit, ...pool.filter((p) => p !== twoDigit).slice(0, 2)] : pool.slice(0, 3);
   const options = [...valid, ...dis].sort((p, q) => p[0] - q[0] || p[1] - q[1]).map(([a, b]) => label(a, b));
   const answer = valid.map(([a, b]) => label(a, b));
   const discs = [];
@@ -268,18 +271,18 @@ function t61Level5(N, rng) {
   if (N / 2 >= 10) discs.push({ value: [...answer, label(2, N / 2)], category: '개념', kind: 'check', feedback: '모두 한 자리 수인지 볼까요?' });
   const [a0, b0] = valid[0];
   return {
-    text: [V(N), '명이 □칸에 △명씩 똑같이 앉아요. □와 △가 모두 한 자리 수인 경우를 모두 골라요.'],
+    text: ['승객 ', V(N), '명이 □칸에 △명씩 똑같이 나눠 앉는다고 해 봐요. □와 △가 모두 한 자리 수인 경우를 모두 골라요.'],
     figure: null,
     input: { kind: 'multi', options },
     answer,
     discriminators: discs,
     grade: multiGradeS(answer, discs),
-    hints: [`${N}명이 칸마다 같은 수만큼 앉아요. 칸 수와 한 칸 사람 수가 모두 한 자리 수인 경우를 모두 물어요.`, `곱해서 ${N}${jo(N, '이', '가')} 되는 두 한 자리 수를 곱셈구구에서 찾아볼까요? 순서를 바꾼 짝도 봐요.`, `${a0} × ${b0} = ${ieyo(N)}.`, `${b0}칸 ☐명`],
+    hints: [`구하는 것: 칸 수와 한 칸 사람 수가 모두 한 자리 수인 경우 모두 / 알고 있는 것: ${N}명, 칸마다 같은 수`, `곱해서 ${N}${jo(N, '이', '가')} 되는 두 한 자리 수를 곱셈구구에서 찾아볼까요? 순서를 바꾼 짝도 봐요.`, `${a0} × ${b0} = ${ieyo(N)}.`, `${b0}칸 ☐명`],
     blank: `${b0}칸 ☐명`,
     blankAnswer: String(a0),
     explain: {
       why: [`곱해서 ${N}${jo(N, '이', '가')} 되는 한 자리 수 짝은 ${valid.map(([a, b]) => `${a} × ${b}`).join(', ')}${jo(valid.at(-1)[1], '이에요', '예요')}.`, '칸 수와 한 칸 사람 수를 바꾸면 다른 경우예요.', `그래서 답은 ${answer.join(', ')}이에요.`],
-      alt: [`${N}을 2, 3, 4, …로 차례로 나눠 몫이 한 자리 수인지 봐도 돼요.`.replace(`${N}을`, eul(N)), `어느 길로 해도 답은 ${answer.join(', ')}으로 같아요.`],
+      alt: [`${N}을 2, 3, 4, …로 차례로 나눠 몫이 한 자리 수인지 봐도 돼요.`.replace(`${N}을`, eul(N)), `어느 길로 해도 답은 ${answer.join(', ')}이에요.`],
     },
   };
 }
@@ -289,7 +292,7 @@ function t61Level6(s, r) {
   const big = s * r;
   const P = big * s;
   return {
-    text: ['두 수를 곱하면 ', n(P), jo(P, '이고', '고'), ', 큰 수를 작은 수로 나누면 ', n(r), '예요. 두 수는 얼마예요?'.replace('예요', jo(r, '이에요', '예요'))],
+    text: ['두 수를 곱하면 ', n(P), '이고, 큰 수를 작은 수로 나누면 ', n(r), '예요. 두 수는 얼마예요?'.replace('예요', jo(r, '이에요', '예요'))],
     figure: null,
     challenge: true,
     input: { kind: 'compound', fields: [{ key: 'big', label: '큰 수' }, { key: 'small', label: '작은 수' }] },
@@ -303,7 +306,7 @@ function t61Level6(s, r) {
     blankAnswer: String(s),
     explain: {
       why: [`큰 수는 작은 수의 ${r}배예요.`, `작은 수가 ${s}이면 큰 수는 ${s} × ${r} = ${ieyo(big)}.`.replace(`${s}이면`, `${s}${jo(s, '이면', '면')}`), `${big} × ${s} = ${P}이 되어 맞아요.`.replace(`${P}이`, `${P}${jo(P, '이', '가')}`), `그래서 큰 수는 ${big}, 작은 수는 ${ieyo(s)}.`],
-      alt: [`곱셈구구에서 곱이 ${P}인 짝을 모두 찾고 몫이 ${r}인 짝을 골라도 돼요.`.replace(`${P}인`, `${P}${jo(P, '인', '인')}`), `어느 길로 해도 답은 ${big}과 ${s}${roOnly(s)} 같아요.`.replace(`${big}과`, wa(big))],
+      alt: [`곱셈구구에서 곱이 ${P}인 짝을 모두 찾고 몫이 ${r}인 짝을 골라도 돼요.`.replace(`${P}인`, `${P}${jo(P, '인', '인')}`), `어느 길로 해도 답은 ${wa(big)} ${ieyo(s)}.`],
     },
   };
 }
@@ -334,24 +337,24 @@ const T6_1 = {
 function t62Level1(q) {
   const N = 8 * q;
   return {
-    text: [L1(), '호선은 ', CARS(), '량이에요. ', V(N), '명이 칸마다 똑같이 타면 한 칸에 몇 명이에요?'],
+    text: ['동매역에서 ', V(N), '명이 ', L1(), '호선 열차 ', CARS(), '칸에 똑같이 나눠 탔어요. 한 칸에 몇 명이에요?'],
     figure: { kind: 'train', cars: 8 },
     input: { kind: 'number', unit: '명' },
     answer: q,
     discriminators: uniq(
       [
         { value: N * 8, category: '식', kind: 'check', feedback: '한 칸 사람 수가 전체보다 많을까요?' },
-        { value: N - 8, category: '식', kind: 'check', feedback: '칸마다 똑같이 탔나요?' },
-        { value: 8, category: '읽기', kind: 'check', feedback: '8은 칸 수예요. 무엇을 물었죠?' },
+        { value: N - 8, category: '식', kind: 'check', feedback: '8을 뺐나요? 똑같이 나누는 문제예요.' },
+        { value: 8, category: '읽기', kind: 'check', feedback: '8은 칸 수예요. 무엇을 물었을까요?' },
       ],
       q,
     ),
-    hints: [`사람은 ${N}명, 칸은 8개예요. 칸마다 같은 수만큼 타요. 한 칸에 몇 명인지 물어요.`, '8 × 몇이 될까요? 곱셈구구 8단을 떠올려 봐요.', `8 × ${q - 1} = ${ieyo(8 * (q - 1))}.`, `8 × ☐ = ${N}`],
+    hints: [`구하는 것: 한 칸에 탄 사람 수 / 알고 있는 것: ${N}명, 8칸에 똑같이 나눠 탐`, `8 × 몇이 ${N}${jo(N, '이', '가')} 될까요? 곱셈구구 8단을 떠올려 봐요.`, `8 × ${q - 1} = ${ieyo(8 * (q - 1))}.`, `8 × ☐ = ${N}`],
     blank: `8 × ☐ = ${N}`,
     blankAnswer: String(q),
     explain: {
       why: [`${N}명을 8칸에 똑같이 나눠요.`, `8 × ${q} = ${N}이니 ${N} ÷ 8 = ${ieyo(q)}.`, `그래서 한 칸에 ${q}명이에요.`],
-      alt: [`${N}에서 8씩 빼면 ${q}번 만에 0이 돼요.`, `어느 길로 해도 답은 ${ro(q)} 같아요.`],
+      alt: [`${N}에서 8씩 빼면 ${q}번 만에 0이 돼요.`, `어느 길로 해도 답은 ${q}명이에요.`],
     },
   };
 }
@@ -360,17 +363,17 @@ function t62Level1(q) {
 function t62Level2(q) {
   const N = 8 * q;
   return {
-    text: ['어느 날 ', V(N), '명이 ', L1(), '호선 ', CARS(), '량에 칸마다 똑같이 탔어요. 한 칸에 몇 명인지 식과 답을 써요.'],
+    text: ['오늘 ', V(N), '명이 ', L1(), '호선 열차 ', CARS(), '칸에 똑같이 나눠 탔어요. 한 칸에 몇 명인지 식과 답을 써요.'],
     figure: { kind: 'train', cars: 8 },
     input: { kind: 'equation' },
     answer: { left: N, op: '÷', right: 8, result: q },
     discriminators: [...mismatch(N, 8, q), { match: (r) => r?.op === '×' && num(r.left) === N, category: '식', kind: 'check', feedback: '한 칸 사람 수가 전체보다 많을까요?' }],
-    hints: [`${N}명이 8칸에 같은 수만큼 탔어요. 한 칸에 몇 명인지 식과 답을 물어요.`, '전체를 칸 수만큼 똑같이 나누는 식이에요. 8단에서 몫을 찾아요.', `8 × ${q} = ${ieyo(N)}.`, `${N} ÷ 8 = ☐`],
+    hints: [`구하는 것: 한 칸에 탄 사람 수의 식과 답 / 알고 있는 것: ${N}명, 8칸에 똑같이 나눠 탐`, '전체를 칸 수만큼 똑같이 나누는 식이에요. 8단에서 몫을 찾아요.', `8 × ${q} = ${ieyo(N)}.`, `${N} ÷ 8 = ☐`],
     blank: `${N} ÷ 8 = ☐`,
     blankAnswer: String(q),
     explain: {
       why: [`${N}명을 8칸에 똑같이 나누는 상황이에요.`, `8 × ${q} = ${N}이니 한 칸에 ${q}명씩이에요.`, `그래서 식은 ${N} ÷ 8 = ${ieyo(q)}.`],
-      alt: [`${N}에서 8씩 빼면 ${q}번 만에 0이 돼요.`, `어느 길로 해도 답은 ${ro(q)} 같아요.`],
+      alt: [`${N}에서 8씩 빼면 ${q}번 만에 0이 돼요.`, `어느 길로 해도 답은 ${ieyo(q)}.`],
     },
   };
 }
@@ -382,21 +385,21 @@ function t62Level3(a, b) {
   const which = a > b ? '앞' : '뒤';
   const diff = Math.abs(a - b);
   return {
-    text: ['어느 날 ', V(A), '명이 앞 열차 ', CARS(), '량에, ', V(B), '명이 뒤 열차 ', CARS(), '량에 칸마다 똑같이 탔어요. 한 칸에 탄 사람이 더 많은 열차는 어느 쪽이고, 몇 명 더 많아요?'],
+    text: ['앞 열차 ', CARS(), '칸에 ', V(A), '명, 뒤 열차 ', CARS(), '칸에 ', V(B), '명이 똑같이 나눠 탔어요. 한 칸에 탄 사람은 어느 열차가 몇 명 더 많아요?'],
     figure: { kind: 'trains', trains: [{ name: '앞 열차', cars: 8 }, { name: '뒤 열차', cars: 8 }] },
     input: { kind: 'compound', fields: [{ key: 'which', label: '열차', options: ['앞', '뒤'] }, { key: 'diff', label: '몇 명 더' }] },
     answer: { which, diff },
     discriminators: [
       { key: 'diff', value: Math.abs(A - B), category: '읽기', kind: 'check', feedback: '한 칸의 차이를 물었어요. 다시 볼까요?' },
-      { key: 'which', value: which === '앞' ? '뒤' : '앞', category: '읽기', kind: 'nudge', feedbackCheck: '두 열차를 다시 견주어 볼까요?', feedback: '한 칸에 몇 명씩인지 견주어 볼까요?' },
+      { key: 'which', value: which === '앞' ? '뒤' : '앞', category: '읽기', kind: 'nudge', feedbackCheck: '두 열차를 다시 비교해 볼까요?', feedback: '한 칸에 몇 명씩인지 비교해 볼까요?' },
     ],
-    hints: [`앞 열차 8량에 ${A}명, 뒤 열차 8량에 ${B}명이 탔어요. 한 칸에 탄 사람이 더 많은 열차와 그 차이를 물어요.`, '두 열차의 한 칸 사람 수를 각각 구해 볼까요? 그다음 견주어요.', `앞 열차는 한 칸에 ${A} ÷ 8 = ${a}명이에요.`, `뒤 열차는 한 칸에 ${B} ÷ 8 = ☐명`],
+    hints: [`구하는 것: 한 칸에 탄 사람이 더 많은 열차, 몇 명 더 많은지 / 알고 있는 것: 앞 열차 8칸에 ${A}명, 뒤 열차 8칸에 ${B}명`, '두 열차의 한 칸 사람 수를 각각 구해 볼까요? 그다음 비교해요.', `앞 열차는 한 칸에 ${A} ÷ 8 = ${a}명이에요.`, `뒤 열차는 한 칸에 ${B} ÷ 8 = ☐명`],
     blank: `${B} ÷ 8 = ☐`,
     blankAnswer: String(b),
     blankThen: '어느 열차가 몇 명 더 많아요?',
     explain: {
       why: [`앞 열차는 한 칸에 ${A} ÷ 8 = ${a}명, 뒤 열차는 ${B} ÷ 8 = ${b}명이에요.`, `${Math.max(a, b)} − ${Math.min(a, b)} = ${ieyo(diff)}.`, `그래서 ${which} 열차가 한 칸에 ${diff}명 더 많아요.`],
-      alt: [`전체 차이 ${Math.abs(A - B)}명을 8칸에 나눠도 한 칸 차이가 나와요.`, `${Math.abs(A - B)} ÷ 8 = ${ieyo(diff)}.`, `어느 길로 해도 답은 ${ro(diff)} 같아요.`],
+      alt: [`전체 차이 ${Math.abs(A - B)}명을 8칸에 나눠도 한 칸 차이가 나와요.`, `${Math.abs(A - B)} ÷ 8 = ${ieyo(diff)}.`, `어느 길로 해도 답은 ${diff}명이에요.`],
     },
   };
 }
@@ -428,7 +431,7 @@ const D1 = {
   diagnostic: true,
   generate() {
     return {
-      text: ['동매역에서 ', V(56), '명이 ', L1(), '호선 ', CARS(), '칸에 똑같이 나눠 탔어요. ', n(56), ' ÷ ', n(8), ' = ?'],
+      text: ['동매역에서 ', V(56), '명이 ', L1(), '호선 ', CARS(), '칸에 똑같이 나눠 탔어요. 한 칸에 몇 명이에요?', '\n', n(56), ' ÷ ', n(8), ' = ?'],
       figure: null,
       input: { kind: 'number', unit: '명' },
       answer: 7,
@@ -438,14 +441,14 @@ const D1 = {
       ],
       hints: [],
       blank: null,
-      explain: { why: ['8 × 7 = 56이에요.', '그래서 56 ÷ 8 = 7이에요.'], alt: [] },
+      explain: { why: ['8 × 7 = 56이니 56 ÷ 8 = 7이에요.', '그래서 한 칸에 7명이에요.'], alt: [] },
     };
   },
 };
 const D2 = {
   id: 'N06-D2',
   node: 'N06',
-  title: '급행 진단: 나뉠 수 구하기',
+  title: '급행 진단: 나누어지는 수 구하기',
   repr: '식',
   minLevel: 4,
   maxLevel: 4,
@@ -482,14 +485,14 @@ function t63Level1(r, c) {
     answer: { left: r, op: '×', right: c, result: P, commutative: true },
     discriminators: [
       { match: (x) => x?.op === '+', category: '식', kind: 'nudge', feedbackCheck: '이 식은 어떤 상황이에요?', feedback: '같은 수씩 여러 줄이에요. 곱셈식으로 써 볼까요?' },
-      { match: (x) => x?.op === '÷' || x?.op === '-', category: '식', kind: 'check', feedback: '의자가 모두 몇 개인지 물었어요' },
+      { match: (x) => x?.op === '÷' || x?.op === '-', category: '식', kind: 'check', feedback: '의자가 모두 몇 개인지 물었어요. 곱셈식일까요?' },
     ],
-    hints: ['대합실 의자가 줄마다 같은 수로 놓여 있어요. 의자가 모두 몇 개인지 곱셈식을 물어요.', '한 줄에 몇 개인지, 몇 줄인지 세어 볼까요? 같은 수씩 여러 줄이면 곱셈식으로 써요.', `한 줄에 ${c}개씩 ${r}줄이에요.`, `${r} × ${c} = ${bl.blank}`],
+    hints: ['구하는 것: 의자 수를 나타내는 곱셈식 / 알고 있는 것: 줄마다 같은 수로 놓인 의자', '한 줄에 몇 개인지, 몇 줄인지 세어 볼까요? 같은 수씩 여러 줄이면 곱셈식으로 써요.', `한 줄에 ${c}개씩 ${r}줄이에요.`, `${r} × ${c} = ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     explain: {
       why: [`한 줄에 ${c}개씩 ${r}줄이에요.`, `${r} × ${c} = ${ieyo(P)}.`, `${c} × ${r} = ${P}${roOnly(P)} 써도 돼요.`, `그래서 의자는 ${P}개예요.`],
-      alt: [`${c}씩 ${r}번 뛰어 세어도 ${ieyo(P)}.`, `두 풀이 모두 ${P}개예요.`],
+      alt: [`${c}씩 ${r}번 뛰어 세어도 ${ieyo(P)}.`, `어느 길로 해도 답은 ${P}개예요.`],
     },
   };
 }
@@ -498,9 +501,9 @@ function t63Level1(r, c) {
 function t63Level2(r, c) {
   const N = r * c;
   return {
-    text: [`${CHAIRS} 의자는 모두 `, V(N), '개예요. 그림은 첫 줄만 보여요. 줄은 몇 줄이에요? 나눗셈식으로 써요.'],
+    text: ['역 대합실 의자 ', V(N), '개가 줄마다 같은 수로 놓여 있어요. 그림에는 첫 줄만 있어요. 몇 줄인지 나눗셈식으로 써요.'],
     // 줄 수가 답이라 첫 줄만 그린다(rows: 1). hiddenRows: 나머지 줄이 가려져 있다는 표시.
-    figure: { kind: 'array', rows: 1, cols: c, label: '나머지 줄은 가려져 있어요', hiddenRows: true },
+    figure: { kind: 'array', rows: 1, cols: c, label: '다른 줄은 가려져 있어요', hiddenRows: true },
     input: { kind: 'equation' },
     answer: { left: N, op: '÷', right: c, result: r },
     discriminators: [
@@ -508,12 +511,12 @@ function t63Level2(r, c) {
       { match: (x) => x?.op === '×' && num(x.left) === N, category: '식', kind: 'check', feedback: '줄 수가 의자 수보다 많을까요?' },
       { match: (x) => x?.op === '-' || x?.op === '+', category: '식', kind: 'nudge', feedbackCheck: '이 식은 어떤 상황이에요?', feedback: '한 줄에 같은 수씩이에요. 몇 묶음일까요?' },
     ],
-    hints: [`의자는 모두 ${N}개이고, 한 줄에 ${c}개예요. 줄이 몇 줄인지 물어요.`, `${c}개씩 묶으면 몇 묶음일까요? 곱셈구구 ${c}단을 떠올려 봐요.`, `${c} × ${r - 1} = ${c * (r - 1)}, ${c} × ${r + 1} = ${ieyo(c * (r + 1))}.`, `${c} × ☐ = ${N}`],
+    hints: [`구하는 것: 줄 수를 구하는 나눗셈식 / 알고 있는 것: 의자 ${N}개, 한 줄에 ${c}개`, `${c}개씩 묶으면 몇 묶음일까요? 곱셈구구 ${c}단을 떠올려 봐요.`, `${c} × ${r - 1} = ${c * (r - 1)}, ${c} × ${r + 1} = ${ieyo(c * (r + 1))}.`, `${c} × ☐ = ${N}`],
     blank: `${c} × ☐ = ${N}`,
     blankAnswer: String(r),
     explain: {
-      why: [`한 줄에 ${c}개씩 ${r}줄이면 ${c} × ${r} = ${N}개예요.`, `그래서 ${N}개를 ${c}개씩 나누면 ${r}줄, ${N} ÷ ${c} = ${ieyo(r)}.`],
-      alt: [`${N}에서 ${c}씩 빼면 ${r}번 만에 0이 돼요.`, `두 풀이 모두 ${r}줄이에요.`],
+      why: [`한 줄에 ${c}개씩 ${r}줄이면 ${c} × ${r} = ${N}개예요.`, `${N}개를 ${c}개씩 묶으면 ${r}줄이에요.`, `그래서 식은 ${N} ÷ ${c} = ${ieyo(r)}.`],
+      alt: [`${N}에서 ${c}씩 빼면 ${r}번 만에 0이 돼요.`, `어느 길로 해도 답은 ${r}줄이에요.`],
     },
   };
 }
@@ -528,10 +531,10 @@ function t63Level3(r, c, rng) {
   const plus = `${c} + ${r} = ${c + r}`;
   const answer = [mul, byCols, byRows];
   const discs = [
-    { value: [...answer, minus], category: '개념', kind: 'check', feedback: '줄 하나를 뺀 식이에요. 배열 전체일까요?' },
+    { value: [...answer, minus], category: '개념', kind: 'check', feedback: '줄 하나를 뺀 식이에요. 의자 전체일까요?' },
     { value: [...answer, plus], category: '개념', kind: 'check', feedback: `${c} + ${eun(r)} 의자 수일까요?` },
-    { value: [mul, byCols], category: '개념', kind: 'nudge', feedbackCheck: '빠진 것이 없나요?', feedback: '줄로 나누기와 칸으로 나누기 둘 다?' },
-    { value: [mul, byRows], category: '개념', kind: 'nudge', feedbackCheck: '빠진 것이 없나요?', feedback: '줄로 나누기와 칸으로 나누기 둘 다?' },
+    { value: [mul, byCols], category: '개념', kind: 'nudge', feedbackCheck: '빠진 것이 없나요?', feedback: '나눗셈식 두 개를 다 골랐나요?' },
+    { value: [mul, byRows], category: '개념', kind: 'nudge', feedbackCheck: '빠진 것이 없나요?', feedback: '나눗셈식 두 개를 다 골랐나요?' },
   ];
   return {
     text: [`${CHAIRS} 이 그림으로 만들 수 있는 식을 모두 골라요.`],
@@ -540,13 +543,13 @@ function t63Level3(r, c, rng) {
     answer,
     discriminators: discs,
     grade: multiGradeS(answer, discs),
-    hints: ['의자 배열 그림을 보고 만들 수 있는 식을 모두 물어요.', '배열 전체의 의자 수를 곱셈식으로 먼저 써 볼까요? 그 곱셈식으로 나눗셈식도 만들 수 있어요.', `한 줄에 ${c}개씩 ${r}줄이라 ${mul}${jo(P, '이에요', '예요')}.`, `${P} ÷ ${c} = ☐`],
+    hints: ['구하는 것: 이 그림으로 만들 수 있는 식 모두 / 알고 있는 것: 줄마다 같은 수로 놓인 의자', '배열 전체의 의자 수를 곱셈식으로 먼저 써 볼까요? 그 곱셈식으로 나눗셈식도 만들 수 있어요.', `한 줄에 ${c}개씩 ${r}줄이라 ${mul}${jo(P, '이에요', '예요')}.`, `${P} ÷ ${c} = ☐`],
     blank: `${P} ÷ ${c} = ☐`,
     blankAnswer: String(r),
     blankThen: '만들 수 있는 식을 모두 골라요.',
     explain: {
-      why: [`한 줄에 ${c}개씩 ${r}줄이라 ${mul}${jo(P, '이에요', '예요')}.`, `${P}개를 ${c}개씩 나누면 ${r}줄, ${r}줄로 똑같이 나누면 한 줄에 ${c}개예요.`, `그래서 ${mul}, ${byCols}, ${byRows} 세 식이에요.`],
-      alt: ['곱셈식 하나에서 나눗셈식 두 개가 나와요.', '나머지 두 식은 배열 전체의 의자 수를 나타내지 않아요.'],
+      why: [`한 줄에 ${c}개씩 ${r}줄이라 ${mul}${jo(P, '이에요', '예요')}.`, `${P}개를 ${c}개씩 묶으면 ${r}줄, ${r}줄로 똑같이 나누면 한 줄에 ${c}개예요.`, `그래서 ${mul}, ${byCols}, ${byRows} 세 식이에요.`],
+      alt: ['곱셈식 하나에서 나눗셈식 두 개가 나와요.', '다른 두 식은 의자 전체의 수를 나타내지 않아요.'],
     },
   };
 }

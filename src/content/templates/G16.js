@@ -138,7 +138,7 @@ const ruler = (from, to) => ({ kind: 'ruler', cm: 10, mm: true, mark: { from, to
 function t161Level1(a, b) {
   const answer = { cm: a, mm: b };
   return {
-    text: ['자 위에 승차권을 놓았어요. 승차권의 한쪽 끝은 자의 눈금 ', n(0), '에 맞췄어요. 승차권의 길이는 몇 cm 몇 mm예요?'],
+    text: ['자 위에 지하철 승차권을 놓았어요. 한쪽 끝은 눈금 ', n(0), '에 맞췄어요. 승차권의 길이는 몇 cm 몇 mm예요?'],
     figure: ruler(0, 10 * a + b),
     input: { kind: 'compound', fields: CM_FIELDS },
     answer,
@@ -147,7 +147,7 @@ function t161Level1(a, b) {
     hints: ['자 위에 놓은 승차권의 길이를 몇 cm 몇 mm로 물어요.', '큰 눈금(cm)을 먼저 읽고, 남은 작은 눈금(mm)을 세어 볼까요?', `큰 눈금은 ${a}cm까지예요.`, `${a}cm ☐mm`],
     blank: '☐',
     blankAnswer: String(b),
-    explain: { why: [`승차권 끝은 ${a}cm 눈금을 지나 작은 눈금 ${b}칸을 더 갔어요.`, '작은 눈금 한 칸은 1mm예요.', `그래서 ${a}cm ${b}mm예요.`], alt: [`${a + 1}cm 눈금에서 작은 눈금 ${10 - b}칸 모자란 자리예요.`, `두 방법 모두 ${a}cm ${b}mm예요.`] },
+    explain: { why: [`승차권 끝은 ${a}cm 눈금을 지나 작은 눈금 ${b}칸을 더 갔어요.`, '작은 눈금 한 칸은 1mm예요.', `그래서 ${a}cm ${b}mm예요.`], alt: [`${a + 1}cm 눈금에서 작은 눈금 ${10 - b}칸 모자란 자리예요.`, `어느 길로 해도 답은 ${a}cm ${b}mm예요.`] },
   };
 }
 function t161Level2(a, b) {
@@ -155,23 +155,24 @@ function t161Level2(a, b) {
   const answer = { cm: a, mm: b, all: 10 * a + b };
   const discs = cleanDiscs([{ value: { all: a + b }, category: '개념', kind: 'check', feedback: '작은 눈금은 모두 몇 칸이에요?' }], answer);
   return {
-    text: ['자 위에 승차권을 놓았어요. 한쪽 끝은 눈금 ', n(0), '에 맞췄어요. 길이를 몇 cm 몇 mm로 쓰고, 같은 길이를 몇 mm로도 써요.'],
+    // 물음 둘은 칸 이름(cm·mm, 모두 몇 mm)에 맡긴다(02 문서 규칙 10).
+    text: ['자 위에 지하철 승차권을 놓았어요. 한쪽 끝은 눈금 ', n(0), '에 맞췄어요. 승차권의 길이를 칸에 맞게 써요.'],
     figure: ruler(0, 10 * a + b),
     input: { kind: 'compound', fields },
     answer,
     discriminators: discs,
     grade: cgrade(fields, answer, discs),
-    hints: ['승차권의 길이를 몇 cm 몇 mm로, 또 몇 mm로 물어요.', '0부터 작은 눈금을 모두 세어 볼까요? 큰 눈금 한 칸 안에 작은 눈금이 몇 칸 있는지 봐요.', `큰 눈금 한 칸 안에 작은 눈금이 10칸 있어요. 큰 눈금은 ${a}칸이에요.`, `작은 눈금 모두: ${blankAt(10 * a + b, 1).blank}칸`],
+    hints: ['승차권의 길이를 몇 cm 몇 mm로, 또 몇 mm로 물어요.', '0부터 작은 눈금을 모두 세어 볼까요? 큰 눈금 한 칸 안에 작은 눈금이 몇 칸 있는지 봐요.', `큰 눈금 한 칸은 작은 눈금 10칸이에요. 마지막 큰 눈금 뒤로 작은 눈금이 ${b}칸 더 있어요.`, `작은 눈금 모두: ${blankAt(10 * a + b, 1).blank}칸`],
     blank: blankAt(10 * a + b, 1).blank,
     blankAnswer: blankAt(10 * a + b, 1).blankAnswer,
-    explain: { why: [`승차권은 ${a}cm ${b}mm예요.`, `작은 눈금을 0부터 세면 큰 눈금 ${a}칸에 10칸씩, 그리고 ${b}칸이 더 있어서 모두 ${10 * a + b}칸이에요.`, `그래서 ${a}cm ${b}mm = ${10 * a + b}mm예요.`], alt: [`작은 눈금을 10칸씩 묶어 세면 ${a}묶음과 ${b}칸이에요.`, `두 방법 모두 ${10 * a + b}mm예요.`] },
+    explain: { why: [`승차권은 ${a}cm ${b}mm예요.`, `작은 눈금을 0부터 세면 큰 눈금 ${a}칸에 10칸씩, 그리고 ${b}칸이 더 있어서 모두 ${10 * a + b}칸이에요.`, `그래서 ${a}cm ${b}mm = ${10 * a + b}mm예요.`], alt: [`작은 눈금을 10칸씩 묶어 세면 ${a}묶음과 ${b}칸이에요.`, `어느 길로 해도 답은 ${10 * a + b}mm예요.`] },
   };
 }
 function t161Level3(s, e, f) {
   const answer = { cm: e - s, mm: f };
-  const discs = cleanDiscs([{ value: { cm: e, mm: f }, category: '개념', kind: 'check', feedback: '물건이 0에서 시작했나요?' }], answer);
+  const discs = cleanDiscs([{ value: { cm: e, mm: f }, category: '개념', kind: 'check', feedback: '승차권이 0에서 시작했나요?' }], answer);
   return {
-    text: ['자 위에 승차권을 놓았어요. 승차권의 한쪽 끝은 자의 ', n(s), 'cm 눈금에 있어요. 승차권의 길이는 몇 cm 몇 mm예요?'],
+    text: ['자 위에 지하철 승차권을 놓았어요. 한쪽 끝은 자의 ', n(s), 'cm 눈금에 있어요. 승차권의 길이는 몇 cm 몇 mm예요?'],
     figure: ruler(10 * s, 10 * e + f),
     input: { kind: 'compound', fields: CM_FIELDS },
     answer,
@@ -180,7 +181,7 @@ function t161Level3(s, e, f) {
     hints: [`승차권은 자의 ${s}cm 눈금에서 시작해요. 승차권의 길이를 물어요.`, `${s}cm 눈금부터 큰 눈금을 몇 칸 지나는지 세어 볼까요?`, `끝은 ${e}cm 눈금을 지나 작은 눈금 ${f}칸 더 간 곳이에요.`, `${s}cm부터 큰 눈금 ☐칸, 작은 눈금 ${f}칸`],
     blank: '☐',
     blankAnswer: String(e - s),
-    explain: { why: [`승차권 끝은 ${e}cm ${f}mm 눈금이에요.`, `${s}cm에서 시작했으니 큰 눈금은 ${e} − ${s} = ${e - s}칸 지나요.`, `그래서 ${e - s}cm ${f}mm예요.`], alt: [`작은 눈금으로 세면 ${10 * e + f} − ${10 * s} = ${10 * (e - s) + f}칸, ${e - s}cm ${f}mm예요.`, `두 방법 모두 ${e - s}cm ${f}mm예요.`] },
+    explain: { why: [`승차권 끝은 ${e}cm ${f}mm 눈금이에요.`, `${s}cm에서 시작했으니 큰 눈금은 ${e} − ${s} = ${e - s}칸 지나요.`, `그래서 ${e - s}cm ${f}mm예요.`], alt: [`작은 눈금으로 세면 ${10 * e + f} − ${10 * s} = ${10 * (e - s) + f}칸, ${e - s}cm ${f}mm예요.`, `어느 길로 해도 답은 ${e - s}cm ${f}mm예요.`] },
   };
 }
 const T16_1 = {
@@ -206,42 +207,42 @@ function t162Level1(far) {
   const ask = far ? '더 먼' : '더 가까운';
   const answer = far ? '금정산' : '황령산';
   return {
-    text: ['서면에서 황령산까지는 약 ', KM2(), 'km, 금정산까지는 약 ', KM14(), 'km예요. 서면에서 ', ask, ' 산은 어디예요?'],
+    text: ['서면역에서 황령산까지는 약 ', KM2(), 'km, 금정산까지는 약 ', KM14(), 'km예요. 서면역에서 ', ask, ' 산은 어디예요?'],
     figure: null,
     input: { kind: 'choice', options: ['황령산', '금정산'] },
     answer,
     discriminators: [{ value: far ? '황령산' : '금정산', category: '개념', kind: 'check', feedback: '약 2km와 약 14km 중 어느 쪽이 길어요?' }],
-    hints: [`서면에서 황령산까지 약 2km, 금정산까지 약 14km예요. ${ask} 산을 물어요.`, '두 거리의 수를 견주어 볼까요? 단위가 같은지도 봐요.', '두 거리 모두 km예요.', `2와 14 중 큰 수는 1☐`],
+    hints: [`구하는 것: 서면역에서 ${ask} 산 / 알고 있는 것: 황령산까지 약 2km, 금정산까지 약 14km`, '두 거리의 수를 비교해 볼까요? 단위가 같은지도 봐요.', '두 거리 모두 km예요.', `2와 14 중 큰 수는 1☐`],
     blank: '1☐',
     blankAnswer: '4',
     blankThen: `${ask} 산은?`,
-    explain: { why: ['두 거리는 모두 km로 적혀 있어요.', '약 14km가 약 2km보다 길어요.', `그래서 ${ask} 산은 ${answer}이에요.`], alt: ['지도에서 서면과 두 산 사이를 이어 보아도 금정산 쪽 선이 훨씬 길어요.', `두 방법 모두 ${answer}이에요.`] },
+    explain: { why: ['두 거리는 모두 km로 적혀 있어요.', '약 14km가 약 2km보다 길어요.', `그래서 ${ask} 산은 ${answer}이에요.`], alt: ['지도에서 서면역과 두 산 사이를 이어 보아도 금정산 쪽 선이 훨씬 길어요.', `어느 길로 해도 답은 ${answer}이에요.`] },
   };
 }
 const t162Level2 = () => ({
-  text: ['서면에서 황령산까지는 약 ', KM2(), 'km, 금정산까지는 약 ', KM14(), 'km예요. 금정산은 황령산보다 서면에서 약 몇 km 더 멀어요?'],
+  text: ['서면역에서 황령산까지는 약 ', KM2(), 'km, 금정산까지는 약 ', KM14(), 'km예요. 금정산이 약 몇 km 더 멀어요?'],
   figure: null,
   input: { kind: 'number', unit: 'km' },
   answer: 12,
-  discriminators: [{ value: 16, category: '식', kind: 'check', feedback: '더 먼 정도를 물었어요. 다시 볼까요?' }],
-  hints: ['황령산까지 약 2km, 금정산까지 약 14km예요. 금정산이 얼마나 더 먼지 물어요.', '두 거리의 차를 구해 볼까요?', '두 거리 모두 km라서 수끼리 견주면 돼요.', '14 − 2 = 1☐'],
+  discriminators: [{ value: 16, category: '식', kind: 'check', feedback: '얼마나 더 먼지 물었어요. 더해도 될까요?' }],
+  hints: ['구하는 것: 금정산이 황령산보다 더 먼 거리 / 알고 있는 것: 황령산까지 약 2km, 금정산까지 약 14km', '두 거리의 차를 구해 볼까요?', '두 거리 모두 km라서 수끼리 비교하면 돼요.', '14 − 2 = 1☐'],
   blank: '1☐',
   blankAnswer: '2',
-  explain: { why: ['더 먼 정도는 두 거리의 차예요.', '14 − 2 = 12예요.', '그래서 금정산이 약 12km 더 멀어요.'], alt: ['2km에서 14km까지 이어 세면 12km예요.', '두 방법 모두 약 12km예요.'] },
+  explain: { why: ['더 먼 정도는 두 거리의 차예요.', '14 − 2 = 12예요.', '그래서 금정산이 약 12km 더 멀어요.'], alt: ['2km에서 14km까지 이어 세면 12km예요.', '어느 길로 해도 답은 약 12km예요.'] },
 });
 const t162Level3 = () => ({
-  text: ['서면에서 황령산까지는 약 ', KM2(), 'km, 금정산까지는 약 ', KM14(), 'km예요. 금정산까지의 거리는 황령산까지의 거리의 약 몇 배예요?'],
+  text: ['서면역에서 황령산까지는 약 ', KM2(), 'km, 금정산까지는 약 ', KM14(), 'km예요. 금정산까지의 거리는 황령산까지의 약 몇 배예요?'],
   figure: null,
   input: { kind: 'number', unit: '배' },
   answer: 7,
   discriminators: [
-    { value: 12, category: '읽기', kind: 'check', feedback: '더 먼 정도가 아니라 몇 배를 물었어요' },
-    { value: 16, category: '식', kind: 'check', feedback: '몇 배인지 물었어요. 다시 볼까요?' },
+    { value: 12, category: '읽기', kind: 'check', feedback: '몇 배인지 물었어요. 2km를 몇 번 이을까요?' },
+    { value: 16, category: '식', kind: 'check', feedback: '몇 배인지 물었어요. 더해도 될까요?' },
   ],
-  hints: ['황령산까지 약 2km, 금정산까지 약 14km예요. 금정산까지의 거리가 황령산까지의 몇 배인지 물어요.', '2km를 몇 번 이으면 14km가 되는지 볼까요?', '2km를 2번 이으면 4km, 3번 이으면 6km예요.', '2 × ☐ = 14'],
+  hints: ['구하는 것: 금정산까지의 거리가 황령산까지의 몇 배인지 / 알고 있는 것: 황령산까지 약 2km, 금정산까지 약 14km', '2km를 몇 번 이으면 14km가 되는지 볼까요?', '2km를 2번 이으면 4km, 3번 이으면 6km예요.', '2 × ☐ = 14'],
   blank: '☐',
   blankAnswer: '7',
-  explain: { why: ['몇 배는 작은 거리를 몇 번 이으면 큰 거리가 되는지예요.', '2 × 7 = 14예요.', '그래서 약 7배예요.'], alt: ['14 ÷ 2 = 7로 구해도 돼요.', '두 방법 모두 약 7배예요.'] },
+  explain: { why: ['작은 거리를 몇 번 이으면 큰 거리가 되는지 보면 몇 배인지 알 수 있어요.', '2 × 7 = 14예요.', '그래서 약 7배예요.'], alt: ['14 ÷ 2 = 7로 구해도 돼요.', '어느 길로 해도 답은 약 7배예요.'] },
 });
 const T16_2 = {
   id: 'T16-2',
@@ -259,9 +260,9 @@ const T16_2 = {
 // ── T16-3 알맞은 단위 (빈칸) — 1~3단계 ──
 // 단계 불변식: 1 아주 짧은 것의 단위(mm) / 2 실제 노선 길이의 단위(km) / 3 물건 셋과 단위 잇기.
 const THIN = [
-  ['승차권의 두께', 'mm'],
+  ['지하철 승차권의 두께', 'mm'],
   ['교통카드의 두께', 'mm'],
-  ['동전의 두께', 'mm'],
+  ['기차 승차권의 두께', 'mm'],
 ];
 function t163Level1(item) {
   return {
@@ -278,22 +279,21 @@ function t163Level1(item) {
 function t163Level2(line) {
   const real = line === 2 ? { len: 45.2, src: SRC_L2, st: 43 } : { len: 39.9, src: SRC_L1, st: 40 };
   return {
-    text: [label(String(line), { source: real.src }), '호선 전체 길이는 ', n(real.len, { real: true, source: real.src }), ' □예요. □에 알맞은 단위는 어느 것이에요?'],
+    // 하린: "전체 길이"보다 "역과 역 사이 거리를 모두 더하면"이 정확하다(N10과 같은 고침).
+    text: [label(String(line), { source: real.src }), '호선의 역과 역 사이 거리를 모두 더하면 ', n(real.len, { real: true, source: real.src }), '□예요. □에 알맞은 단위는 어느 것이에요?'],
     figure: null,
     input: { kind: 'choice', options: UNITS },
     answer: 'km',
     discriminators: [
-      { value: 'm', category: '개념', kind: 'check', feedback: `${line}호선은 ${real.st}역이 이어진 길이예요` },
-      { value: 'cm', category: '개념', kind: 'check', feedback: `${line}호선은 ${real.st}역이 이어진 길이예요` },
-      { value: 'mm', category: '개념', kind: 'check', feedback: `${line}호선은 ${real.st}역이 이어진 길이예요` },
+      ...['m', 'cm', 'mm'].map((u) => ({ value: u, category: '개념', kind: 'check', feedback: `${real.st}역을 잇는 길이가 ${real.len}${u}일까요?` })),
     ],
-    hints: [`${line}호선 전체 길이 ${real.len} 뒤에 알맞은 단위를 물어요.`, `${real.len}m라면 얼마나 긴 길일지 떠올려 볼까요?`, `${real.len}m는 교실 몇 개 길이밖에 안 돼요. ${line}호선은 ${real.st}역이 이어져 있어요.`, '역과 역 사이처럼 먼 거리를 나타내는 단위를 골라요.'],
+    hints: [`구하는 것: ${real.len} 뒤에 알맞은 단위 / 알고 있는 것: ${line}호선 ${real.st}역의 역 사이 거리를 모두 더한 길이`, `${real.len}m라면 얼마나 긴 길일지 떠올려 볼까요?`, `${real.len}m는 교실 몇 개 길이밖에 안 돼요. ${line}호선은 ${real.st}역이 이어져 있어요.`, '역과 역 사이처럼 먼 거리를 나타내는 단위를 골라요.'],
     blank: null,
-    explain: { why: [`${line}호선은 ${real.st}역을 잇는 아주 긴 노선이에요.`, '역과 역 사이처럼 먼 거리는 km로 재요.', `그래서 ${line}호선 전체 길이는 ${real.len}km예요.`], alt: [`${real.len}m라면 운동장 한 바퀴도 안 되는 길이라 맞지 않아요.`, '그래서 답은 km예요.'] },
+    explain: { why: [`${line}호선은 ${real.st}역을 잇는 아주 긴 노선이에요.`, '역과 역 사이처럼 먼 거리는 km로 재요.', `그래서 ${line}호선의 역 사이 거리를 모두 더하면 ${real.len}km예요.`], alt: [`${real.len}m라면 운동장 한 바퀴도 안 되는 길이라 맞지 않아요.`, '그래서 답은 km예요.'] },
   };
 }
 const MATCH = [
-  { key: 'mt', label: '서면에서 황령산까지', unit: 'km' },
+  { key: 'mt', label: '서면역에서 황령산까지', unit: 'km' },
   { key: 'car', label: '열차 한 칸의 길이', unit: 'm' },
   { key: 'ticket', label: '승차권의 긴 쪽', unit: 'cm' },
 ];
@@ -303,22 +303,22 @@ function t163Level3(order) {
   const answer = Object.fromEntries(items.map((it) => [it.key, it.unit]));
   const discs = cleanDiscs(
     [
-      { value: { mt: 'm' }, category: '개념', kind: 'check', feedback: '서면에서 황령산까지 걸어갈 수 있을까요?' },
+      { value: { mt: 'm' }, category: '개념', kind: 'check', feedback: '약 2km를 1m씩 몇 번 재야 할까요?' },
       { value: { car: 'cm' }, category: '개념', kind: 'check', feedback: '열차 한 칸은 자로 잴 만큼 짧을까요?' },
       { value: { ticket: 'mm' }, category: '개념', kind: 'check', feedback: '승차권의 긴 쪽은 자의 큰 눈금 몇 칸쯤이에요?' },
     ],
     answer,
   );
   return {
-    text: ['물건마다 길이를 잴 때 알맞은 단위를 골라요.'],
+    text: ['산까지의 거리, 열차 한 칸, 승차권의 길이에 알맞은 단위를 골라요.'],
     figure: null,
     input: { kind: 'compound', fields },
     answer,
     discriminators: discs,
     grade: cgrade(fields, answer, discs),
-    hints: ['서면에서 황령산까지, 열차 한 칸의 길이, 승차권의 긴 쪽에 알맞은 단위를 물어요.', '가장 긴 것부터 가장 짧은 것까지 차례로 놓아 볼까요?', '가장 긴 것은 서면에서 황령산까지예요.', '남은 둘도 긴 차례에 맞춰 큰 단위부터 골라요.'],
+    hints: ['구하는 것: 길이마다 알맞은 단위 / 알고 있는 것: 서면역에서 황령산까지, 열차 한 칸의 길이, 승차권의 긴 쪽', '가장 긴 것부터 가장 짧은 것까지 차례로 놓아 볼까요?', '가장 긴 것은 서면역에서 황령산까지예요.', '남은 둘도 긴 차례에 맞춰 큰 단위부터 골라요.'],
     blank: null,
-    explain: { why: ['서면에서 황령산까지는 아주 멀어서 km로 재요.', '열차 한 칸은 몇 걸음쯤이라 m, 승차권은 손바닥만 해서 cm로 재요.', '그래서 km, m, cm예요.'], alt: ['긴 차례(황령산 > 열차 한 칸 > 승차권)와 큰 단위 차례(km > m > cm)를 짝지어도 돼요.', '두 방법 모두 km, m, cm예요.'] },
+    explain: { why: ['서면역에서 황령산까지는 아주 멀어서 km로 재요.', '열차 한 칸은 몇 걸음쯤이라 m, 승차권은 손바닥만 해서 cm로 재요.', '그래서 km, m, cm예요.'], alt: ['긴 차례(황령산 > 열차 한 칸 > 승차권)와 큰 단위 차례(km > m > cm)를 짝지어도 돼요.', '어느 길로 해도 답은 km, m, cm예요.'] },
   };
 }
 const T16_3 = {

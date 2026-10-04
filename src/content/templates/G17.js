@@ -130,7 +130,7 @@ const KM_FIELDS = [
 // ── T17-1 단위 바꾸기 (식) — 1~3단계 ──
 // 단계 불변식: 1 cm·mm → mm / 2 km·m → m / 3 m → km·m.
 // scene = 식 앞 교통 장면 조각(없으면 식만)
-function t171Level1(a, b, scene = null) {
+function t171Level1(a, b, scene = null, h1 = null) {
   const ans = 10 * a + b;
   return {
     text: [...(scene ?? []), n(a), 'cm ', n(b), 'mm = □mm'],
@@ -138,28 +138,28 @@ function t171Level1(a, b, scene = null) {
     input: { kind: 'number', unit: 'mm' },
     answer: ans,
     discriminators: [a + b, 100 * a + b].filter((v) => v !== ans).map((v) => ({ value: v, category: '개념', kind: 'check', feedback: '1cm는 몇 mm예요?' })),
-    hints: [`${a}cm ${b}mm를 mm로만 나타내요.`, `${a}cm가 몇 mm인지 먼저 바꿔 볼까요?`, `1cm = 10mm라서 ${a}cm = ${10 * a}mm예요.`, `${10 * a} + ${b} = ${blankAt(ans, 1).blank}`],
+    hints: [h1 ?? `${a}cm ${b}mm를 mm로만 나타내요.`, `${a}cm가 몇 mm인지 먼저 바꿔 볼까요?`, `1cm = 10mm라서 ${a}cm = ${10 * a}mm예요.`, `${10 * a} + ${b} = ${blankAt(ans, 1).blank}`],
     blank: blankAt(ans, 1).blank,
     blankAnswer: blankAt(ans, 1).blankAnswer,
-    explain: { why: ['1cm는 10mm예요.', `${a}cm는 ${10 * a}mm이고, ${b}mm를 더해요.`, `그래서 ${a}cm ${b}mm = ${ans}mm예요.`], alt: [`자의 작은 눈금을 0부터 세면 ${ans}칸이에요.`, `두 방법 모두 ${ans}mm예요.`] },
+    explain: { why: ['1cm는 10mm예요.', `${a}cm는 ${10 * a}mm이고, ${b}mm를 더해요.`, `그래서 ${a}cm ${b}mm = ${ans}mm예요.`], alt: [`자의 작은 눈금을 0부터 세면 ${ans}칸이에요.`, `어느 길로 해도 답은 ${ans}mm예요.`] },
   };
 }
-function t171Level2(a, b, scene = null) {
+function t171Level2(a, b, scene = null, h1 = null) {
   const ans = 1000 * a + b;
-  const discs = [100 * a + b / 10, 1000 * a + b / 100].filter((v) => v !== ans && Number.isInteger(v)).map((v) => ({ value: v, category: '개념', kind: 'nudge', feedbackCheck: '답의 자릿수를 다시 볼까요?', feedback: `1km는 1000m예요. ${a}km는요?` }));
+  const discs = [100 * a + b / 10, 1000 * a + b / 100].filter((v) => v !== ans && Number.isInteger(v)).map((v) => ({ value: v, category: '개념', kind: 'nudge', feedbackCheck: '답의 자릿수를 다시 볼까요?', feedback: a === 1 ? '1km는 몇 m예요?' : `1km는 1000m예요. ${a}km는요?` }));
   return {
     text: [...(scene ?? []), n(a), 'km ', n(b), 'm = □m'],
     figure: null,
     input: { kind: 'number', unit: 'm' },
     answer: ans,
     discriminators: discs,
-    hints: [`${a}km ${b}m를 m로만 나타내요.`, `${a}km가 몇 m인지 먼저 바꿔 볼까요?`, `1km = 1000m라서 ${a}km = ${1000 * a}m예요.`, `${1000 * a} + ${b} = ${blankAt(ans, 2).blank}`],
+    hints: [h1 ?? `${a}km ${b}m를 m로만 나타내요.`, `${a}km가 몇 m인지 먼저 바꿔 볼까요?`, `1km = 1000m라서 ${a}km = ${1000 * a}m예요.`, `${1000 * a} + ${b} = ${blankAt(ans, 2).blank}`],
     blank: blankAt(ans, 2).blank,
     blankAnswer: blankAt(ans, 2).blankAnswer,
-    explain: { why: ['1km는 1000m예요.', `${a}km는 ${1000 * a}m이고, ${b}m를 더해요.`, `그래서 ${a}km ${b}m = ${ans}m예요.`], alt: [`${ans}m에서 천의 자리 ${a}${jo(a, "은", "는")} ${a}km, 나머지 ${b}${jo(b, "은", "는")} ${b}m예요.`, `두 방법 모두 ${ans}m예요.`] },
+    explain: { why: ['1km는 1000m예요.', `${a}km는 ${1000 * a}m이고, ${b}m를 더해요.`, `그래서 ${a}km ${b}m = ${ans}m예요.`], alt: [`${ans}m에서 천의 자리 ${a}${jo(a, "은", "는")} ${a}km, 나머지 ${b}${jo(b, "은", "는")} ${b}m예요.`, `어느 길로 해도 답은 ${ans}m예요.`] },
   };
 }
-function t171Level3(T, scene = null) {
+function t171Level3(T, scene = null, h1 = null) {
   const answer = { km: Math.floor(T / 1000), m: T % 1000 };
   const discs = cleanDiscs([{ value: { km: Math.floor(T / 100), m: T % 100 }, category: '개념', kind: 'check', feedback: '1km는 몇 m예요?' }], answer);
   return {
@@ -169,10 +169,10 @@ function t171Level3(T, scene = null) {
     answer,
     discriminators: discs,
     grade: cgrade(KM_FIELDS, answer, discs),
-    hints: [`${T}m를 몇 km 몇 m로 나타내요.`, '1000m씩 묶으면 몇 km가 될까요?', `${T}m 안에 1000m가 ${answer.km}번 들어가요.`, `${T} − ${1000 * answer.km} = ${blankAt(answer.m, 2).blank}`],
+    hints: [h1 ?? `${T}m를 몇 km 몇 m로 나타내요.`, '1000m씩 묶으면 몇 km가 될까요?', `${T}m 안에 1000m가 ${answer.km}번 들어가요.`, `${T} − ${1000 * answer.km} = ${blankAt(answer.m, 2).blank}`],
     blank: blankAt(answer.m, 2).blank,
     blankAnswer: blankAt(answer.m, 2).blankAnswer,
-    explain: { why: ['1000m가 1km예요.', `${T}m는 1000m가 ${answer.km}번이고 ${answer.m}m가 남아요.`, `그래서 ${answer.km}km ${answer.m}m예요.`], alt: [`${T}에서 천의 자리 숫자 ${answer.km}${jo(answer.km, '이', '가')} km, 나머지 ${answer.m}${jo(answer.m, '이', '가')} m예요.`, `두 방법 모두 ${answer.km}km ${answer.m}m예요.`] },
+    explain: { why: ['1000m가 1km예요.', `${T}m는 1000m가 ${answer.km}번이고 ${answer.m}m가 남아요.`, `그래서 ${answer.km}km ${answer.m}m예요.`], alt: [`${T}에서 천의 자리 숫자 ${answer.km}${jo(answer.km, '이', '가')} km, 나머지 ${answer.m}${jo(answer.m, '이', '가')} m예요.`, `어느 길로 해도 답은 ${answer.km}km ${answer.m}m예요.`] },
   };
 }
 const T17_1 = {
@@ -185,14 +185,14 @@ const T17_1 = {
   generate(rng, level) {
     if (level === 1) {
       const [a, b] = [rng.int(2, 9), rng.int(1, 9)];
-      return t171Level1(a, b, ['공책에 노선도를 그렸어요. 개금역에서 다음 역까지 그은 선이 ', V(a), 'cm ', V(b), 'mm예요. 몇 mm일까요? ']);
+      return t171Level1(a, b, ['공책에 노선도를 그렸어요. 개금역에서 다음 역까지 그은 선이 ', V(a), 'cm ', V(b), 'mm예요. 몇 mm일까요?', '\n'], `구하는 것: 그은 선의 길이(mm) / 알고 있는 것: ${a}cm ${b}mm`);
     }
     if (level === 2) {
       const [a, b] = [rng.int(1, 9), rng.int(1, 9) * 100];
-      return t171Level2(a, b, ['개금역 앞에서 버스를 타고 ', V(a), 'km ', V(b), 'm를 갔어요. 몇 m일까요? ']);
+      return t171Level2(a, b, ['개금역 앞에서 버스를 타고 ', V(a), 'km ', V(b), 'm를 갔어요. 몇 m일까요?', '\n'], `구하는 것: 버스로 간 거리(m) / 알고 있는 것: ${a}km ${b}m`);
     }
     const T = draw(rng, () => rng.int(1101, 8999), (t) => t % 1000 >= 110 && t % 10 !== 0 && t % 100 >= 10, 1450);
-    return t171Level3(T, ['어느 날 개금역 앞에서 버스를 타고 ', V(T), 'm를 갔어요. 몇 km 몇 m일까요? ']);
+    return t171Level3(T, ['주말에 개금역 앞에서 버스를 타고 ', V(T), 'm를 갔어요. 몇 km 몇 m일까요?', '\n'], `구하는 것: 버스로 간 거리(몇 km 몇 m) / 알고 있는 것: ${T}m`);
   },
 };
 
@@ -200,29 +200,29 @@ const T17_1 = {
 // 단계 불변식: 1 실제 km → m(네 자리) / 2 실제 km → m(다섯 자리, N20) / 3 km·m와 m 비교와 차 / 4 m → km·m(백의 자리 0) / 5 □ 범위 모두 / 6 오류 찾기.
 function t172Level1() {
   return {
-    text: ['서면에서 황령산까지 약 ', n(2, { real: true, source: SRC_MT }), 'km예요. 약 몇 m예요?'],
+    text: ['서면역에서 황령산까지 약 ', n(2, { real: true, source: SRC_MT }), 'km예요. 약 몇 m예요?'],
     figure: null,
     input: { kind: 'number', unit: 'm' },
     answer: 2000,
     discriminators: [200, 20].map((v) => ({ value: v, category: '개념', kind: 'check', feedback: '1km는 몇 m예요?' })),
-    hints: ['서면에서 황령산까지 약 2km예요. 이 거리를 m로 물어요.', '1km가 몇 m인지 먼저 떠올려 볼까요?', '1km는 1000m예요.', '2km = ☐000m'],
+    hints: ['구하는 것: 서면역에서 황령산까지의 거리(m) / 알고 있는 것: 약 2km', '1km가 몇 m인지 먼저 떠올려 볼까요?', '1km는 1000m예요.', '2km = ☐000m'],
     blank: '☐000',
     blankAnswer: '2',
-    explain: { why: ['1km는 1000m예요.', '2km는 1000m가 2번이라 2000m예요.', '그래서 약 2000m예요.'], alt: ['1000m를 두 번 이어 세어도 2000m예요.', '두 방법 모두 약 2000m예요.'] },
+    explain: { why: ['1km는 1000m예요.', '2km는 1000m가 2번이라 2000m예요.', '그래서 약 2000m예요.'], alt: ['1000m를 두 번 이어 세어도 2000m예요.', '어느 길로 해도 답은 약 2000m예요.'] },
   };
 }
 function t172Level2() {
   return {
-    text: ['서면에서 금정산까지 약 ', n(14, { real: true, source: SRC_MT }), 'km예요. 약 몇 m예요?'],
+    text: ['서면역에서 금정산까지 약 ', n(14, { real: true, source: SRC_MT }), 'km예요. 약 몇 m예요?'],
     figure: null,
     input: { kind: 'number', unit: 'm' },
     answer: 14000,
     requires: ['N20'],
     discriminators: [1400, 140, 1004].map((v) => ({ value: v, category: '개념', kind: 'check', feedback: '1km는 몇 m예요?' })),
-    hints: ['서면에서 금정산까지 약 14km예요. 이 거리를 m로 물어요.', '1km가 몇 m인지 떠올려 볼까요? 14km는 1km가 14번이에요.', '10km는 10000m예요.', '14km = 1☐000m'],
+    hints: ['구하는 것: 서면역에서 금정산까지의 거리(m) / 알고 있는 것: 약 14km', '1km가 몇 m인지 떠올려 볼까요? 14km는 1km가 14번이에요.', '10km는 10000m예요.', '14km = 1☐000m'],
     blank: '1☐000',
     blankAnswer: '4',
-    explain: { why: ['1km는 1000m예요.', '14km는 1000m가 14번이라 14000m예요.', '그래서 약 14000m예요.'], alt: ['10km = 10000m, 4km = 4000m, 합치면 14000m예요.', '두 방법 모두 약 14000m예요.'] },
+    explain: { why: ['1km는 1000m예요.', '14km는 1000m가 14번이라 14000m예요.', '그래서 약 14000m예요.'], alt: ['10km = 10000m, 4km = 4000m, 합치면 14000m예요.', '어느 길로 해도 답은 약 14000m예요.'] },
   };
 }
 const FAR = ['공원', '도서관'];
@@ -241,25 +241,26 @@ function t172Level3(x, Y) {
     [
       { value: { park: 100 * x, far: FAR[1] }, category: '개념', kind: 'nudge', feedbackCheck: `1km ${100 * x}m와 ${Y}m, 단위가 같나요?`, feedback: `1km ${100 * x}m를 m로 바꿔 볼까요?` },
       { value: { park: 100 * x }, category: '개념', kind: 'nudge', feedbackCheck: `1km ${100 * x}m와 ${Y}m, 단위가 같나요?`, feedback: `1km ${100 * x}m를 m로 바꿔 볼까요?` },
-      { value: { park, far: otherFar }, category: '개념', kind: 'check', feedback: '두 거리를 다시 견주어 볼까요?' },
+      { value: { park, far: otherFar }, category: '개념', kind: 'check', feedback: '두 거리를 다시 비교해 볼까요?' },
     ],
     answer,
   );
   const bl = blankAt(park, 2);
   return {
-    text: ['개금역에서 공원까지 ', V(1), 'km ', V(100 * x), 'm, 도서관까지 ', V(Y), 'm예요. 공원까지는 몇 m예요? 어느 쪽이 몇 m 더 멀어요?'],
+    // 역에서 공원·도서관까지 거리는 FACTS에 없어 가정으로(02 문서 규칙 14). '공원까지 몇 m'는 칸 이름에 맡긴다.
+    text: ['개금역에서 공원까지 ', V(1), 'km ', V(100 * x), 'm, 도서관까지 ', V(Y), 'm라고 해 봐요. 어느 쪽이 몇 m 더 멀어요?'],
     figure: null,
     input: { kind: 'compound', fields },
     answer,
     discriminators: discs,
     grade: cgrade(fields, answer, discs),
-    hints: [`공원까지 1km ${100 * x}m, 도서관까지 ${Y}m예요. 어느 쪽이 몇 m 더 먼지 물어요.`, '두 거리를 같은 단위로 바꿔 볼까요?', '1km는 1000m예요.', `1km ${100 * x}m = ${bl.blank}m`],
+    hints: [`구하는 것: 더 먼 곳과 몇 m 더 먼지 / 알고 있는 것: 공원까지 1km ${100 * x}m, 도서관까지 ${Y}m`, '두 거리를 같은 단위로 바꿔 볼까요?', '1km는 1000m예요.', `1km ${100 * x}m = ${bl.blank}m`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     blankThen: '어느 쪽이 몇 m 더 멀어요?',
     explain: {
       why: [`1km ${100 * x}m = 1000m + ${100 * x}m = ${park}m예요.`, park > Y ? `${park}m가 ${Y}m보다 ${diff}m 더 멀어요.` : `${Y}m가 ${park}m보다 ${diff}m 더 멀어요.`, `그래서 ${far}이 ${diff}m 더 멀어요.`],
-      alt: [`${Y}m = 1km ${Y - 1000}m예요.`, `1km ${Y - 1000}m와 1km ${100 * x}m를 견주면 ${Math.max(Y - 1000, 100 * x)}m − ${Math.min(Y - 1000, 100 * x)}m = ${diff}m 차이예요.`, `두 풀이 모두 ${far}이 ${diff}m 더 멀어요.`],
+      alt: [`${Y}m = 1km ${Y - 1000}m예요.`, `1km ${Y - 1000}m와 1km ${100 * x}m를 비교하면 ${Math.max(Y - 1000, 100 * x)}m − ${Math.min(Y - 1000, 100 * x)}m = ${diff}m 차이예요.`, `어느 길로 해도 ${far}이 ${diff}m 더 멀어요.`],
     },
   };
 }
@@ -268,22 +269,22 @@ function t172Level4(a, b) {
   const answer = { km: a, m: b };
   const discs = cleanDiscs(
     [
-      { value: { km: a, m: b * 10 }, category: '개념', kind: 'check', feedback: `${T}에서 천의 자리 숫자는 몇이에요?` },
+      { value: { km: a, m: b * 10 }, category: '개념', kind: 'check', feedback: `${T}에서 백의 자리 숫자는 몇이에요?` },
       { value: { km: Math.floor(T / 100), m: T % 100 }, category: '개념', kind: 'check', feedback: `${T}에서 천의 자리 숫자는 몇이에요?` },
     ],
     answer,
   );
   return {
-    text: ['개금역에서 어떤 길의 길이를 m로 쓰면 ', V(T), 'm예요. 몇 km 몇 m예요?'],
+    text: ['개금역에서 자전거를 타고 ', V(T), 'm를 달렸어요. 몇 km 몇 m예요?'],
     figure: null,
     input: { kind: 'compound', fields: KM_FIELDS },
     answer,
     discriminators: discs,
     grade: cgrade(KM_FIELDS, answer, discs),
-    hints: [`길이가 ${T}m예요. 몇 km 몇 m인지 물어요.`, '1000m씩 묶으면 몇 km인지 볼까요? 자리마다 숫자를 써 봐요.', `${T}에서 천의 자리 숫자는 ${a}, 백의 자리 숫자는 0이에요.`, `${a}km ☐${String(b).padStart(2, '0').slice(1)}m`],
+    hints: [`구하는 것: 자전거로 달린 길이(몇 km 몇 m) / 알고 있는 것: ${T}m`, '1000m씩 묶으면 몇 km인지 볼까요? 자리마다 숫자를 써 봐요.', `${T}에서 천의 자리 숫자는 ${a}, 백의 자리 숫자는 0이에요.`, `${a}km ☐${String(b).padStart(2, '0').slice(1)}m`],
     blank: `☐${String(b).padStart(2, '0').slice(1)}`,
     blankAnswer: String(b).padStart(2, '0')[0],
-    explain: { why: [`${T}m는 1000m가 ${a}번이고 ${b}m가 남아요.`, '백의 자리가 0이라서 남는 것은 두 자리 수예요.', `그래서 ${a}km ${b}m예요.`], alt: [`${a}km ${b}m를 다시 m로 바꾸면 ${1000 * a} + ${b} = ${T}m예요.`, `두 방법 모두 ${a}km ${b}m예요.`] },
+    explain: { why: [`${T}m는 1000m가 ${a}번이고 ${b}m가 남아요.`, '백의 자리가 0이라서 남는 것은 두 자리 수예요.', `그래서 ${a}km ${b}m예요.`], alt: [`${T}에서 천의 자리 ${a}${jo(a, '은', '는')} ${a}km, 남은 ${String(b).padStart(3, '0')}${jo(b, '은', '는')} ${b}m예요.`, `어느 길로 해도 답은 ${a}km ${b}m예요.`] },
   };
 }
 function t172Level5(a, d) {
@@ -301,7 +302,7 @@ function t172Level5(a, d) {
     hints: [`${a}□50m가 ${a}km ${100 * d}m보다 짧게 되는 □를 모두 찾아요.`, '두 길이를 같은 단위로 바꿔 볼까요?', `${a}km ${100 * d}m = ${1000 * a + 100 * d}m예요.`, `${a}□50 < ${1000 * a + 100 * d}에서 □가 될 수 있는 가장 큰 수: ☐`],
     blank: '☐',
     blankAnswer: String(d - 1),
-    explain: { why: [`${a}km ${100 * d}m = ${1000 * a + 100 * d}m예요.`, `□가 ${d}이면 ${a}${d}50m로 ${1000 * a + 100 * d}m보다 길어요.`, `그래서 □는 ${answer.join(', ')}예요.`.replace(/(\d)예요\.$/, (x, k) => `${k}${jo(Number(k), '이에요', '예요')}.`)], alt: [`백의 자리를 견주면 □는 ${d}보다 작아야 해요.`, `두 풀이 모두 ${answer.join(', ')}${jo(answer.at(-1), '이에요', '예요')}.`] },
+    explain: { why: [`${a}km ${100 * d}m = ${1000 * a + 100 * d}m예요.`, `□가 ${d}이면 ${a}${d}50m로 ${1000 * a + 100 * d}m보다 길어요.`, `그래서 □는 ${answer.join(', ')}예요.`.replace(/(\d)예요\.$/, (x, k) => `${k}${jo(Number(k), '이에요', '예요')}.`)], alt: [`백의 자리끼리 비교하면 □는 ${d}보다 작아야 해요.`, `어느 길로 해도 답은 ${answer.join(', ')}${jo(answer.at(-1), '이에요', '예요')}.`] },
   };
 }
 function t172Level6(a, b) {
@@ -320,7 +321,7 @@ function t172Level6(a, b) {
     hints: [`친구는 ${a}km ${b}m를 ${wrong}m라고 썼어요. 바른 길이를 m로 물어요.`, `${a}km를 먼저 m로 바꿔 볼까요?`, `${a}km = ${1000 * a}m예요.`, `${1000 * a} + ${b} = ${a}00☐`],
     blank: `${a}00☐`,
     blankAnswer: String(b),
-    explain: { why: [`${a}km는 ${1000 * a}m예요.`, `${1000 * a}m에 ${b}m를 더하면 ${ans}m예요.`, `그래서 바른 길이는 ${ans}m예요.`], alt: [`${ans}m에서 천의 자리 ${a}${jo(a, "은", "는")} ${a}km, 일의 자리 ${b}${jo(b, "은", "는")} ${b}m예요. 가운데 두 자리는 0이에요.`, `두 방법 모두 ${ans}m예요.`] },
+    explain: { why: [`${a}km는 ${1000 * a}m예요.`, `${1000 * a}m에 ${b}m를 더하면 ${ans}m예요.`, `그래서 바른 길이는 ${ans}m예요.`], alt: [`${ans}m에서 천의 자리 ${a}${jo(a, "은", "는")} ${a}km, 일의 자리 ${b}${jo(b, "은", "는")} ${b}m예요. 가운데 두 자리는 0이에요.`, `어느 길로 해도 답은 ${ans}m예요.`] },
   };
 }
 const T17_2 = {
@@ -354,7 +355,7 @@ const LINE = (extra) => ({ kind: 'numberline', from: 0, to: 2000, ticks: 20, uni
 function t173Level1(v) {
   const answer = { km: 1, m: v - 1000 };
   return {
-    text: ['개금역 근처 길을 ', n(0), 'm부터 ', n(2000), 'm까지 수직선으로 나타냈어요. 작은 눈금 한 칸은 ', n(100), 'm예요. 점이 가리키는 길이는 몇 km 몇 m예요?'],
+    text: ['개금역 근처 길을 수직선에 나타냈어요. 작은 눈금 한 칸은 ', n(100), 'm예요. 점까지의 길이는 몇 km 몇 m예요?'],
     figure: LINE({ mark: v }),
     input: { kind: 'compound', fields: KM_FIELDS },
     answer,
@@ -363,12 +364,12 @@ function t173Level1(v) {
     hints: ['수직선 위의 점이 가리키는 길이를 몇 km 몇 m로 물어요.', '1000m(1km) 눈금을 먼저 찾고, 거기서 몇 칸 더 갔는지 세어 볼까요?', `점은 1000m 눈금에서 작은 눈금 ${(v - 1000) / 100}칸 더 갔어요.`, `1km ☐00m`],
     blank: '☐00',
     blankAnswer: String((v - 1000) / 100),
-    explain: { why: ['1000m는 1km예요.', `점은 1km에서 ${(v - 1000) / 100}칸, 곧 ${v - 1000}m 더 간 곳이에요.`, `그래서 1km ${v - 1000}m예요.`], alt: [`0부터 작은 눈금을 세면 ${v / 100}칸, ${v}m = 1km ${v - 1000}m예요.`, `두 방법 모두 1km ${v - 1000}m예요.`] },
+    explain: { why: ['1000m는 1km예요.', `점은 1km에서 ${(v - 1000) / 100}칸, 곧 ${v - 1000}m 더 간 곳이에요.`, `그래서 1km ${v - 1000}m예요.`], alt: [`0부터 작은 눈금을 세면 ${v / 100}칸, ${v}m = 1km ${v - 1000}m예요.`, `어느 길로 해도 답은 1km ${v - 1000}m예요.`] },
   };
 }
 function t173Level2(v) {
   return {
-    text: ['개금역 근처 길을 ', n(0), 'm부터 ', n(2000), 'm까지 수직선으로 나타냈어요. 작은 눈금 한 칸은 ', n(100), 'm예요. 점이 가리키는 길이는 몇 m예요?'],
+    text: ['개금역 근처 길을 수직선에 나타냈어요. 작은 눈금 한 칸은 ', n(100), 'm예요. 점까지의 길이는 몇 m예요?'],
     figure: LINE({ mark: v }),
     input: { kind: 'number', unit: 'm' },
     answer: v,
@@ -376,22 +377,22 @@ function t173Level2(v) {
     hints: ['수직선 위의 점이 가리키는 길이를 m로 물어요.', '0부터 작은 눈금을 몇 칸 지났는지 세어 볼까요?', `점은 0에서 작은 눈금 ${v / 100}칸 간 곳이에요.`, `100 × ${v / 100} = ${blankAt(v, 2).blank}`],
     blank: blankAt(v, 2).blank,
     blankAnswer: blankAt(v, 2).blankAnswer,
-    explain: { why: ['작은 눈금 한 칸은 100m예요.', `점까지 ${v / 100}칸이라 ${v}m예요.`, `그래서 ${v}m예요.`], alt: [`1000m 눈금에서 ${(v - 1000) / 100}칸 더 가서 1km ${v - 1000}m, 곧 ${v}m예요.`, `두 방법 모두 ${v}m예요.`] },
+    explain: { why: ['작은 눈금 한 칸은 100m예요.', `점까지 ${v / 100}칸이라 ${v}m예요.`, `그래서 ${v}m예요.`], alt: [`1000m 눈금에서 ${(v - 1000) / 100}칸 더 가서 1km ${v - 1000}m, 곧 ${v}m예요.`, `어느 길로 해도 답은 ${v}m예요.`] },
   };
 }
 function t173Level3(p, q) {
   const ans = q - p;
   const near = Math.abs(q - 1000 - p);
   return {
-    text: ['개금역 근처 길 수직선에 점 두 개가 있어요. 한 점은 ', V(p), 'm, 다른 점은 ', V(1), 'km ', V(q - 1000), 'm에 있어요. 두 점 사이는 몇 m예요?'],
+    text: ['개금역 근처 길 수직선에서 한 점은 ', V(p), 'm, 다른 점은 ', V(1), 'km ', V(q - 1000), 'm에 있어요. 두 점 사이는 몇 m예요?'],
     figure: LINE({ marks: [p, q] }),
     input: { kind: 'number', unit: 'm' },
     answer: ans,
     discriminators: near > 0 && near !== ans ? [{ value: near, category: '개념', kind: 'check', feedback: `1km ${q - 1000}m는 몇 m예요?` }] : [],
-    hints: [`한 점은 ${p}m, 다른 점은 1km ${q - 1000}m에 있어요. 두 점 사이의 길이를 물어요.`, '두 길이를 같은 단위로 바꿔 볼까요?', `1km ${q - 1000}m = ${q}m예요.`, `${q} − ${p} = ${blankAt(ans, 2).blank}`],
+    hints: [`구하는 것: 두 점 사이의 길이(m) / 알고 있는 것: 한 점 ${p}m, 다른 점 1km ${q - 1000}m`, '두 길이를 같은 단위로 바꿔 볼까요?', `1km ${q - 1000}m = ${q}m예요.`, `${q} − ${p} = ${blankAt(ans, 2).blank}`],
     blank: blankAt(ans, 2).blank,
     blankAnswer: blankAt(ans, 2).blankAnswer,
-    explain: { why: [`1km ${q - 1000}m는 ${q}m예요.`, `${q}m − ${p}m = ${ans}m예요.`, `그래서 두 점 사이는 ${ans}m예요.`], alt: [`${p}m에서 1000m까지 ${1000 - p}m, 1000m에서 ${q}m까지 ${q - 1000}m예요. 합치면 ${ans}m예요.`, `두 풀이 모두 ${ans}m예요.`] },
+    explain: { why: [`1km ${q - 1000}m는 ${q}m예요.`, `${q}m − ${p}m = ${ans}m예요.`, `그래서 두 점 사이는 ${ans}m예요.`], alt: [`${p}m에서 1000m까지 ${1000 - p}m, 1000m에서 ${q}m까지 ${q - 1000}m예요. 합치면 ${ans}m예요.`, `어느 길로 해도 답은 ${ans}m예요.`] },
   };
 }
 const T17_3 = {
@@ -410,7 +411,7 @@ const T17_3 = {
 };
 
 // ── 급행 통과 진단 ──
-const D1 = { id: 'G17-D1', node: 'G17', title: '급행 진단: 2km 300m는 몇 m', repr: '식', minLevel: 2, maxLevel: 2, diagnostic: true, generate: () => asDiag(t171Level2(2, 300, ['개금역 앞에서 버스로 ', V(2), 'km ', V(300), 'm를 갔어요. '])) };
+const D1 = { id: 'G17-D1', node: 'G17', title: '급행 진단: 2km 300m는 몇 m', repr: '식', minLevel: 2, maxLevel: 2, diagnostic: true, generate: () => asDiag(t171Level2(2, 300, ['개금역 앞에서 버스로 ', V(2), 'km ', V(300), 'm를 갔어요.', '\n'])) };
 const D2 = { id: 'G17-D2', node: 'G17', title: '급행 진단: 공원과 도서관', repr: '문장', minLevel: 3, maxLevel: 3, diagnostic: true, generate: () => asDiag(t172Level3(2, 1350)) };
 const D3 = { id: 'G17-D3', node: 'G17', title: '급행 진단(예비): m를 km와 m로', repr: '문장', minLevel: 4, maxLevel: 4, diagnostic: true, generate: () => asDiag(t172Level4(3, 50)) };
 

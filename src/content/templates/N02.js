@@ -98,9 +98,74 @@ function firstStep(a, b) {
   const bu = b % 10;
   const at = Math.floor(a / 10) % 10;
   const bt = Math.floor(b / 10) % 10;
-  if (pos.includes(0)) return `일의 자리 ${au}에서 ${eul(bu)} 뺄 수 없어서 십의 자리에서 10을 빌려 와요.`;
-  if (pos.includes(1)) return `일의 자리는 ${au} − ${bu} = ${ieyo(au - bu)}. 십의 자리 ${at}에서 ${eul(bt)} 뺄 수 없어서 백의 자리에서 빌려 와요.`;
+  if (pos.includes(0)) return `일의 자리 ${au}에서 ${eul(bu)} 뺄 수 없어서 십의 자리에서 받아내림해요.`;
+  if (pos.includes(1)) return `일의 자리는 ${au} − ${bu} = ${ieyo(au - bu)}. 십의 자리 ${at}에서 ${eul(bt)} 뺄 수 없어서 백의 자리에서 받아내림해요.`;
   return `일의 자리는 ${au} − ${bu} = ${ieyo(au - bu)}.`;
+}
+/** 받아내림을 자리마다 풀어 쓴 해설 줄(받아내림 한 번 또는 없음 — 이 문제의 진짜 어려운 점) */
+function borrowWhy(a, b) {
+  const pos = borrowPos(a, b);
+  const [ah, at, au] = [Math.floor(a / 100), Math.floor(a / 10) % 10, a % 10];
+  const [bh, bt, bu] = [Math.floor(b / 100), Math.floor(b / 10) % 10, b % 10];
+  const d = a - b;
+  const [dh, dt, du] = [Math.floor(d / 100), Math.floor(d / 10) % 10, d % 10];
+  if (pos.length === 0) return ['같은 자리끼리 빼요.', '자리마다 위의 숫자가 아래 숫자보다 크거나 같아서 받아내림이 없어요.'];
+  if (pos[0] === 0) {
+    return [
+      `일의 자리 ${au}에서 ${eul(bu)} 뺄 수 없어요.`,
+      `십의 자리에서 받아내림하면 십의 자리는 ${at - 1}, 일의 자리는 ${10 + au}${jo(10 + au, '이', '가')} 돼요.`,
+      `일의 자리 ${10 + au} − ${bu} = ${du}, 십의 자리 ${at - 1} − ${bt} = ${dt}, 백의 자리 ${ah} − ${bh} = ${ieyo(dh)}.`,
+    ];
+  }
+  return [
+    `일의 자리는 ${au} − ${bu} = ${ieyo(du)}.`,
+    `십의 자리 ${at}에서 ${eul(bt)} 뺄 수 없어서 백의 자리에서 받아내림해요.`,
+    `백의 자리는 ${ah - 1}, 십의 자리는 ${10 + at}${jo(10 + at, '이', '가')} 돼요.`,
+    `십의 자리 ${10 + at} − ${bt} = ${dt}, 백의 자리 ${ah - 1} − ${bh} = ${ieyo(dh)}.`,
+  ];
+}
+/** 다른 풀이: 빼는 수에서 처음 수까지 더해서 세기(396 → 400 → 900 → 903) */
+function countUp(b, a) {
+  const stops = [b];
+  let cur = b;
+  const go = (next) => {
+    if (next > cur && next <= a) {
+      stops.push(next);
+      cur = next;
+    }
+  };
+  if (cur % 10) go(Math.ceil(cur / 10) * 10);
+  if (cur % 100) go(Math.ceil(cur / 100) * 100);
+  go(Math.floor(a / 100) * 100);
+  go(a);
+  const jumps = stops.slice(1).map((x, i) => x - stops[i]);
+  return [`${b}에서 ${a}까지 더해서 세어도 돼요.`, `${[...stops.slice(0, -1), ro(a)].join(' → ')} 가면 ${jumps.join(' + ')} = ${ieyo(a - b)}.`];
+}
+/** 다른 풀이(덧셈): 남은 수에 다른 수를 백·십·일로 갈라 차례로 더하기 */
+function stepAdd(a, b) {
+  const parts = [Math.floor(b / 100) * 100, (Math.floor(b / 10) % 10) * 10, b % 10].filter((x) => x > 0);
+  const chain = [];
+  let cur = a;
+  for (const p of parts) {
+    chain.push(`${cur} + ${p} = ${cur + p}`);
+    cur += p;
+  }
+  return [`${eul(b)} ${[...parts.slice(0, -1), ro(parts.at(-1))].join(', ')} 갈라 차례로 더해도 돼요.`, `${chain.join(', ')}.`];
+}
+const PLACE = ['일', '십', '백', '천'];
+/** 받아올림 해설 줄(T2-2 4단계: 처음 사람 수 구하기) */
+function carryWhy(a, b) {
+  if (carries(a, b) === 0) return ['같은 자리끼리 더해요.'];
+  const lines = ['같은 자리의 합이 10이거나 10보다 크면 윗자리로 받아올림해요.'];
+  let c = 0;
+  for (let i = 0, x = a, y = b; x > 0 || y > 0; i++, x = Math.floor(x / 10), y = Math.floor(y / 10)) {
+    const s = (x % 10) + (y % 10) + c;
+    const expr = `${x % 10} + ${y % 10}${c ? ' + 1' : ''} = ${s}`;
+    if (s >= 10) lines.push(`${PLACE[i]}의 자리는 ${expr}${jo(s, '이라', '라')} ${PLACE[i + 1]}의 자리로 1을 받아올림하고 ${eul(s - 10)} 써요.`);
+    else lines.push(`${PLACE[i]}의 자리는 ${expr}${jo(s, '이에요', '예요')}.`);
+    c = s >= 10 ? 1 : 0;
+  }
+  return lines;
 }
 function subDiscs(a, b) {
   const d = a - b;
@@ -113,15 +178,17 @@ function subDiscs(a, b) {
   return uniq(
     [
       { value: absDigits(a, b), category: '개념', kind: 'check', feedback: where },
-      { value: d + 10, category: '계산', kind: 'nudge', feedbackCheck: '빌려 준 자리를 다시 볼까요?', feedback: '빌려 준 자리는 1 줄었나요?' },
-      { value: d + 100, category: '계산', kind: 'nudge', feedbackCheck: '빌려 준 자리를 다시 볼까요?', feedback: '빌려 준 자리는 1 줄었나요?' },
-      { value: a + b, category: '식', kind: 'nudge', feedbackCheck: '답을 처음 수와 견주어 볼까요?', feedback: '빼기 문제예요. 답이 커질까요?' },
+      { value: d + 10, category: '계산', kind: 'nudge', feedbackCheck: '받아내림한 자리를 다시 볼까요?', feedback: '받아내림한 자리는 1 작아졌나요?' },
+      { value: d + 100, category: '계산', kind: 'nudge', feedbackCheck: '받아내림한 자리를 다시 볼까요?', feedback: '받아내림한 자리는 1 작아졌나요?' },
+      { value: a + b, category: '식', kind: 'nudge', feedbackCheck: '답을 처음 수와 비교해 볼까요?', feedback: '빼면 답이 커질까요?' },
     ].filter((x) => pos.length > 0 || x.value === a + b),
     d,
   );
 }
 
 /** T2-1 정비창 점검 (식) — 1~3단계 */
+// 다대포항은 종점 바로 앞 역이라 열차 안에 800~900명이 남아 있는 장면은 어색하다(04 문서 2절).
+// 그래서 열차 안 인원 대신 역의 하루 인원을 부분과 전체로 쓴다(오늘 탄 사람 중 오전/오후).
 const T2_1 = {
   id: 'T2-1',
   node: 'N02',
@@ -148,44 +215,50 @@ const T2_1 = {
       level === 1 ? [586, 243] : [432, 127],
     );
     const d = a - b;
-    const scene = [level >= 3 ? '어느 날 다대포항역에 도착한 열차에 ' : '다대포항역에 도착한 열차에 ', V(a), '명이 타 있었고, ', V(b), '명이 내렸어요. '];
-    return build(a, b, d, level, { text: level < 3 ? [...scene, '남은 사람은 몇 명인지 식으로 계산해요. '] : [...scene, '남은 사람을 구해 봐요. '], unit: '명' });
+    const scene = {
+      unit: '명',
+      h1: level < 3 ? `구하는 것: 오후에 탄 사람 수 / 알고 있는 것: 오늘 탄 사람 ${a}명, 그중 오전 ${b}명` : `구하는 것: 오후에 탄 사람 수와, 그 수가 맞는지 확인하는 덧셈식 / 알고 있는 것: 탄 사람 ${a}명, 그중 오전 ${b}명`,
+      concl: (x) => `그래서 오후에 탄 사람은 ${x}명이에요.`,
+      text:
+        level < 3
+          ? ['오늘 다대포항역에서 ', V(a), '명이 탔어요. 그중 ', V(b), '명은 오전에 탔어요. 오후에는 몇 명이 탔어요?']
+          : ['토요일에 다대포항역에서 ', V(a), '명이 탔어요. 그중 ', V(b), '명은 오전에 탔어요.', '\n', '오후에 탄 사람 수에 ', V(b), jo(b, '을', '를'), ' 더하는 덧셈식을 써요.'],
+    };
+    return build(a, b, d, level, scene);
   },
 };
 
-/** scene = { text: 식 앞 교통 장면 조각, unit } (없으면 식만) */
+/** scene = { text: 식 앞 교통 장면 조각, unit, h1: 힌트 ①, concl: (d) => 결론 줄 } (없으면 식만) */
 function build(a, b, d, level, scene = null) {
   const bl = blankAt(d, 1);
-  const explainWhy = borrowPos(a, b).length
-    ? [firstStep(a, b), '빌려 준 자리는 1 줄어든 수로 계산해요.', `그래서 ${a} − ${b} = ${ieyo(d)}.`]
-    : ['같은 자리끼리 빼요.', '어느 자리도 빌려 올 필요가 없어요.', `그래서 ${a} − ${b} = ${ieyo(d)}.`];
-  const alt = [`${b}에서 ${a}까지 더해서 세어도 돼요.`, `${b} + ${d} = ${ieyo(a)}.`, `어느 길로 해도 답은 ${ro(d)} 같아요.`];
+  const concl = scene?.concl ? scene.concl(d) : `그래서 답은 ${ieyo(d)}.`;
+  const unitOf = (x) => (scene?.unit ? `${x}${scene.unit}이에요` : ieyo(x));
   if (level < 3) {
     return {
-      text: [...(scene?.text ?? []), n(a), ' − ', n(b), ' = ?'],
+      text: [...(scene?.text ?? []), ...(scene?.text ? ['\n'] : []), n(a), ' − ', n(b), ' = ?'],
       figure: { kind: 'vertical', op: '−', a, b },
       input: scene?.unit ? { kind: 'number', unit: scene.unit } : { kind: 'number' },
       answer: d,
       discriminators: subDiscs(a, b),
-      hints: [`${a} − ${b}의 값을 구해요.`, '자리를 맞춰 세로로 써 봐요. 일의 자리부터 차례로 해요.', firstStep(a, b), `${a} − ${b} = ${bl.blank}`],
+      hints: [scene?.h1 ?? `${a} − ${b}의 값을 물어요.`, '자리를 맞춰 세로로 써 봐요. 일의 자리부터 차례로 해요.', firstStep(a, b), `${a} − ${b} = ${bl.blank}`],
       blank: bl.blank,
       blankAnswer: bl.blankAnswer,
-      explain: { why: explainWhy, alt },
+      explain: { why: [...borrowWhy(a, b), `${a} − ${b} = ${ieyo(d)}.`, concl], alt: [...countUp(b, a), `어느 길로 해도 답은 ${unitOf(d)}.`] },
     };
   }
-  // 3단계: 뺄셈 + 덧셈 검산식(equation)
+  // 3단계: 뺄셈 + 덧셈 검산식(equation). 장면 문장이 식을 묻는다(04 문서 3절).
   const wrongs = [absDigits(a, b), d + 10, d + 100].filter((v) => v !== d);
   return {
-    text: [...(scene?.text ?? []), n(a), ' − ', n(b), '의 답을 구해서, 그 답에 ', n(b), jo(b, '을', '를'), ' 더하는 덧셈식으로 써요.'],
+    text: scene?.text ?? [n(a), ' − ', n(b), '을 계산하고, 덧셈으로 검산하는 식을 써요.'],
     figure: { kind: 'vertical', op: '−', a, b },
     input: { kind: 'equation' },
     answer: { left: d, op: '+', right: b, result: a, commutative: true },
     discriminators: [
       { match: (r) => Number(r?.left) === wrongs[0] || Number(r?.right) === wrongs[0], category: '개념', kind: 'check', feedback: '작은 숫자에서 큰 숫자를 뺄 수 있나요?' },
-      { match: (r) => wrongs.slice(1).includes(Number(r?.left)) || wrongs.slice(1).includes(Number(r?.right)), category: '계산', kind: 'nudge', feedbackCheck: '빌려 준 자리를 다시 볼까요?', feedback: '빌려 준 자리는 1 줄었나요?' },
+      { match: (r) => wrongs.slice(1).includes(Number(r?.left)) || wrongs.slice(1).includes(Number(r?.right)), category: '계산', kind: 'nudge', feedbackCheck: '받아내림한 자리를 다시 볼까요?', feedback: '받아내림한 자리는 1 작아졌나요?' },
     ],
     hints: [
-      `${a} − ${b}의 답과, 그 답이 맞는지 확인하는 덧셈식을 물어요.`,
+      scene?.h1 ?? `${a} − ${b}의 답과, 그 답이 맞는지 확인하는 덧셈식을 물어요.`,
       '먼저 세로로 빼요. 그 답에 빼는 수를 더하면 처음 수가 나와야 해요.',
       firstStep(a, b),
       `${bl.blank} + ${b} = ${a}`,
@@ -193,8 +266,8 @@ function build(a, b, d, level, scene = null) {
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     explain: {
-      why: [...explainWhy.slice(0, -1), `${a} − ${b} = ${ieyo(d)}.`, `${d} + ${b} = ${a}${jo(a, '이', '가')} 되니 맞게 뺀 거예요.`, `그래서 덧셈식은 ${d} + ${b} = ${ieyo(a)}.`],
-      alt: [`${b} + ${d}처럼 순서를 바꿔 써도 돼요.`, `어느 길로 해도 답은 ${ro(d)} 같아요.`],
+      why: [...borrowWhy(a, b), `${a} − ${b} = ${ieyo(d)}.`, `${d} + ${b} = ${a}${jo(a, '이', '가')} 되니 맞게 뺀 거예요.`, `그래서 덧셈식은 ${d} + ${b} = ${ieyo(a)}.`],
+      alt: [...countUp(b, a), `어느 길로 해도 ${a} − ${b}의 답은 ${ieyo(d)}.`],
     },
   };
 }
@@ -204,15 +277,16 @@ function t22Level1(a, b) {
   const d = a - b;
   const bl = blankAt(d, 1);
   return {
-    text: ['어느 날 열차에 ', V(a), '명이 타 있었어요. 다대포항역에서 ', V(b), '명이 내렸어요. 열차에 남은 사람은 몇 명이에요?'],
+    // 다대포항 쪽 끝으로 가는 열차라 방향을 밝힌다(하린 지적).
+    text: ['노포 쪽에서 오던 열차에 ', V(a), '명이 타 있었어요. 다대포항역에서 ', V(b), '명이 내렸어요. 남은 사람은 몇 명이에요?'],
     figure: { kind: 'train', cars: 8 },
     input: { kind: 'number', unit: '명' },
     answer: d,
     discriminators: uniq([{ value: a + b, category: '식', kind: 'check', feedback: '남은 사람이 처음보다 많을까요?' }], d),
-    hints: [`열차에 ${a}명이 타 있었고, 다대포항역에서 ${b}명이 내렸어요. 열차에 남은 사람 수를 물어요.`, '내린 사람은 열차에서 빠져요. 자리를 맞춰 세로로 써 봐요.', firstStep(a, b), `${a} − ${b} = ${bl.blank}`],
+    hints: [`구하는 것: 열차에 남은 사람 수 / 알고 있는 것: 처음 ${a}명, 다대포항역에서 ${b}명 내림`, '내린 사람은 열차에서 빠져요. 자리를 맞춰 세로로 써 봐요.', firstStep(a, b), `${a} − ${b} = ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
-    explain: { why: ['내린 사람만큼 열차 안 사람이 줄어요.', `${a} − ${b} = ${ieyo(d)}.`, `그래서 남은 사람은 ${d}명이에요.`], alt: [`${b}에서 ${a}까지 더해서 세면 ${ieyo(d)}.`, `어느 길로 해도 답은 ${ro(d)} 같아요.`] },
+    explain: { why: ['내린 사람만큼 열차 안 사람이 줄어요.', ...borrowWhy(a, b), `${a} − ${b} = ${ieyo(d)}.`, `그래서 남은 사람은 ${d}명이에요.`], alt: [...countUp(b, a), `어느 길로 해도 답은 ${d}명이에요.`] },
   };
 }
 
@@ -224,21 +298,21 @@ function t22Level2(am, pm) {
   const other = when === '오전' ? '오후' : '오전';
   const bl = blankAt(d, 1);
   return {
-    text: ['어느 날 다대포항역에서 오전에 ', V(am), '명, 오후에 ', V(pm), '명이 탔어요. 언제 몇 명 더 많이 탔어요?'],
+    text: ['다대포항역에서 오전에 ', V(am), '명, 오후에 ', V(pm), '명이 탔어요. 언제 더 많이 탔어요? 몇 명 더 많아요?'],
     figure: null,
     input: { kind: 'compound', fields: [{ key: 'when', label: '언제', options: ['오전', '오후'] }, { key: 'diff', label: '몇 명 더' }] },
     answer: { when, diff: d },
     discriminators: [
       { key: 'when', value: other, category: '읽기', kind: 'check', feedback: `${wa(am)} ${pm} 중 어느 쪽이 커요?` },
       { key: 'diff', value: absDigits(big, small), category: '개념', kind: 'check', feedback: '작은 숫자에서 큰 숫자를 뺄 수 있나요?' },
-      { key: 'diff', value: am + pm, category: '식', kind: 'check', feedback: '몇 명 더 많은지 물었어요. 모두 몇 명일까요?' },
+      { key: 'diff', value: am + pm, category: '식', kind: 'check', feedback: '몇 명 더 많은지 물었어요. 더해도 될까요?' },
     ].filter((x) => x.value !== d),
-    hints: [`오전에 ${am}명, 오후에 ${pm}명이 탔어요. 어느 때가 몇 명 더 많은지 물어요.`, '먼저 어느 쪽이 큰지 봐요. 큰 수에서 작은 수를 빼면 차이가 나와요.', firstStep(big, small), `${big} − ${small} = ${bl.blank}`],
+    hints: [`구하는 것: 더 많이 탄 때와 몇 명 더 많은지 / 알고 있는 것: 오전 ${am}명, 오후 ${pm}명`, '먼저 어느 쪽이 큰지 봐요. 큰 수에서 작은 수를 빼면 차가 나와요.', firstStep(big, small), `${big} − ${small} = ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     explain: {
-      why: [`${eun(big)} ${small}보다 커서 ${when}에 더 많이 탔어요.`, `${big} − ${small} = ${ieyo(d)}.`, `그래서 ${when}에 ${d}명 더 많이 탔어요.`],
-      alt: [`${small}에서 ${big}까지 더해서 세도 ${ieyo(d)}.`, `어느 길로 해도 답은 ${ro(d)} 같아요.`],
+      why: [`${eun(big)} ${small}보다 커서 ${when}에 더 많이 탔어요.`, ...borrowWhy(big, small), `${big} − ${small} = ${ieyo(d)}.`, `그래서 ${when}에 ${d}명 더 많이 탔어요.`],
+      alt: [...countUp(small, big), `어느 길로 해도 답은 ${d}명이에요.`],
     },
   };
 }
@@ -247,30 +321,30 @@ function t22Level3(all, empty) {
   const d = all - empty;
   const bl = blankAt(d, 1);
   return {
-    text: ['어느 날 열차에 ', V(all), '명이 타 있었어요. 그중 ', V(empty), '명이 서 있었어요. 앉아 있던 사람은 몇 명이에요?'],
+    text: ['퇴근 시간에 열차에 ', V(all), '명이 타 있었어요. 그중 ', V(empty), '명이 서 있었어요. 앉아 있던 사람은 몇 명이에요?'],
     figure: null,
     input: { kind: 'number', unit: '명' },
     answer: d,
     discriminators: uniq(
       [
-        { value: all + empty, category: '식', kind: 'check', feedback: '앉은 사람이 탄 사람보다 많을까요?' },
-        { value: empty, category: '읽기', kind: 'check', feedback: `${eun(empty)} 서 있던 사람이에요. 무엇을 물었죠?` },
+        { value: all + empty, category: '식', kind: 'check', feedback: '앉아 있던 사람이 탄 사람보다 많을까요?' },
+        { value: empty, category: '읽기', kind: 'check', feedback: `${eun(empty)} 서 있던 사람이에요. 무엇을 물었을까요?` },
         { value: absDigits(all, empty), category: '개념', kind: 'check', feedback: `일의 자리 ${all % 10}에서 ${eul(empty % 10)} 뺄 수 있나요?` },
-        { value: d + 10, category: '계산', kind: 'nudge', feedbackCheck: '빌려 준 자리를 다시 볼까요?', feedback: '빌려 준 자리는 1 줄었나요?' },
+        { value: d + 10, category: '계산', kind: 'nudge', feedbackCheck: '받아내림한 자리를 다시 볼까요?', feedback: '받아내림한 자리는 1 작아졌나요?' },
       ],
       d,
     ),
     hints: [
-      `열차에 ${all}명이 타 있었고, 그중 ${empty}명이 서 있었어요. 앉아 있던 사람 수를 물어요.`,
-      '탄 사람 전체를 서 있던 사람과 앉아 있던 사람으로 나눠 띠를 그려 봐요.',
-      `앉은 사람은 ${all} − ${ieyo(empty)}. 일의 자리 ${all % 10}에서 ${eun(empty % 10)} 뺄 수 없어요.`,
+      `구하는 것: 앉아 있던 사람 수 / 알고 있는 것: 열차에 탄 사람 ${all}명, 그중 서 있던 사람 ${empty}명`,
+      '탄 사람 전체를 서 있던 사람과 앉아 있던 사람으로 갈라 띠를 그려 봐요.',
+      `앉아 있던 사람은 ${all} − ${ieyo(empty)}. ${firstStep(all, empty)}`,
       `${all} − ${empty} = ${bl.blank}`,
     ],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     explain: {
-      why: ['탄 사람 전체에서 서 있던 사람을 빼면 앉아 있던 사람이에요.', firstStep(all, empty), `${all} − ${empty} = ${ieyo(d)}.`, `그래서 앉아 있던 사람은 ${d}명이에요.`],
-      alt: [`${empty}에서 ${all}까지 더해서 세요.`, `${empty} + ${d} = ${ieyo(all)}.`, `어느 길로 해도 답은 ${ro(d)} 같아요.`],
+      why: ['탄 사람 전체에서 서 있던 사람을 빼면 앉아 있던 사람이에요.', ...borrowWhy(all, empty), `${all} − ${empty} = ${ieyo(d)}.`, `그래서 앉아 있던 사람은 ${d}명이에요.`],
+      alt: [...countUp(empty, all), `어느 길로 해도 답은 ${d}명이에요.`],
     },
   };
 }
@@ -279,30 +353,38 @@ function t22Level4(off, left) {
   const s = off + left;
   const bl = blankAt(s, 1);
   const minus = Math.abs(left - off);
+  const u = (left % 10) + (off % 10);
   return {
-    text: ['어느 날 열차에 몇 명이 타 있었는데, 다대포항역에서 ', V(off), '명이 내려서 ', V(left), '명이 남았어요. 처음에 타 있던 사람은 몇 명이에요?'],
+    text: ['노포 쪽에서 온 열차가 다대포항역에 섰어요. ', V(off), '명이 내리고 ', V(left), '명이 남았어요. 처음에는 몇 명이 타 있었어요?'],
     figure: { kind: 'train', cars: 8 },
     input: { kind: 'number', unit: '명' },
     answer: s,
     discriminators: uniq(
       [
         { value: minus, category: '식', kind: 'nudge', feedbackCheck: '구한 수로 문제를 다시 따라가 볼까요?', feedback: '처음에는 지금보다 많았을까요, 적었을까요?' },
-        { value: s - 10, category: '계산', kind: 'nudge', feedbackCheck: '십의 자리를 다시 계산해 볼까요?', feedback: '받아올린 1을 더했나요?' },
-        { value: s - 100, category: '계산', kind: 'nudge', feedbackCheck: '백의 자리를 다시 계산해 볼까요?', feedback: '받아올린 1을 더했나요?' },
+        { value: s - 10, category: '계산', kind: 'nudge', feedbackCheck: '십의 자리를 다시 계산해 볼까요?', feedback: '받아올림한 1을 더했나요?' },
+        { value: s - 100, category: '계산', kind: 'nudge', feedbackCheck: '백의 자리를 다시 계산해 볼까요?', feedback: '받아올림한 1을 더했나요?' },
       ],
       s,
     ),
     hints: [
-      `다대포항역에서 ${off}명이 내린 뒤 ${left}명이 남았어요. 내리기 전에 타 있던 사람 수를 물어요.`,
-      '처음 사람 수는 내린 사람과 남은 사람으로 나뉘어요. 그림에 두 부분을 표시해 봐요.',
-      `일의 자리는 ${left % 10} + ${off % 10} = ${ieyo((left % 10) + (off % 10))}.`,
+      `구하는 것: 내리기 전에 타 있던 사람 수 / 알고 있는 것: 내린 사람 ${off}명, 남은 사람 ${left}명`,
+      '처음 사람은 내린 사람과 남은 사람으로 이루어져요. 그림에 두 부분을 표시해 봐요.',
+      u >= 10 ? `일의 자리는 ${left % 10} + ${off % 10} = ${u}${jo(u, '이라', '라')} 1을 받아올림해요.` : `일의 자리는 ${left % 10} + ${off % 10} = ${ieyo(u)}.`,
       `${left} + ${off} = ${bl.blank}`,
     ],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     explain: {
-      why: ['처음 사람은 내린 사람과 남은 사람을 합친 수예요.', `${left} + ${off} = ${ieyo(s)}.`, `그래서 처음에 ${s}명이 타 있었어요.`],
-      alt: [`확인해 봐요: ${s} − ${off} = ${ieyo(left)}.`, `어느 길로 해도 답은 ${ro(s)} 같아요.`],
+      why: [
+        '"내렸어요"가 있어도 빼는 문제가 아니에요. 내린 사람이 다시 탄다고 생각해 봐요.',
+        '처음 사람은 내린 사람과 남은 사람을 합친 수예요.',
+        ...carryWhy(left, off),
+        `${left} + ${off} = ${ieyo(s)}.`,
+        `확인해 보면 ${s} − ${off} = ${ieyo(left)}.`,
+        `그래서 처음에 ${s}명이 타 있었어요.`,
+      ],
+      alt: [...stepAdd(left, off), `어느 길로 해도 답은 ${s}명이에요.`],
     },
   };
 }
@@ -322,9 +404,9 @@ function t22Level5(h, k, u, b, T) {
     discriminators: discs,
     grade: multiGrade(answer, discs),
     hints: [
-      `${h}□${u}에서 ${b}의 차가 ${T}보다 작게 되는 □를 모두 찾아요.`,
+      `구하는 것: □에 들어갈 수 있는 수 모두 / 알고 있는 것: ${h}□${u}${jo(u, '과', '와')} ${b}의 차가 ${T}보다 작음`,
       '□에 0부터 차례로 넣어 볼까요? 조건이 바뀌는 곳을 찾아봐요.',
-      `${T} + ${b} = ${T + b}이니, ${h}□${u}${jo(u, '은', '는')} ${T + b}보다 작아야 해요.`,
+      `${T} + ${b} = ${T + b}${jo(T + b, '이니', '니')}, ${h}□${u}${jo(u, '은', '는')} ${T + b}보다 작아야 해요.`,
       `들어갈 수 있는 수: 0부터 ☐까지`,
     ],
     blank: '0부터 ☐까지',
@@ -335,7 +417,7 @@ function t22Level5(h, k, u, b, T) {
         `□가 ${k + 1}이면 ${h}${k + 1}${u} − ${b} = ${ro((h * 100 + (k + 1) * 10 + u) - b)} ${T}보다 커요.`,
         `그래서 들어갈 수 있는 수는 0부터 ${k}까지예요.`,
       ],
-      alt: [`${T} + ${b} = ${T + b}보다 작은 ${h}□${u}${jo(u, '을', '를')} 찾아도 돼요.`, `어느 길로 해도 답은 0부터 ${k}까지로 같아요.`],
+      alt: [`${T} + ${b} = ${T + b}보다 작은 ${h}□${u}${jo(u, '을', '를')} 찾아도 돼요.`, `어느 길로 해도 답은 0부터 ${k}까지예요.`],
     },
   };
 }
@@ -389,10 +471,10 @@ function t22Level6(cards) {
     challenge: true,
     input: { kind: 'number' },
     answer: best,
-    discriminators: uniq([{ value: wrong, category: '개념', kind: 'nudge', feedbackCheck: '다른 수도 만들어 견주어 볼까요?', feedback: '큰 수 뒤에는 어떤 숫자를 둘까요?' }], best),
+    discriminators: uniq([{ value: wrong, category: '개념', kind: 'nudge', feedbackCheck: '다른 수도 만들어 비교해 볼까요?', feedback: '큰 수 뒤에는 어떤 숫자를 둘까요?' }], best),
     hints: [
-      '카드 여섯 장으로 세 자리 수 두 개를 만들어요. 두 수의 차이가 가장 작을 때를 물어요.',
-      '백의 자리 숫자의 차이를 가장 작게 해 볼까요? 그다음 큰 수는 작게, 작은 수는 크게 만들어요.',
+      '구하는 것: 두 수의 차가 가장 작을 때의 차 / 알고 있는 것: 카드 여섯 장으로 세 자리 수 두 개를 만듦',
+      '백의 자리 숫자의 차를 가장 작게 해 볼까요? 그다음 큰 수는 작게, 작은 수는 크게 만들어요.',
       `백의 자리에 ${wa(Math.floor(x / 100))} ${eul(Math.floor(y / 100))} 두면 좋아요.`,
       `${x} − ${bl.blank}`,
     ],
@@ -400,7 +482,7 @@ function t22Level6(cards) {
     blankAnswer: bl.blankAnswer,
     explain: {
       why: ['백의 자리 숫자가 차에 가장 크게 영향을 줘요.', `백의 자리를 ${wa(Math.floor(x / 100))} ${ro(Math.floor(y / 100))} 두고, 큰 수는 작게, 작은 수는 크게 만들어요.`, `${x} − ${y} = ${ieyo(best)}.`, `그래서 가장 작은 차는 ${ieyo(best)}.`],
-      alt: ['다른 짝도 몇 개 계산해서 견주어 봐요.', `어느 길로 해도 답은 ${ro(best)} 같아요.`],
+      alt: ['다른 짝도 몇 개 만들어 차를 비교해 봐도 돼요.', `어느 길로 해도 답은 ${ieyo(best)}.`],
     },
   };
 }
@@ -496,7 +578,15 @@ const D1 = {
   maxLevel: 2,
   diagnostic: true,
   generate() {
-    return { ...build(352, 127, 225, 2, { text: ['다대포항역에서 열차 승객 ', V(352), '명 중 ', V(127), '명이 내렸어요. '], unit: '명' }), hints: [], blank: null };
+    return {
+      ...build(352, 127, 225, 2, {
+        text: ['노포 쪽에서 온 열차 승객 ', V(352), '명 중 ', V(127), '명이 다대포항역에서 내렸어요. 남은 사람은 몇 명이에요?'],
+        unit: '명',
+        concl: (x) => `그래서 남은 사람은 ${x}명이에요.`,
+      }),
+      hints: [],
+      blank: null,
+    };
   },
 };
 const D2 = {
@@ -525,6 +615,7 @@ const D3 = {
 };
 
 // ── T2-4 받아내림 세로식 칸 채우기 (빈칸) — 09-templates-additions.md 2절 ──
+// 장면은 T2-1과 같은 까닭으로 역의 하루 인원(오늘 탄 사람 중 오전/오후)을 쓴다(04 문서 2절).
 function t24(a, b, level) {
   const d = a - b;
   const ah = Math.floor(a / 100);
@@ -537,7 +628,7 @@ function t24(a, b, level) {
   const dt = Math.floor(d / 10) % 10;
   const du = d % 10;
   const tensBorrow = level === 3;
-  const from = tensBorrow ? ah : at; // 빌려 준 자리의 원래 숫자
+  const from = tensBorrow ? ah : at; // 받아내림한 자리의 원래 숫자
   const fromName = tensBorrow ? '백의 자리' : '십의 자리';
   const toName = tensBorrow ? '십의 자리' : '일의 자리';
   const top = tensBorrow ? 10 + at : 10 + au; // 받아내린 뒤의 수
@@ -550,39 +641,41 @@ function t24(a, b, level) {
   ];
   const discs = uniq(
     [
-      { key: 'changed', value: from, category: '개념', kind: 'nudge', feedbackCheck: '빌려 준 자리를 다시 볼까요?', feedback: '빌려 준 자리는 1 줄었나요?' },
-      { key: 'answer', value: tensBorrow ? d + 100 : d + 10, category: '계산', kind: 'nudge', feedbackCheck: '빌려 준 자리를 다시 볼까요?', feedback: '빌려 준 자리는 1 줄었나요?' },
+      { key: 'changed', value: from, category: '개념', kind: 'nudge', feedbackCheck: '받아내림한 자리를 다시 볼까요?', feedback: '받아내림한 자리는 1 작아졌나요?' },
+      { key: 'answer', value: tensBorrow ? d + 100 : d + 10, category: '계산', kind: 'nudge', feedbackCheck: '받아내림한 자리를 다시 볼까요?', feedback: '받아내림한 자리는 1 작아졌나요?' },
       { key: 'answer', value: absDigits(a, b), category: '개념', kind: 'check', feedback: `${toName} ${tensBorrow ? at : au}에서 ${eul(sub)} 뺄 수 있나요?` },
-      { key: 'answer', value: a + b, category: '식', kind: 'check', feedback: '남은 사람이 처음보다 많을까요?' },
+      { key: 'answer', value: a + b, category: '식', kind: 'check', feedback: '오후에 탄 사람이 하루보다 많을까요?' },
     ],
     null,
   ).filter((x) => x.value !== (x.key === 'changed' ? from - 1 : d));
   const why = tensBorrow
     ? [
         `일의 자리는 ${au} − ${bu} = ${ieyo(du)}.`,
-        `십의 자리 ${at}에서 ${eul(bt)} 못 빼서 백의 자리 ${ah}에서 10을 빌려 와요.`,
+        `십의 자리 ${at}에서 ${eul(bt)} 뺄 수 없어서 백의 자리에서 받아내림해요.`,
         `백의 자리는 ${ah - 1}, 십의 자리는 ${ieyo(top)}.`,
-        `${top} − ${bt} = ${dt}, ${ah - 1} − ${bh} = ${eul(dh)} 써서 ${ieyo(d)}.`,
-        `그래서 남은 사람은 ${d}명이에요.`,
+        `${top} − ${bt} = ${dt}, ${ah - 1} − ${bh} = ${dh}${jo(dh, '이라', '라')} ${ieyo(d)}.`,
+        `확인해 보면 ${d} + ${b} = ${ieyo(a)}.`,
+        `그래서 오후에 탄 사람은 ${d}명이에요.`,
       ]
     : [
-        `일의 자리 ${au}에서 ${eul(bu)} 못 빼서 십의 자리 ${at}에서 10을 빌려 와요.`,
+        `일의 자리 ${au}에서 ${eul(bu)} 뺄 수 없어서 십의 자리에서 받아내림해요.`,
         `십의 자리는 ${at - 1}, 일의 자리는 ${ieyo(top)}.`,
         `${top} − ${bu} = ${du}, ${at - 1} − ${bt} = ${dt}, ${ah} − ${bh} = ${dh}${jo(dh, '이라', '라')} ${ieyo(d)}.`,
-        `그래서 남은 사람은 ${d}명이에요.`,
+        `확인해 보면 ${d} + ${b} = ${ieyo(a)}.`,
+        `그래서 오후에 탄 사람은 ${d}명이에요.`,
       ];
   return {
-    text: [(level >= 3 ? '어느 날 ' : '') + '열차에 ', V(a), '명이 타 있었고, 다대포항역에서 ', V(b), '명이 내렸어요. 남은 사람을 세로식으로 계산하고 있어요. 빈칸을 채워요.'],
+    text: [level >= 3 ? '토요일에 다대포항역에서 ' : '오늘 다대포항역에서 ', V(a), '명이 탔어요. 그중 ', V(b), '명은 오전에 탔어요. 오후에 탄 사람을 세로식으로 구해요.'],
     figure: { kind: 'vertical', op: '−', a, b },
     input: { kind: 'compound', fields },
     answer: { changed: from - 1, part, answer: d },
     discriminators: discs,
     hints: [
-      `열차에 ${a}명이 있었고 ${b}명이 내렸어요. 남은 사람을 구하는 세로식의 빈칸 세 개를 채워요.`,
+      `구하는 것: 오후에 탄 사람을 구하는 세로식의 빈칸 세 개 / 알고 있는 것: 탄 사람 ${a}명, 그중 오전 ${b}명`,
       tensBorrow
-        ? `일의 자리부터 차례로 볼까요? 십의 자리 ${at}에서 ${eul(bt)} 못 빼면 백의 자리에서 10을 빌려 와요.`
-        : `일의 자리 ${au}에서 ${eul(bu)} 뺄 수 있는지 먼저 볼까요? 못 빼면 십의 자리에서 10을 빌려 와요.`,
-      `${fromName}에서 10을 빌려 오면 ${toName}는 ${top}${jo(top, '이', '가')} 돼요.`,
+        ? `일의 자리부터 차례로 볼까요? 십의 자리 ${at}에서 ${eul(bt)} 뺄 수 없으면 백의 자리에서 받아내림해요.`
+        : `일의 자리 ${au}에서 ${eul(bu)} 뺄 수 있는지 먼저 볼까요? 뺄 수 없으면 십의 자리에서 받아내림해요.`,
+      `${fromName}에서 받아내림하면 ${toName}는 ${top}${jo(top, '이', '가')} 돼요.`,
       `${fromName} ${from} → ☐`,
     ],
     blank: `${from} → ☐`,
@@ -590,7 +683,7 @@ function t24(a, b, level) {
     blankThen: '나머지 칸도 채워요.',
     explain: {
       why,
-      alt: ['답에 빼는 수를 더해 확인해요.', `${d} + ${b} = ${ieyo(a)}.`, '처음 수가 나오니 맞아요.', `두 방법 모두 ${d}명이에요.`],
+      alt: [...countUp(b, a), `어느 길로 해도 답은 ${d}명이에요.`],
     },
   };
 }

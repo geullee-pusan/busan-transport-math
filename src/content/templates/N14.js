@@ -104,7 +104,7 @@ function divHints(N, d, q, lead) {
   const part1 = d * tensQ;
   const part2 = N - part1;
   return {
-    hints: [lead, `${eul(N)} ${wa(part1)} ${ro(part2)} 나눠 볼까요? 둘 다 ${ro(d)} 나누기 쉬워요.`, `${part1} ÷ ${d} = ${ieyo(tensQ)}.`, `${part2} ÷ ${d} = ☐`],
+    hints: [lead, `${eul(N)} ${wa(part1)} ${ro(part2)} 갈라 볼까요? 둘 다 ${ro(d)} 나누기 쉬워요.`, `${part1} ÷ ${d} = ${ieyo(tensQ)}.`, `${part2} ÷ ${d} = ☐`],
     blank: `${part2} ÷ ${d} = ☐`,
     blankAnswer: String(q % 10),
     blankThen: '몫은 얼마예요?',
@@ -117,29 +117,31 @@ function divExplain(N, d, q) {
   const part2 = N - part1;
   return {
     why: [`${eun(N)} ${wa(part1)} ${ieyo(part2)}.`, `${part1} ÷ ${d} = ${tensQ}, ${part2} ÷ ${d} = ${q % 10}${jo(q % 10, '이라', '라')} 몫은 ${ieyo(q)}.`, `그래서 ${N} ÷ ${d} = ${ieyo(q)}.`],
-    alt: [`세로로 나눠요. 십의 자리부터 ${ro(d)} 나누고, 남은 수는 일의 자리와 합쳐 다시 나눠요.`, `어느 길로 해도 답은 ${ro(q)} 같아요.`],
+    alt: [`세로로 나눠요. 십의 자리부터 ${ro(d)} 나누고, 남은 수는 일의 자리와 합쳐 다시 나눠요.`, `어느 길로 해도 답은 ${ieyo(q)}.`],
   };
 }
 
 // ── T14-1 정비창 점검 (식) — 1~3단계 ──
-/** 정비창 점검 장면: N명이 d칸에 똑같이 나눠 탐(1호선은 8량이라 d < 8이면 "앞 d칸") */
+/** 정비창 점검 장면: N명이 d칸에 똑같이 나눠 탐(1호선은 8칸이라 d < 8이면 "앞 d칸") */
 function carScene(N, d, level) {
   const cars = d === 8 ? [L1(), '호선 ', CARS(), '칸에'] : ['앞 ', V(d), '칸에'];
-  return [level >= 3 ? '어느 날 동대신역에서 ' : '동대신역에서 ', V(N), '명이 ', ...cars, ' 똑같이 나눠 탔어요. '];
+  return [level >= 3 ? '아침에 동대신역에서 ' : '동대신역에서 ', V(N), '명이 ', ...cars, ' 똑같이 나눠 탔어요.'];
 }
+/** 칸 장면의 힌트 ①(구하는 것 / 알고 있는 것) */
+const carLead = (N, d) => `구하는 것: 한 칸에 탄 사람 수 / 알고 있는 것: ${N}명, ${d === 8 ? '1호선 8칸' : `앞 ${d}칸`}에 똑같이 나눠 탐`;
 
-/** scene = { text: 식 앞 교통 장면 조각, unit } (없으면 식만) */
+/** scene = { text: 식 앞 교통 장면 조각, unit, lead: 힌트 ①, conclude: 해설 결론 } (없으면 식만). 식은 새 줄에 둔다. */
 function buildDiv(N, d, q, scene = null) {
   return {
-    text: [...(scene?.text ?? []), n(N), ' ÷ ', n(d), ' = ?'],
+    text: [...(scene?.text ? [...scene.text, '\n'] : []), n(N), ' ÷ ', n(d), ' = ?'],
     figure: null,
     input: scene?.unit ? { kind: 'number', unit: scene.unit } : { kind: 'number' },
     answer: q,
     discriminators: divDiscs(N, d, q),
-    ...divHints(N, d, q, `${eul(N)} ${ro(d)} 나눈 몫을 물어요.`),
+    ...divHints(N, d, q, scene?.lead ?? `${N} ÷ ${d}의 몫을 물어요.`),
     explain: {
-      why: [divExplain(N, d, q).why[0], divExplain(N, d, q).why[1], `그래서 ${N} ÷ ${d} = ${ieyo(q)}.`],
-      alt: [`${d} × ${q} = ${N}${roOnly(N)} 확인해요.`, ...divExplain(N, d, q).alt],
+      why: [divExplain(N, d, q).why[0], divExplain(N, d, q).why[1], scene?.conclude ? scene.conclude(q) : `그래서 ${N} ÷ ${d} = ${ieyo(q)}.`],
+      alt: divExplain(N, d, q).alt,
     },
   };
 }
@@ -147,7 +149,7 @@ function buildDiv(N, d, q, scene = null) {
 /** 3단계: 몫과 곱셈 확인식(식 입력) */
 function t141Level3(N, d, q, scene = null) {
   return {
-    text: [...(scene?.text ?? []), n(N), ' ÷ ', n(d), '의 몫을 구하고, 맞는지 곱셈식으로 확인해요. 확인하는 곱셈식을 써요.'],
+    text: [...(scene?.text ? [...scene.text, '\n'] : []), n(N), ' ÷ ', n(d), '의 몫을 구하고, 확인하는 곱셈식을 써요.'],
     figure: null,
     input: { kind: 'equation' },
     answer: { left: d, op: '×', right: q, result: N, commutative: true },
@@ -156,7 +158,7 @@ function t141Level3(N, d, q, scene = null) {
       { match: (r) => r?.op === '×' && [num(r.left), num(r.right)].includes(d) && [num(r.left), num(r.right)].includes(dropTens(N, d)), category: '개념', kind: 'nudge', feedbackCheck: '십의 자리를 다시 볼까요?', feedback: `십의 자리에서 남은 수는 어디로 갔나요?` },
       { match: (r) => r?.op === '×' && num(r.result) !== N && num(r.result) > 0, category: '계산', kind: 'check', feedback: `곱이 ${N}${jo(N, '이', '가')} 되나요?` },
     ],
-    hints: [`${eul(N)} ${ro(d)} 나눈 몫과, 그것을 확인하는 곱셈식을 물어요.`, `${d} × 몇이 ${N}${jo(N, '이', '가')} 될까요? 십의 자리부터 나눠 봐요.`, `${d} × ${Math.floor(q / 10) * 10} = ${ieyo(d * Math.floor(q / 10) * 10)}.`, `${d} × ☐ = ${N - d * Math.floor(q / 10) * 10}`],
+    hints: [`구하는 것: ${N} ÷ ${d}의 몫과, 그 몫을 확인하는 곱셈식 / 알고 있는 것: ${N}명, ${d === 8 ? '1호선 8칸' : `앞 ${d}칸`}에 똑같이 나눠 탐`,`${d} × 몇이 ${N}${jo(N, '이', '가')} 될까요? 십의 자리부터 나눠 봐요.`, `${d} × ${Math.floor(q / 10) * 10} = ${ieyo(d * Math.floor(q / 10) * 10)}.`, `${d} × ☐ = ${N - d * Math.floor(q / 10) * 10}`],
     blank: `${d} × ☐ = ${N - d * Math.floor(q / 10) * 10}`,
     blankAnswer: String(q % 10),
     blankThen: '확인하는 곱셈식을 써요.',
@@ -167,7 +169,7 @@ function t141Level3(N, d, q, scene = null) {
   };
 }
 
-/** 단계별 (나뉠 수, 나누는 수) */
+/** 단계별 (나누어지는 수, 나누는 수) */
 function pickDiv(rng, level) {
   return draw(
     rng,
@@ -195,7 +197,9 @@ const T14_1 = {
   maxLevel: 3,
   generate(rng, level) {
     const [N, d, q] = pickDiv(rng, level);
-    return level === 3 ? t141Level3(N, d, q, { text: carScene(N, d, level) }) : buildDiv(N, d, q, { text: [...carScene(N, d, level), '한 칸에 몇 명인지 식으로 계산해요. '], unit: '명' });
+    return level === 3
+      ? t141Level3(N, d, q, { text: carScene(N, d, level) })
+      : buildDiv(N, d, q, { text: [...carScene(N, d, level), ' 한 칸에 몇 명이에요?'], unit: '명', lead: carLead(N, d), conclude: (qq) => `그래서 한 칸에 ${qq}명이에요.` });
   },
 };
 
@@ -203,20 +207,20 @@ const T14_1 = {
 function t142Level1(q) {
   const N = 8 * q;
   return {
-    text: [L1(), '호선은 ', CARS(), '량이에요. 어느 날 ', V(N), '명이 칸마다 똑같이 탔어요. 한 칸에 몇 명이에요?'],
+    text: ['동대신역에서 ', L1(), '호선 열차 ', CARS(), '칸에 ', V(N), '명이 똑같이 나누어 탔어요. 한 칸에 몇 명이에요?'],
     figure: { kind: 'train', cars: 8 },
     input: { kind: 'number', unit: '명' },
     answer: q,
     discriminators: divDiscs(N, 8, q),
-    ...divHints(N, 8, q, `사람은 ${N}명, 칸은 8개예요. 칸마다 같은 수만큼 타요. 한 칸에 몇 명인지 물어요.`),
-    explain: { why: [`${N}명을 8칸에 똑같이 나누면 ${N} ÷ 8이에요.`, divExplain(N, 8, q).why[1], `그래서 한 칸에 ${q}명이에요.`], alt: [`8 × ${q} = ${N}${roOnly(N)} 확인해요.`, `어느 길로 해도 답은 ${ro(q)} 같아요.`] },
+    ...divHints(N, 8, q, `구하는 것: 한 칸에 탄 사람 수 / 알고 있는 것: ${N}명, 8칸에 똑같이 나누어 탐`),
+    explain: { why: [`${N}명을 8칸에 똑같이 나누면 ${N} ÷ 8이에요.`, divExplain(N, 8, q).why[1], `그래서 한 칸에 ${q}명이에요.`], alt: divExplain(N, 8, q).alt },
   };
 }
 
 function t142Level2(k, q) {
   const N = k * q;
   return {
-    text: ['어느 날 ', L1(), '호선 앞 ', V(k), '칸에 ', V(N), '명이 칸마다 똑같이 탔어요. 한 칸에 몇 명인지 식과 답을 써요.'],
+    text: ['퇴근 시간에 동대신역에서 ', V(N), '명이 앞 ', V(k), '칸에 똑같이 나누어 탔어요. 한 칸에 몇 명인지 식과 답을 써요.'],
     figure: { kind: 'train', cars: 8, highlight: Array.from({ length: k }, (_, i) => i) },
     input: { kind: 'equation' },
     answer: { left: N, op: '÷', right: k, result: q },
@@ -235,8 +239,8 @@ function t142Level2(k, q) {
       if (op === '÷' && num(left) === N && num(right) === k) return { correct: false, category: '계산', kind: 'check', feedback: `${k} × ${num(result)}${jo(num(result), '이', '가')} ${N}인지 확인해 볼까요?` };
       return { correct: false, category: '식', kind: 'check', feedback: null };
     },
-    ...divHints(N, k, q, `앞 ${k}칸에 ${N}명이 똑같이 탔어요. 한 칸의 사람 수를 구하는 식과 답을 물어요.`),
-    explain: { why: [`${N}명을 ${k}칸에 똑같이 나누는 상황이에요.`, divExplain(N, k, q).why[1], `그래서 식은 ${N} ÷ ${k} = ${ieyo(q)}.`], alt: [`${k} × ${q} = ${N}${roOnly(N)} 확인해요.`, `어느 길로 해도 답은 ${ro(q)} 같아요.`] },
+    ...divHints(N, k, q, `구하는 것: 한 칸에 탄 사람 수를 구하는 식과 답 / 알고 있는 것: ${N}명, 앞 ${k}칸에 똑같이 나누어 탐`),
+    explain: { why: [`${N}명을 ${k}칸에 똑같이 나누는 상황이에요.`, divExplain(N, k, q).why[1], `그래서 식은 ${N} ÷ ${k} = ${q}, 한 칸에 ${q}명이에요.`], alt: divExplain(N, k, q).alt },
   };
 }
 
@@ -246,7 +250,7 @@ function t142Level3(a, b) {
   const db = 40 / b;
   const answer = { da, db, which: `하루 ${b}역`, diff: da - db };
   return {
-    text: [L1(), '호선 ', FORTY(), '역을 모두 가 보는 역 탐방을 해요. 하루에 ', V(a), '역씩 가는 방법과 하루에 ', V(b), '역씩 가는 방법이 있어요. 각각 며칠 걸리고, 어느 쪽이 며칠 빨리 끝나요?'],
+    text: [L1(), '호선 ', FORTY(), '역을 모두 가 보기로 해요. 하루에 ', V(a), '역씩 갈 때와 ', V(b), '역씩 갈 때 걸리는 날수를 비교해요.'],
     figure: null,
     input: {
       kind: 'compound',
@@ -261,18 +265,18 @@ function t142Level3(a, b) {
     discriminators: uniqK(
       [
         { key: 'which', value: `하루 ${a}역`, category: '읽기', kind: 'check', feedback: '어느 쪽 날수가 적은지 다시 볼까요?' },
-        { key: 'diff', value: b - a, category: '식', kind: 'check', feedback: '며칠 빨리 끝나는지 물었어요.' },
-        { key: 'diff', value: da + db, category: '식', kind: 'check', feedback: '며칠 빨리 끝나는지 물었어요.' },
+        { key: 'diff', value: b - a, category: '식', kind: 'check', feedback: '하루 역 수끼리 뺐나요?' },
+        { key: 'diff', value: da + db, category: '식', kind: 'check', feedback: '날수를 더해도 될까요?' },
       ],
       answer,
     ),
-    hints: [`${L1().label}호선은 40역이에요. 하루에 ${a}역씩 가는 방법과 ${b}역씩 가는 방법이 있어요. 각각 며칠 걸리고 어느 쪽이 며칠 빨리 끝나는지 물어요.`, `40역을 ${a}역씩, ${b}역씩 묶으면 각각 몇 묶음일까요?`, `${a}역씩이면 ${da}일이에요.`, `40 ÷ ${b} = ☐일`],
+    hints: [`구하는 것: 하루 ${a}역씩, ${b}역씩 갈 때 걸리는 날수와 며칠 빨리 끝나는지 / 알고 있는 것: ${L1().label}호선 40역`,`40역을 ${a}역씩, ${b}역씩 묶으면 각각 몇 묶음일까요?`, `${a}역씩이면 ${da}일이에요.`, `40 ÷ ${b} = ☐일`],
     blank: '☐일',
     blankAnswer: String(db),
     blankThen: '어느 쪽이 며칠 빨리 끝나요?',
     explain: {
       why: [`하루 ${a}역씩이면 40 ÷ ${a} = ${da}일, 하루 ${b}역씩이면 40 ÷ ${b} = ${db}일이에요.`, `${da} − ${db} = ${da - db}일 차이예요.`, `그래서 하루 ${b}역씩 가는 쪽이 ${da - db}일 빨리 끝나요.`],
-      alt: [`${a} × ${da} = 40, ${b} × ${db} = 40으로 확인해요.`, `두 풀이 모두 하루 ${b}역씩이 ${da - db}일 빨라요.`],
+      alt: [`${a}, ${2 * a}, ${3 * a}, …처럼 ${a}씩 뛰어 세면 40까지 ${da}번, ${b}씩 뛰어 세면 ${db}번이에요.`, `어느 길로 해도 하루 ${b}역씩 가는 쪽이 ${da - db}일 빨리 끝나요.`],
     },
   };
 }
@@ -282,7 +286,7 @@ function t142Level4(r, w, p) {
   const total = w * p;
   const ans = total / r;
   return {
-    text: ['어느 날 역 탐방 사진을 ', V(r), '명이 똑같이 나눠야 하는데, ', V(w), '명에게 나눴더니 한 사람이 ', V(p), '장씩이었어요. 바르게 나누면 한 사람이 몇 장이에요?'],
+    text: ['역 탐방 사진을 ', V(r), '명에게 나눠 줘야 하는데, 잘못해서 ', V(w), '명에게 ', V(p), '장씩 줬어요. 바르게 나누면 한 사람이 몇 장이에요?'],
     figure: null,
     input: { kind: 'number', unit: '장' },
     answer: ans,
@@ -293,12 +297,12 @@ function t142Level4(r, w, p) {
       ],
       ans,
     ),
-    hints: [`사진을 ${w}명에게 나눴더니 한 사람이 ${p}장씩이었어요. ${r}명이 똑같이 나눌 때 한 사람의 장 수를 물어요.`, '잘못 나눈 것을 되돌려 사진이 모두 몇 장인지부터 구해 볼까요?', `사진은 모두 ${p} × ${w} = ${total}장이에요.`, `${total} ÷ ${r} = ${ans >= 10 ? Math.floor(ans / 10) : ''}☐`],
+    hints: [`구하는 것: ${r}명에게 똑같이 나눠 줄 때 한 사람의 사진 수 / 알고 있는 것: 잘못해서 ${w}명에게 ${p}장씩 나눠 줌`,'잘못 나눈 것을 되돌려 사진이 모두 몇 장인지부터 구해 볼까요?', `사진은 모두 ${p} × ${w} = ${total}장이에요.`, `${total} ÷ ${r} = ${ans >= 10 ? Math.floor(ans / 10) : ''}☐`],
     blank: `${total} ÷ ${r} = ${ans >= 10 ? Math.floor(ans / 10) : ''}☐`,
     blankAnswer: String(ans % 10),
     explain: {
-      why: [`${w}명에게 ${p}장씩이면 사진은 ${p} × ${w} = ${total}장이에요.`, `${r}명이 똑같이 나누면 ${total} ÷ ${r} = ${ans}장씩이에요.`, `그래서 한 사람이 ${ans}장이에요.`],
-      alt: [`${r} × ${ans} = ${total}${roOnly(total)} 확인해요.`, `어느 길로 해도 답은 ${ro(ans)} 같아요.`],
+      why: [`${w}명에게 ${p}장씩이면 사진은 ${p} × ${w} = ${total}장이에요.`, `${r}명에게 똑같이 나누면 ${total} ÷ ${r} = ${ans}장씩이에요.`, `그래서 한 사람이 ${ans}장이에요.`],
+      alt: [`${r} × ${ans} = ${total}${roOnly(total)} 확인해요.`, '확인해 보면 답이 맞아요.'],
     },
   };
 }
@@ -317,12 +321,12 @@ function t142Level5(u, d, answer) {
     answer,
     discriminators: uniq(discs, answer),
     grade: multiGrade(answer, discs),
-    hints: [`□${u}${jo(u, '을', '를')} ${ro(d)} 나눴을 때 나머지가 없는 □를 모두 찾아요.`, `${d}단의 수 중에서 일의 자리가 ${u}인 두 자리 수를 찾아볼까요?`, `${answer[0]}${u} = ${d} × ${(answer[0] * 10 + u) / d}이에요.`.replace(/(\d)이에요\.$/, (m, g) => `${g}${jo(Number(g), '이에요', '예요')}.`), `${answer.slice(0, -1).join(', ')}${answer.length > 1 ? ', ' : ''}☐`],
+    hints: [`구하는 것: □에 들어갈 수 있는 수 모두 / 알고 있는 것: □${u}${jo(u, '은', '는')} ${ro(d)} 나누어떨어짐`, `${d}씩 뛰어 센 수 중에서 일의 자리가 ${u}인 두 자리 수를 찾아볼까요?`,`${answer[0]}${u} = ${d} × ${(answer[0] * 10 + u) / d}이에요.`.replace(/(\d)이에요\.$/, (m, g) => `${g}${jo(Number(g), '이에요', '예요')}.`), `${answer.slice(0, -1).join(', ')}${answer.length > 1 ? ', ' : ''}☐`],
     blank: `${answer.slice(0, -1).join(', ')}${answer.length > 1 ? ', ' : ''}☐`,
     blankAnswer: String(last),
     explain: {
-      why: [`${d}단의 두 자리 수 중 일의 자리가 ${u}인 수는 ${answer.map((t) => t * 10 + u).join(', ')}${jo(answer.at(-1) * 10 + u, '이에요', '예요')}.`, '이 수들은 모두 나누어떨어져요.', `그래서 □는 ${answer.join(', ')}${jo(last, '이에요', '예요')}.`],
-      alt: [`□에 1부터 9까지 차례로 넣어 ${ro(d)} 나눠 봐도 돼요.`, `어느 길로 해도 답은 ${answer.join(', ')}${roOnly(last)} 같아요.`],
+      why: [`${d}씩 뛰어 센 두 자리 수 중 일의 자리가 ${u}인 수는 ${answer.map((t) => t * 10 + u).join(', ')}${jo(answer.at(-1) * 10 + u, '이에요', '예요')}.`, `이 수들은 모두 ${ro(d)} 나누어떨어져요.`, `그래서 □는 ${answer.join(', ')}${jo(last, '이에요', '예요')}.`],
+      alt: [`□에 1부터 9까지 차례로 넣어 ${ro(d)} 나눠 봐도 돼요.`, `어느 길로 해도 답은 ${answer.join(', ')}${jo(last, '이에요', '예요')}.`],
     },
   };
 }
@@ -336,23 +340,23 @@ function t142Level6(d) {
   const extra = [d * 10 + 1, d * 11 + 2, d * 12 + 1].filter((v) => v <= 99 && !options.includes(v));
   const opts = [...options, ...extra].sort((x, y) => x - y);
   const discs = [
-    { value: answer.slice(1), category: '개념', kind: 'nudge', feedbackCheck: '빠진 것이 없나요?', feedback: '1□의 □에 0도 넣어 봤나요?' },
-    { value: [d * 9, ...answer], category: '개념', kind: 'check', feedback: `${d * 9} ÷ ${d}의 몫은 1□ 꼴인가요?` },
+    { value: answer.slice(1), category: '개념', kind: 'nudge', feedbackCheck: '빠진 것이 없나요?', feedback: '몫이 10일 때도 생각해 봤나요?' },
+    { value: [d * 9, ...answer], category: '개념', kind: 'check', feedback: `${d * 9} ÷ ${d}의 몫은 십몇인가요?` },
   ];
   return {
-    text: [unknown('□□'), ' ÷ ', n(d), ' = ', unknown('1□'), '이고 나누어떨어져요. 나뉠 수가 될 수 있는 두 자리 수를 모두 골라요.'],
+    text: [unknown('□□'), ' ÷ ', n(d), '의 몫이 십몇이고 나누어떨어져요. 나누어지는 수가 될 수 있는 두 자리 수를 모두 골라요.'],
     figure: null,
     challenge: true,
     input: { kind: 'multi', options: opts },
     answer,
     discriminators: uniq(discs, answer),
     grade: multiGrade(answer, discs),
-    hints: [`몫이 십몇이고 나누어떨어지는 ${d}의 나뉠 수를 두 자리 수에서 모두 찾아요.`, `몫이 10일 때부터 차례로 ${d}${jo(d, '을', '를')} 곱해 볼까요? 두 자리 수를 넘으면 멈춰요.`, `몫이 10이면 ${ieyo(d * 10)}.`, `${answer.slice(0, -1).join(', ')}, ☐${answer.at(-1) % 10}`],
+    hints: [`구하는 것: 나누어지는 수가 될 수 있는 두 자리 수 모두 / 알고 있는 것: 나누는 수 ${d}, 몫은 십몇, 나누어떨어짐`,`몫이 10일 때부터 차례로 ${d}${jo(d, '을', '를')} 곱해 볼까요? 두 자리 수를 넘으면 멈춰요.`, `몫이 10이면 ${ieyo(d * 10)}.`, `${answer.slice(0, -1).join(', ')}, ☐${answer.at(-1) % 10}`],
     blank: `☐${answer.at(-1) % 10}`,
     blankAnswer: String(Math.floor(answer.at(-1) / 10)),
     explain: {
-      why: [`나뉠 수는 ${d} × (몫)이고, 몫은 10부터 19까지 될 수 있어요.`, `${d} × 10 = ${d * 10}부터 ${d} × ${answer.length + 9} = ${answer.at(-1)}까지가 두 자리 수예요.`, `그래서 ${answer.join(', ')}${jo(answer.at(-1), '이에요', '예요')}.`],
-      alt: [`${d}단을 이어 세어 ${d * 10}부터 99까지 찾아도 돼요.`, `어느 길로 해도 답은 ${answer.join(', ')}${roOnly(answer.at(-1))} 같아요.`],
+      why: [`나누어지는 수는 ${d} × (몫)이고, 몫은 10부터 19까지 될 수 있어요.`, `${d} × 10 = ${d * 10}부터 ${d} × ${answer.length + 9} = ${answer.at(-1)}까지가 두 자리 수예요.`, `그래서 ${answer.join(', ')}${jo(answer.at(-1), '이에요', '예요')}.`],
+      alt: [`${d}씩 뛰어 세어 ${d * 10}부터 99까지 찾아도 돼요.`, `어느 길로 해도 답은 ${answer.join(', ')}${jo(answer.at(-1), '이에요', '예요')}.`],
     },
   };
 }
@@ -413,13 +417,13 @@ function t143Level1(N, d) {
     input: { kind: 'number' },
     answer: q,
     discriminators: uniq([{ value: N * d, category: '식', kind: 'check', feedback: '나누면 커질까요?' }, { value: T / d, category: '개념', kind: 'check', feedback: '일 모형도 나눴나요?' }].filter((x) => Number.isInteger(x.value)), q),
-    hints: [`수 모형은 십 모형 ${T}개, 일 모형 ${U}개예요. ${d}명이 똑같이 가질 때 한 사람 몫을 물어요.`, '십 모형부터 한 사람에게 똑같이 나눠 줘 볼까요? 그다음 일 모형도 나눠 줘요.', `한 사람에게 십 모형 ${T / d}개씩이에요.`, `한 사람에게 일 모형 ☐개`],
+    hints: [`구하는 것: 한 사람이 받는 몫 / 알고 있는 것: 십 모형 ${T}개, 일 모형 ${U}개, ${d}명이 똑같이 가짐`, '십 모형부터 한 사람에게 똑같이 나눠 줘 볼까요? 그다음 일 모형도 나눠 줘요.', `한 사람에게 십 모형 ${T / d}개씩이에요.`, `한 사람에게 일 모형 ☐개`],
     blank: '일 모형 ☐개',
     blankAnswer: String(U / d),
     blankThen: '한 사람에게 얼마씩이에요?',
     explain: {
       why: [`십 모형 ${T}개를 ${d}명이 나누면 ${T / d}개씩, 일 모형 ${U}개를 나누면 ${U / d}개씩이에요.`, `한 사람에게 ${T / d * 10} + ${U / d} = ${ieyo(q)}.`, `그래서 ${N} ÷ ${d} = ${ieyo(q)}.`],
-      alt: [`${d} × ${q} = ${N}${roOnly(N)} 확인해요.`, `어느 길로 해도 답은 ${ro(q)} 같아요.`],
+      alt: [`${d} × ${q} = ${N}${roOnly(N)} 확인해요.`, '확인해 보면 답이 맞아요.'],
     },
   };
 }
@@ -434,24 +438,24 @@ function t143Level23(N, d) {
   const discs = uniqK(
     [
       { key: 'q', value: dropTens(N, d), category: '개념', kind: 'nudge', feedbackCheck: '남은 십 모형을 다시 볼까요?', feedback: '남은 십 모형은 일 모형 10개로 바꿔 볼까요?' },
-      { key: 'change', value: 0, category: '개념', kind: 'check', feedback: '십 모형이 남지 않나요?' },
+      { key: 'change', value: 0, category: '개념', kind: 'check', feedback: '남는 십 모형이 있나요?' },
       { key: 'q', value: swapQ(q), category: '계산', kind: 'check', feedback: `몫에 ${eul(d)} 곱하면 ${N}${jo(N, '이', '가')} 되나요?` },
     ],
     answer,
   );
   return {
-    text: [n(N), jo(N, '을', '를'), ' 수 모형으로 나타냈어요. ', n(d), '명이 똑같이 나누어 가져요. 일 모형으로 바꿔야 하는 십 모형은 몇 개이고, 한 사람에게 얼마씩이에요?'],
+    text: [n(N), jo(N, '을', '를'), ' 수 모형으로 나타냈어요. ', n(d), '명이 똑같이 나누어 가지면 한 사람에게 얼마씩이에요?'],
     figure: { kind: 'base10', tens: T, ones: U },
-    input: { kind: 'compound', fields: [{ key: 'change', label: '바꾸는 십 모형' }, { key: 'q', label: '한 사람 몫' }] },
+    input: { kind: 'compound', fields: [{ key: 'change', label: '일 모형으로 바꾸는 십 모형' }, { key: 'q', label: '한 사람 몫' }] },
     answer,
     discriminators: discs,
-    hints: [`수 모형은 십 모형 ${T}개, 일 모형 ${U}개예요. ${d}명이 똑같이 가질 때 바꿔야 하는 십 모형 수와 한 사람 몫을 물어요.`, '십 모형부터 똑같이 나눠 줘 볼까요? 남은 십 모형은 일 모형 10개로 바꿔서 나눠요.', `십 모형은 한 사람에게 ${Math.floor(T / d)}개씩 나눠 줄 수 있어요.`, '남은 십 모형을 바꾼 일 모형까지 나누면 한 사람에게 일 모형 ☐개'],
+    hints: [`구하는 것: 일 모형으로 바꾸는 십 모형 수와 한 사람 몫 / 알고 있는 것: 십 모형 ${T}개, 일 모형 ${U}개, ${d}명이 똑같이 가짐`, '십 모형부터 똑같이 나눠 줘 볼까요? 남은 십 모형은 일 모형 10개로 바꿔서 나눠요.', `십 모형은 한 사람에게 ${Math.floor(T / d)}개씩 나눠 줄 수 있어요.`, '바꾼 일 모형과 처음 일 모형을 함께 나누면: 한 사람에게 일 모형 ☐개'],
     blank: '한 사람에게 ☐개',
     blankAnswer: String((left * 10 + U) / d),
     blankThen: '두 칸을 채워요.',
     explain: {
       why: [`십 모형 ${T}개를 ${d}명이 나누면 ${Math.floor(T / d)}개씩이고 ${left}개가 남아요.`, `남은 ${left}개를 일 모형 ${left * 10}개로 바꾸면 일 모형은 ${left * 10 + U}개, 한 사람에게 ${(left * 10 + U) / d}개씩이에요.`, `그래서 십 모형 ${left}개를 바꾸고, 한 사람에게 ${ieyo(q)}.`],
-      alt: [`${d} × ${q} = ${N}${roOnly(N)} 확인해요.`, `어느 길로 해도 몫은 ${ro(q)} 같아요.`],
+      alt: [`${d} × ${q} = ${N}${roOnly(N)} 확인해요.`, '확인해 보면 답이 맞아요.'],
     },
   };
 }
@@ -495,7 +499,7 @@ const D1 = {
   maxLevel: 2,
   diagnostic: true,
   generate() {
-    return { ...buildDiv(72, 4, 18, { text: ['동대신역에서 ', V(72), '명이 앞 ', V(4), '칸에 똑같이 나눠 탔어요. '], unit: '명' }), hints: [], blank: null };
+    return { ...buildDiv(72, 4, 18, { text: ['동대신역에서 ', V(72), '명이 앞 ', V(4), '칸에 똑같이 나눠 탔어요.'], unit: '명', conclude: (qq) => `그래서 한 칸에 ${qq}명이에요.` }), hints: [], blank: null };
   },
 };
 const D2 = {

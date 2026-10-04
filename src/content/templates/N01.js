@@ -109,34 +109,73 @@ function addDiscs(a, b) {
   return uniq(
     [
       { value: noCarry(a, b), category: '계산', kind: 'check', feedback: '일의 자리 10은 어디로 갔을까요?' },
-      { value: sum - 10, category: '계산', kind: 'nudge', feedbackCheck: '십의 자리를 다시 계산해 볼까요?', feedback: '받아올린 1을 더했나요?' },
-      { value: sum - 100, category: '계산', kind: 'nudge', feedbackCheck: '백의 자리를 다시 계산해 볼까요?', feedback: '받아올린 1을 더했나요?' },
+      { value: sum - 10, category: '계산', kind: 'nudge', feedbackCheck: '십의 자리를 다시 계산해 볼까요?', feedback: '받아올림한 1을 더했나요?' },
+      { value: sum - 100, category: '계산', kind: 'nudge', feedbackCheck: '백의 자리를 다시 계산해 볼까요?', feedback: '받아올림한 1을 더했나요?' },
       { value: concatSums(a, b), category: '개념', kind: 'check', feedback: '한 자리에 숫자가 둘 들어갔나요?' },
     ].filter((d) => d.value !== sum && (carries(a, b) > 0 || d.value === concatSums(a, b))),
     sum,
   );
 }
 
-/** scene = { text: 식 앞 교통 장면 조각, unit } (없으면 식만) */
+const PLACE = ['일', '십', '백', '천'];
+/** 받아올림을 자리마다 풀어 쓴 해설 줄(이 문제의 진짜 어려운 점) */
+function carryWhy(a, b) {
+  const lines = [];
+  if (carries(a, b) === 0) return ['같은 자리끼리 더해요.', '어느 자리도 합이 10이 안 돼서 받아올림이 없어요.'];
+  lines.push('같은 자리의 합이 10이거나 10보다 크면 윗자리로 받아올림해요.');
+  let c = 0;
+  for (let i = 0, x = a, y = b; x > 0 || y > 0; i++, x = Math.floor(x / 10), y = Math.floor(y / 10)) {
+    const s = (x % 10) + (y % 10) + c;
+    const expr = `${x % 10} + ${y % 10}${c ? ' + 1' : ''} = ${s}`;
+    const last = Math.floor(x / 10) === 0 && Math.floor(y / 10) === 0;
+    if (s >= 10) lines.push(`${PLACE[i]}의 자리는 ${expr}${jo(s, '이라', '라')} ${PLACE[i + 1]}의 자리로 1을 받아올림하고 ${eul(s - 10)} 써요.`);
+    else lines.push(`${PLACE[i]}의 자리는 ${expr}${jo(s, '이에요', '예요')}.`);
+    if (last && s >= 10) lines.push(`받아올림한 1은 천의 자리에 써요.`);
+    c = s >= 10 ? 1 : 0;
+  }
+  return lines;
+}
+/** 다른 풀이: 뒤의 수를 백·십·일로 갈라 앞의 수에 차례로 더하기 */
+function stepAdd(a, b) {
+  const parts = [Math.floor(b / 100) * 100, (Math.floor(b / 10) % 10) * 10, b % 10].filter((x) => x > 0);
+  const chain = [];
+  let cur = a;
+  for (const p of parts) {
+    chain.push(`${cur} + ${p} = ${cur + p}`);
+    cur += p;
+  }
+  return [`${eul(b)} ${[...parts.slice(0, -1), ro(parts.at(-1))].join(', ')} 갈라 차례로 더해도 돼요.`, `${chain.join(', ')}.`];
+}
+
+/** scene = { text: 식 앞 교통 장면 조각(줄바꿈 전 한 문장), unit, h1: 힌트 ①, concl: (sum) => 결론 줄 } */
 function buildAdd(a, b, scene = null) {
   const sum = a + b;
   const bl = blankAt(sum, 1);
   const u = (a % 10) + (b % 10);
   return {
-    text: [...(scene?.text ?? []), n(a), ' + ', n(b), ' = ?'],
+    text: [...(scene?.text ?? []), ...(scene?.text ? ['\n'] : []), n(a), ' + ', n(b), ' = ?'],
     figure: { kind: 'vertical', op: '+', a, b },
     input: scene?.unit ? { kind: 'number', unit: scene.unit } : { kind: 'number' },
     answer: sum,
     discriminators: addDiscs(a, b),
-    hints: [`${a} + ${b}의 값을 구해요.`, '자리를 맞춰 세로로 써 봐요. 일의 자리부터 차례로 해요.', `일의 자리는 ${a % 10} + ${b % 10} = ${ieyo(u)}.`, `${a} + ${b} = ${bl.blank}`],
+    hints: [
+      scene?.h1 ?? `${a} + ${b}의 값을 물어요.`,
+      '자리를 맞춰 세로로 써 봐요. 일의 자리부터 차례로 해요.',
+      u >= 10 ? `일의 자리는 ${a % 10} + ${b % 10} = ${u}${jo(u, '이라', '라')} 1을 받아올림해요.` : `일의 자리는 ${a % 10} + ${b % 10} = ${ieyo(u)}.`,
+      `${a} + ${b} = ${bl.blank}`,
+    ],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     explain: {
-      why: ['같은 자리끼리 더해요.', '한 자리의 합이 10이 넘으면 10을 윗자리로 올려요.', `그래서 ${a} + ${b} = ${ieyo(sum)}.`],
-      alt: [`${Math.floor(a / 100) * 100} + ${Math.floor(b / 100) * 100}을 먼저 하고 나머지를 더해도 돼요.`, `어느 길로 해도 답은 ${ro(sum)} 같아요.`],
+      why: [...carryWhy(a, b), `${a} + ${b} = ${ieyo(sum)}.`, scene?.concl ? scene.concl(sum) : `그래서 답은 ${ieyo(sum)}.`],
+      alt: [...stepAdd(a, b), `어느 길로 해도 답은 ${ieyo(sum)}.`],
     },
   };
 }
+const AMPM = (a, b) => ({
+  h1: `구하는 것: 오전과 오후에 탄 사람 수 모두 / 알고 있는 것: 오전 ${a}명, 오후 ${b}명`,
+  concl: (sum) => `그래서 모두 ${sum}명이 탔어요.`,
+});
 
 /** T1-1 정비창 점검 (식) — 1~3단계 */
 const T1_1 = {
@@ -160,8 +199,9 @@ const T1_1 = {
       level === 1 ? [245, 138] : level === 2 ? [368, 275] : [586, 417],
     );
     return buildAdd(a, b, {
-      text: [level >= 3 ? '어느 날 다대포해수욕장역에서 오전에 ' : '다대포해수욕장역에서 오전에 ', V(a), '명, 오후에 ', V(b), '명이 탔어요. 모두 몇 명인지 식으로 계산해요. '],
+      text: [level >= 3 ? '토요일에 다대포해수욕장역에서 오전에 ' : '다대포해수욕장역에서 오전에 ', V(a), '명, 오후에 ', V(b), '명이 탔어요.'],
       unit: '명',
+      ...AMPM(a, b),
     });
   },
 };
@@ -170,16 +210,22 @@ const T1_1 = {
 function t12Level1(a, b) {
   const sum = a + b;
   const bl = blankAt(sum, 1);
+  const u = (a % 10) + (b % 10);
   return {
-    text: ['어느 날 다대포해수욕장역에서 ', V(a), '명, 다대포항역에서 ', V(b), '명이 탔어요. 두 역에서 탄 사람은 모두 몇 명이에요?'],
+    text: ['노포 쪽으로 가는 열차에 다대포해수욕장역에서 ', V(a), '명, 다대포항역에서 ', V(b), '명이 탔어요. 모두 몇 명이에요?'],
     figure: { kind: 'train', cars: 8 },
     input: { kind: 'number', unit: '명' },
     answer: sum,
     discriminators: addDiscs(a, b),
-    hints: [`다대포해수욕장역에서 ${a}명, 다대포항역에서 ${b}명이 탔어요. 두 역에서 탄 사람 수를 모두 물어요.`, '자리를 맞춰 세로로 써 봐요.', `일의 자리는 ${a % 10} + ${b % 10} = ${ieyo((a % 10) + (b % 10))}.`, `${a} + ${b} = ${bl.blank}`],
+    hints: [
+      `구하는 것: 두 역에서 탄 사람 수 모두 / 알고 있는 것: 다대포해수욕장역 ${a}명, 다대포항역 ${b}명`,
+      '자리를 맞춰 세로로 써 봐요.',
+      u >= 10 ? `일의 자리는 ${a % 10} + ${b % 10} = ${u}${jo(u, '이라', '라')} 1을 받아올림해요.` : `일의 자리는 ${a % 10} + ${b % 10} = ${ieyo(u)}.`,
+      `${a} + ${b} = ${bl.blank}`,
+    ],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
-    explain: { why: ['두 역에서 탄 사람을 합쳐요.', `${a} + ${b} = ${ieyo(sum)}.`, `그래서 모두 ${sum}명이에요.`], alt: [`${Math.floor(a / 100) * 100} + ${Math.floor(b / 100) * 100}을 먼저 하고 나머지를 더해요.`, `어느 길로 해도 답은 ${ro(sum)} 같아요.`] },
+    explain: { why: ['두 역에서 탄 사람을 합쳐요.', ...carryWhy(a, b), `${a} + ${b} = ${ieyo(sum)}.`, `그래서 모두 ${sum}명이 탔어요.`], alt: [...stepAdd(a, b), `어느 길로 해도 답은 ${sum}명이에요.`] },
   };
 }
 
@@ -188,8 +234,10 @@ function t12Level2(a, b, T) {
   const sum = a + b;
   const more = sum > T ? '많아요' : '적어요';
   const bl = blankAt(sum, 1);
+  const u = (a % 10) + (b % 10);
   return {
-    text: ['어느 날 다대포해수욕장역에서 ', V(a), '명, 다대포항역에서 ', V(b), '명이 탔어요. 모두 몇 명이에요? ', V(T), '명보다 많아요?'],
+    // 묻는 것 둘(모두 몇 명, T명보다 많은지)은 compound 칸 이름에 맡긴다(02 문서 규칙 10).
+    text: ['다대포해수욕장역에서 ', V(a), '명, 다대포항역에서 ', V(b), '명이 탔어요. 모두 몇 명인지 ', V(T), '명과 비교해요.'],
     figure: { kind: 'train', cars: 8 },
     input: { kind: 'compound', fields: [{ key: 'sum', label: '모두 몇 명' }, { key: 'more', label: `${T}명보다`, options: ['많아요', '적어요'] }] },
     answer: { sum, more },
@@ -197,47 +245,52 @@ function t12Level2(a, b, T) {
     discriminators: uniq(
       [
         { key: 'sum', value: noCarry(a, b), category: '계산', kind: 'check', feedback: '일의 자리 10은 어디로 갔을까요?' },
-        { key: 'sum', value: sum - 10, category: '계산', kind: 'nudge', feedbackCheck: '십의 자리를 다시 계산해 볼까요?', feedback: '받아올린 1을 더했나요?' },
+        { key: 'sum', value: sum - 10, category: '계산', kind: 'nudge', feedbackCheck: '십의 자리를 다시 계산해 볼까요?', feedback: '받아올림한 1을 더했나요?' },
         { key: 'more', value: more === '많아요' ? '적어요' : '많아요', category: '개념', kind: 'check', feedback: `${wa(sum)} ${T}의 백의 자리를 볼까요?` },
       ].filter((d) => d.value !== sum),
       sum,
     ),
-    hints: [`두 역에서 ${a}명과 ${b}명이 탔어요. 모두 몇 명인지, 그 수가 ${T}명보다 많은지 물어요.`, '먼저 모두 몇 명인지 구해요. 그다음 백의 자리부터 견주어 봐요.', `일의 자리는 ${a % 10} + ${b % 10} = ${ieyo((a % 10) + (b % 10))}.`, `${a} + ${b} = ${bl.blank}`],
+    hints: [
+      `구하는 것: 두 역에서 탄 사람 수 모두, 그 수가 ${T}명보다 많은지 / 알고 있는 것: 다대포해수욕장역 ${a}명, 다대포항역 ${b}명`,
+      '먼저 모두 몇 명인지 구해요. 그다음 백의 자리부터 비교해 봐요.',
+      u >= 10 ? `일의 자리는 ${a % 10} + ${b % 10} = ${u}${jo(u, '이라', '라')} 1을 받아올림해요.` : `일의 자리는 ${a % 10} + ${b % 10} = ${ieyo(u)}.`,
+      `${a} + ${b} = ${bl.blank}`,
+    ],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     blankThen: `${T}명보다 많아요, 적어요?`,
     explain: {
-      why: [`${a} + ${b} = ${ieyo(sum)}.`, `${eun(sum)} ${T}보다 ${sum > T ? '커요' : '작아요'}.`, `그래서 모두 ${sum}명이고, ${T}명보다 ${more}.`],
-      alt: ['백의 자리끼리 먼저 더한 다음 나머지를 더해요.', `어느 길로 해도 답은 ${ro(sum)} 같아요.`],
+      why: [...carryWhy(a, b), `${a} + ${b} = ${ieyo(sum)}.`, `${eun(sum)} ${T}보다 ${sum > T ? '커요' : '작아요'}.`, `그래서 모두 ${sum}명이고, ${T}명보다 ${more}.`],
+      alt: [...stepAdd(a, b), `어느 길로 해도 답은 ${sum}명이에요.`],
     },
   };
 }
 
-/** T1-2 3단계: 앞 4량, 뒤 4량은 앞보다 m명 더 */
+/** T1-2 3단계: 앞쪽 4칸, 뒤쪽 4칸은 앞보다 m명 더 */
 function t12Level3(p, m) {
   const back = p + m;
   const total = p + back;
   const bl = blankAt(total, 1);
   return {
-    text: [L1(), '호선 열차는 ', CARS(), '량이에요. 어느 날 앞 ', V(4), '량에 ', V(p), '명이 탔고, 뒤 ', V(4), '량에는 앞보다 ', V(m), '명 더 많이 탔어요. 열차에 탄 사람은 모두 몇 명이에요?'],
+    text: ['아침에 열차 앞쪽 ', V(4), '칸에 ', V(p), '명이 탔어요. 뒤쪽 ', V(4), '칸에는 앞보다 ', V(m), '명 더 탔어요. 모두 몇 명이 탔어요?'],
     figure: { kind: 'train', cars: 8, split: 4 },
     input: { kind: 'number', unit: '명' },
     answer: total,
     discriminators: uniq(
       [
-        { value: back, category: '식', kind: 'nudge', feedbackCheck: '열차에 탄 사람을 모두 셌나요?', feedback: '뒤 4량만 구했어요. 앞 4량은요?' },
-        { value: 2 * p, category: '읽기', kind: 'check', feedback: '뒤 4량은 앞과 똑같이 탔나요?' },
-        { value: p + m, category: '식', kind: 'nudge', feedbackCheck: '열차에 탄 사람을 모두 셌나요?', feedback: '뒤 4량만 구했어요. 앞 4량은요?' },
-        { value: total - 10, category: '계산', kind: 'nudge', feedbackCheck: '십의 자리를 다시 계산해 볼까요?', feedback: '받아올린 1을 더했나요?' },
+        { value: back, category: '식', kind: 'nudge', feedbackCheck: '열차에 탄 사람을 모두 셌나요?', feedback: '앞쪽 4칸 사람도 더했나요?' },
+        { value: 2 * p, category: '읽기', kind: 'check', feedback: '뒤쪽 4칸은 앞과 똑같이 탔나요?' },
+        { value: p + m, category: '식', kind: 'nudge', feedbackCheck: '열차에 탄 사람을 모두 셌나요?', feedback: '앞쪽 4칸 사람도 더했나요?' },
+        { value: total - 10, category: '계산', kind: 'nudge', feedbackCheck: '십의 자리를 다시 계산해 볼까요?', feedback: '받아올림한 1을 더했나요?' },
       ],
       total,
     ),
-    hints: [`앞 4량에는 ${p}명이 탔어요. 뒤 4량은 앞보다 ${m}명 많아요. 열차 전체에 탄 사람 수를 물어요.`, '뒤 4량에 탄 사람부터 구해 볼까요? 그림의 앞과 뒤에 사람 수를 적어 봐요.', `뒤 4량에는 ${p} + ${m} = ${back}명이 탔어요.`, `${p} + ${back} = ${bl.blank}`],
+    hints: [`구하는 것: 열차 8칸에 탄 사람 수 모두 / 알고 있는 것: 앞쪽 4칸 ${p}명, 뒤쪽 4칸은 앞보다 ${m}명 많음`, '뒤쪽 4칸에 탄 사람부터 구해 볼까요? 그림의 앞과 뒤에 사람 수를 적어 봐요.', `뒤쪽 4칸에는 ${p} + ${m} = ${back}명이 탔어요.`, `${p} + ${back} = ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     explain: {
-      why: [`뒤 4량은 앞보다 ${m}명 많으니 ${p} + ${m} = ${back}명이에요.`, `열차 전체는 앞과 뒤를 합친 ${p} + ${back} = ${total}명이에요.`, `그래서 모두 ${total}명이에요.`],
-      alt: [`앞 4량이 두 번 있다고 생각하면 ${p} + ${p} = ${2 * p}명이에요.`, `뒤에만 ${m}명이 더 있으니 ${2 * p} + ${m} = ${total}명이에요.`, `어느 길로 해도 답은 ${ro(total)} 같아요.`],
+      why: [`뒤쪽 4칸은 앞보다 ${m}명 많으니 ${p} + ${m} = ${back}명이에요.`, `열차 전체는 앞과 뒤를 합친 ${p} + ${back} = ${total}명이에요.`, `그래서 모두 ${total}명이 탔어요.`],
+      alt: [`앞쪽 4칸이 두 번 있다고 생각하면 ${p} + ${p} = ${2 * p}명이에요.`, `뒤쪽에만 ${m}명이 더 있으니 ${2 * p} + ${m} = ${total}명이에요.`, `어느 길로 해도 답은 ${total}명이에요.`],
     },
   };
 }
@@ -256,19 +309,27 @@ function t12Level4(cards) {
   const x = d[0] * 100 + d[2] * 10 + d[4];
   const y = d[1] * 100 + d[3] * 10 + d[5];
   const bl = blankAt(best, 2);
+  const H = d[0] + d[1];
+  const T = d[2] + d[3];
+  const O = d[4] + d[5];
   return {
     text,
     figure: { kind: 'cards', cards },
     challenge: true,
     input: { kind: 'number' },
     answer: best,
-    discriminators: uniq([{ value: wrong, category: '개념', kind: 'nudge', feedbackCheck: '다른 수도 만들어 견주어 볼까요?', feedback: '큰 숫자를 어느 자리에 둬야 할까요?' }], best),
-    hints: ['카드 여섯 장으로 세 자리 수 두 개를 만들어요. 그 합이 가장 클 때를 물어요.', '가장 큰 숫자 두 개를 어느 자리에 두면 좋을까요?', `백의 자리에 ${wa(d[0])} ${d[1]}, 십의 자리에 ${wa(d[2])} ${eul(d[3])} 둬요.`, `합은 ${bl.blank}`],
+    discriminators: uniq([{ value: wrong, category: '개념', kind: 'nudge', feedbackCheck: '다른 수도 만들어 비교해 볼까요?', feedback: '큰 숫자를 어느 자리에 둬야 할까요?' }], best),
+    hints: ['구하는 것: 두 수의 합이 가장 클 때의 합 / 알고 있는 것: 카드 여섯 장으로 세 자리 수 두 개를 만듦', '가장 큰 숫자 두 개를 어느 자리에 두면 좋을까요?', `백의 자리에 ${wa(d[0])} ${d[1]}, 십의 자리에 ${wa(d[2])} ${eul(d[3])} 둬요.`, `합은 ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     explain: {
       why: ['백의 자리 숫자가 합에 가장 크게 영향을 줘요.', `백에 ${d[0]}·${d[1]}, 십에 ${d[2]}·${d[3]}, 일에 ${d[4]}·${eul(d[5])} 둬요.`, `예: ${x} + ${y} = ${ieyo(best)}.`, `그래서 가장 큰 합은 ${ieyo(best)}.`],
-      alt: [`(${d[0]}+${d[1]})×100 + (${d[2]}+${d[3]})×10 + (${d[4]}+${d[5]}) = ${ieyo(best)}.`, `어느 길로 해도 답은 ${ro(best)} 같아요.`],
+      alt: [
+        '자리마다 숫자 두 개의 합으로 생각해도 돼요.',
+        `백의 자리 합 ${eun(H)} ${ieyo(H * 100)}. 십의 자리 합 ${eun(T)} ${ieyo(T * 10)}. 일의 자리 합은 ${ieyo(O)}.`,
+        `${H * 100} + ${T * 10} + ${O} = ${ieyo(best)}.`,
+        `어느 길로 해도 답은 ${ieyo(best)}.`,
+      ],
     },
   };
 }
@@ -278,18 +339,18 @@ function t12Level5(h, k, u, B) {
   const lo = h * 100 + (k - 1) * 10 + u;
   const hi = h * 100 + k * 10 + u;
   return {
-    text: [unknown(`${h}□${u}`), ' + ', n(B), '의 합이 ', n(1000), '보다 커요. □에 들어갈 수 있는 가장 작은 수는?'],
+    text: [unknown(`${h}□${u}`), ' + ', n(B), '의 합이 ', n(1000), '보다 커요. □에 들어갈 수 있는 가장 작은 수는 얼마예요?'],
     figure: null,
     challenge: true,
     input: { kind: 'number' },
     answer: k,
     discriminators: [{ value: k - 1, category: '개념', kind: 'check', feedback: `${lo} + ${eun(B)} 1000보다 클까요?` }],
-    hints: [`${h}□${u}${jo(u, '과', '와')} ${B}의 합이 1000보다 크게 되는 □ 중 가장 작은 수를 찾아요.`, '□에 0부터 차례로 넣어 볼까요?', `1000 − ${B} = ${ieyo(1000 - B)}. ${h}□${u}${jo(u, '은', '는')} 이보다 커야 해요.`, `□ = ☐ 이면 ${h}□${u} + ${B}${jo(B, '이', '가')} 처음으로 1000보다 커요.`],
+    hints: [`구하는 것: □에 들어갈 수 있는 가장 작은 수 / 알고 있는 것: ${h}□${u}${jo(u, '과', '와')} ${B}의 합이 1000보다 큼`, '□에 0부터 차례로 넣어 볼까요?', `1000 − ${B} = ${ieyo(1000 - B)}. ${h}□${u}${jo(u, '은', '는')} 이보다 커야 해요.`, `□ = ☐이면 ${h}□${u} + ${B}${jo(B, '이', '가')} 처음으로 1000보다 커요.`],
     blank: '☐',
     blankAnswer: String(k),
     explain: {
       why: [`□가 ${k - 1}이면 ${lo} + ${B} = ${ro(lo + B)} 1000보다 크지 않아요.`, `□가 ${k}이면 ${hi} + ${B} = ${ro(hi + B)} 1000보다 커요.`, `그래서 가장 작은 수는 ${ieyo(k)}.`],
-      alt: [`1000 − ${B} = ${ieyo(1000 - B)}. ${h}□${u}${jo(u, '은', '는')} ${1000 - B}보다 커야 해요.`, `어느 길로 해도 답은 ${ro(k)} 같아요.`],
+      alt: [`1000 − ${B} = ${ieyo(1000 - B)}. ${h}□${u}${jo(u, '은', '는')} ${1000 - B}보다 커야 해요.`, `어느 길로 해도 답은 ${ieyo(k)}.`],
     },
   };
 }
@@ -303,21 +364,21 @@ function t12Level6(X) {
   const y1 = 9 - x1;
   const y2 = 9 - x2;
   const Y = y2 * 100 + y1 * 10 + y0;
-  const discs = x1 >= 1 ? [{ value: y2 * 100 + (10 - x1) * 10 + y0, category: '개념', kind: 'nudge', feedbackCheck: '자리마다 더해서 확인해 볼까요?', feedback: '십의 자리에도 올라온 1이 있나요?' }] : [];
+  const discs = x1 >= 1 ? [{ value: y2 * 100 + (10 - x1) * 10 + y0, category: '개념', kind: 'nudge', feedbackCheck: '자리마다 더해서 확인해 볼까요?', feedback: '받아올림한 1도 더했나요?' }] : [];
   const bl = blankAt(Y, 1);
   return {
-    text: [n(X), '에 어떤 세 자리 수를 더했더니 일의 자리, 십의 자리, 백의 자리에서 모두 받아올림이 있었어요. 어떤 수가 될 수 있는 가장 작은 세 자리 수는?'],
+    text: [n(X), '에 어떤 세 자리 수를 더했어요. 일, 십, 백의 자리에서 모두 받아올림이 있었어요. 어떤 수가 될 수 있는 수 중 가장 작은 수는 얼마예요?'],
     figure: null,
     challenge: true,
     input: { kind: 'number' },
     answer: Y,
     discriminators: uniq(discs, Y),
-    hints: [`${X}에 어떤 세 자리 수를 더할 때 일·십·백의 자리에서 모두 받아올림이 생기는 가장 작은 수를 찾아요.`, '일의 자리부터 받아올림이 생기는 가장 작은 숫자를 정해요.', `일의 자리: ${x0} + ${y0} = 10이니 ${ieyo(y0)}.`, bl.blank],
+    hints: [`구하는 것: 어떤 수가 될 수 있는 가장 작은 수 / 알고 있는 것: ${X}에 어떤 세 자리 수를 더하니 일·십·백의 자리에서 모두 받아올림`, '일의 자리부터 받아올림이 생기는 가장 작은 숫자를 정해요.', `일의 자리는 ${x0} + ${y0} = 10이 되게 ${eul(y0)} 골라요.`, bl.blank],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     explain: {
-      why: [`일의 자리 ${x0} + ${y0} = 10으로 받아올림.`, `십의 자리 ${x1} + ${y1} + 1 = 10으로 받아올림.`, `백의 자리 ${x2} + ${y2} + 1 = 10으로 받아올림.`, `그래서 가장 작은 수는 ${ieyo(Y)}.`],
-      alt: [`${X} + ${Y} = 1000이에요.`, `어느 길로 해도 답은 ${ro(Y)} 같아요.`],
+      why: [`일의 자리는 ${x0} + ${y0} = 10이라 받아올림해요.`, `십의 자리는 ${x1} + ${y1} + 1 = 10이라 받아올림해요.`, `백의 자리는 ${x2} + ${y2} + 1 = 10이라 받아올림해요.`, `그래서 가장 작은 수는 ${ieyo(Y)}.`],
+      alt: ['세 자리 모두 받아올림이 있는 가장 작은 경우는 합이 1000일 때예요.', `1000 − ${X} = ${ieyo(Y)}.`, `어느 길로 해도 답은 ${ieyo(Y)}.`],
     },
   };
 }
@@ -381,13 +442,13 @@ const D1 = {
   maxLevel: 2,
   diagnostic: true,
   generate() {
-    return { ...buildAdd(368, 275, { text: ['다대포해수욕장역에서 오전에 ', V(368), '명, 오후에 ', V(275), '명이 탔어요. '], unit: '명' }), hints: [], blank: null };
+    return { ...buildAdd(368, 275, { text: ['다대포해수욕장역에서 오전에 ', V(368), '명, 오후에 ', V(275), '명이 탔어요.'], unit: '명', ...AMPM(368, 275) }), hints: [], blank: null };
   },
 };
 const D2 = {
   id: 'N01-D2',
   node: 'N01',
-  title: '급행 진단: 앞 4량과 뒤 4량',
+  title: '급행 진단: 앞쪽 4칸과 뒤쪽 4칸',
   repr: '문장',
   minLevel: 3,
   maxLevel: 3,
@@ -405,7 +466,7 @@ const D3 = {
   maxLevel: 3,
   diagnostic: true,
   generate() {
-    return { ...buildAdd(586, 417, { text: ['다대포해수욕장역에서 오전에 ', V(586), '명, 오후에 ', V(417), '명이 탔어요. '], unit: '명' }), hints: [], blank: null };
+    return { ...buildAdd(586, 417, { text: ['다대포해수욕장역에서 오전에 ', V(586), '명, 오후에 ', V(417), '명이 탔어요.'], unit: '명', ...AMPM(586, 417) }), hints: [], blank: null };
   },
 };
 
@@ -419,7 +480,6 @@ function t14(a, b, level) {
   const H = A.hundreds + B.hundreds;
   const T = A.tens + B.tens;
   const O = A.ones + B.ones;
-  const S = digits3(sum);
   const bl = blankAt(sum, 1);
   const concat = Number(`${H}${T}${O}`);
   const discs =
@@ -444,38 +504,37 @@ function t14(a, b, level) {
       : level === 2
         ? '일 모형 10개는 십 모형 1개로 바꿔 볼까요? 바꾼 다음 모형을 세어 봐요.'
         : '일 모형 10개는 십 모형 1개로 바꿔 볼까요? 십 모형 10개는 백 모형 1개로 바꿔요.';
+  // ③은 첫 단계의 결과만. ④ 빈칸(모은 십 모형 수)을 다른 말로 쓰지 않는다(07 0.9절).
   const hint3 =
     level === 1
-      ? `백 모형 ${H}개, 십 모형 ${T}개, 일 모형 ${O}개예요.`
+      ? `백 모형끼리 모으면 백 모형은 ${H}개예요.`
       : level === 2
         ? `일 모형은 ${O}개라서 십 모형 1개와 일 모형 ${O - 10}개가 돼요.`
-        : `일 모형 ${O}개는 십 모형 1개와 일 모형 ${O - 10}개가 돼요. 그러면 십 모형은 ${T + 1}개예요.`;
+        : `일 모형 ${O}개는 십 모형 1개와 일 모형 ${O - 10}개가 돼요.`;
   const why =
     level === 1
-      ? [`백 모형 ${H}개, 십 모형 ${T}개, 일 모형 ${O}개예요.`, '10개가 되는 모형이 없어서 바꿀 것이 없어요.', `그래서 ${sum}명이에요.`]
+      ? [`백 모형 ${H}개, 십 모형 ${T}개, 일 모형 ${O}개예요.`, '어느 모형도 10개가 안 돼서 바꿀 것이 없어요.', `그래서 모두 ${sum}명이에요.`]
       : level === 2
-        ? [`일 모형 ${A.ones} + ${B.ones} = ${O}개는 십 모형 1개와 일 모형 ${O - 10}개로 바꿔요.`, `십 모형은 ${A.tens} + ${B.tens} + 1 = ${T + 1}개, 백 모형은 ${H}개예요.`, `그래서 ${sum}명이에요.`]
+        ? [`일 모형 ${A.ones} + ${B.ones} = ${O}개는 십 모형 1개와 일 모형 ${O - 10}개로 바꿔요.`, `십 모형은 ${A.tens} + ${B.tens} + 1 = ${T + 1}개, 백 모형은 ${H}개예요.`, `그래서 모두 ${sum}명이에요.`]
         : [
             `일 모형 ${A.ones} + ${B.ones} = ${O}개는 십 모형 1개와 일 모형 ${O - 10}개로 바꿔요.`,
             `십 모형 ${A.tens} + ${B.tens} + 1 = ${T + 1}개는 백 모형 1개와 십 모형 ${T + 1 - 10}개로 바꿔요.`,
             `백 모형은 ${A.hundreds} + ${B.hundreds} + 1 = ${H + 1}개예요.`,
-            `그래서 ${sum}명이에요.`,
+            `그래서 모두 ${sum}명이에요.`,
           ];
-  const s1 = a + B.hundreds * 100;
-  const s2 = s1 + B.tens * 10;
   return {
-    text: [(level >= 3 ? '어느 날 ' : '') + '다대포해수욕장역에서 탄 사람 ', V(a), '명과 다대포항역에서 탄 사람 ', V(b), '명을 수 모형으로 나타내 같은 모형끼리 모았어요. 모두 몇 명이에요?'],
+    text: [level >= 3 ? '주말에 다대포해수욕장역에서 ' : '다대포해수욕장역에서 ', V(a), '명, 다대포항역에서 ', V(b), '명이 탔어요. 수 모형으로 모으면 모두 몇 명이에요?'],
     // 화면이 그리는 것은 모은 모형(hundreds·tens·ones). addends는 두 수를 따로 그릴 때 쓸 수 있는 덧붙임 정보.
     figure: { kind: 'base10', hundreds: H, tens: T, ones: O, addends: [A, B] },
     input: { kind: 'number', unit: '명' },
     answer: sum,
     discriminators: discs,
-    hints: [`다대포해수욕장역에서 ${a}명, 다대포항역에서 ${b}명이 탔어요. 모두 몇 명인지 물어요.`, hint2, hint3, `백 ${S.hundreds}개, 일 ${S.ones}개예요. 십 모형은 몇 개일까요? → ${bl.blank}`],
+    hints: [`구하는 것: 두 역에서 탄 사람 수 모두 / 알고 있는 것: 다대포해수욕장역 ${a}명, 다대포항역 ${b}명`, hint2, hint3, `모은 십 모형은 몇 개일까요? ${a} + ${b} = ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     explain: {
       why,
-      alt: [`${a} + ${B.hundreds * 100} = ${s1}, ${s1} + ${B.tens * 10} = ${s2}, ${s2} + ${B.ones} = ${ieyo(sum)}.`, `두 풀이 모두 ${sum}명이에요.`],
+      alt: [...stepAdd(a, b), `어느 길로 해도 답은 ${sum}명이에요.`],
     },
   };
 }

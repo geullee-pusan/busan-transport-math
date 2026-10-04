@@ -139,7 +139,7 @@ function t101Level1(k) {
     answer: ans,
     discriminators: discs,
     grade: decGrade(ans, discs, [0, 1, 10]),
-    hints: ['0km부터 1km까지를 10칸으로 똑같이 나눴어요. 색칠한 길이가 몇 km인지 물어요.', '한 칸은 1km를 10칸으로 나눈 것 중 하나예요. 색칠한 칸을 세어 봐요.', '한 칸은 0.1km예요.', '0.☐'],
+    hints: ['구하는 것: 색칠한 길이 / 알고 있는 것: 0km부터 1km까지를 똑같이 10칸으로 나눈 수직선', '한 칸은 1km를 10칸으로 나눈 것 중 하나예요. 색칠한 칸을 세어 봐요.', '한 칸은 0.1km예요.', '0.☐'],
     blank: '0.☐',
     blankAnswer: String(k),
     explain: {
@@ -181,7 +181,7 @@ function t101Level2(a, b) {
       }
       return { correct: false, category: null, kind: 'check', feedback: `${!decOk ? '소수' : '분수'} 칸을 다시 볼까요?` };
     },
-    hints: [`${fa}${jo(fa, '은', '는')} 소수로, ${db}${jo(db, '은', '는')} 분수로 바꿔 쓰는 것을 물어요.`, '1을 10칸으로 똑같이 나눈 한 칸이 1/10, 곧 0.1이에요. 몇 칸인지 생각해 봐요.', `${fa}${jo(fa, '은', '는')} 0.1이 ${a}개예요.`, `${db}${jo(db, '은', '는')} ☐/10`],
+    hints: [`구하는 것: ${fa}${jo(fa, '을', '를')} 소수로, ${db}${jo(db, '을', '를')} 분수로 쓴 것 / 알고 있는 것: ${fa}, ${db}`, '1을 10칸으로 똑같이 나눈 한 칸이 1/10, 곧 0.1이에요. 몇 칸인지 생각해 봐요.', `${fa}${jo(fa, '은', '는')} 0.1이 ${a}개예요.`, `${db}${jo(db, '은', '는')} ☐/10`],
     blank: '☐/10',
     blankAnswer: String(b),
     explain: {
@@ -198,7 +198,7 @@ function t101Level3() {
     { key: 'tenth', value: 0.9, category: '개념', kind: 'check', feedback: '0.1km가 몇 개인지 물었어요. 몇 개일까요?' },
   ];
   return {
-    text: [L1(), '호선 전체 길이는 ', n(39.9, { real: true, source: SRC_LEN }), 'km예요. ', n(1), 'km가 몇 개, ', n(0.1), 'km가 몇 개인 길이예요?'],
+    text: [L1(), '호선의 역과 역 사이 거리를 모두 더하면 ', n(39.9, { real: true, source: SRC_LEN }), 'km예요. ', n(39.9, { real: true, source: SRC_LEN }), 'km는 ', n(1), 'km가 ', unknown('□'), '개, ', n(0.1), 'km가 ', unknown('□'), '개 모인 길이예요.'],
     figure: { kind: 'numberline', from: 39, to: 40, ticks: 10, mark: 39.9 },
     input: { kind: 'compound', fields: [{ key: 'one', label: '1km' }, { key: 'tenth', label: '0.1km' }] },
     answer: { one: 39, tenth: 9 },
@@ -213,7 +213,7 @@ function t101Level3() {
       if (o === 39 && d) return { correct: false, category: d.category, kind: d.kind ?? 'check', feedbackCheck: d.feedbackCheck, feedback: d.feedback };
       return { correct: false, category: null, kind: 'check', feedback: `${o === 39 ? '0.1km' : '1km'} 칸을 다시 볼까요?` };
     },
-    hints: ['1호선 전체 길이는 39.9km예요. 1km가 몇 개, 0.1km가 몇 개인지 물어요.', '39.9를 자연수 부분과 소수 부분으로 나눠 볼까요?', '자연수 부분은 39예요.', '0.9km는 0.1km가 ☐개'],
+    hints: ['구하는 것: 39.9km 안에 있는 1km의 개수와 0.1km의 개수 / 알고 있는 것: 1호선 역 사이 거리를 모두 합친 길이 39.9km', '39.9를 39와 0.9로 갈라 볼까요?', '39km는 1km가 39개예요.', '0.9km는 0.1km가 ☐개'],
     blank: '0.1km가 ☐개',
     blankAnswer: '9',
     explain: {
@@ -242,7 +242,7 @@ function t101Level4(N) {
     answer: ans,
     discriminators: discs,
     grade: decGrade(ans, discs, [0.1, N]),
-    hints: [`0.1이 ${N}개 있어요. 그 수를 물어요.`, `0.1이 10개면 1이에요. ${N}개 안에 10개 묶음이 몇 개 있을까요?`, `10개 묶음이 ${t}개예요.`, `${t}개 묶음을 빼면 0.1이 ☐개 남아요.`],
+    hints: [`구하는 것: 0.1이 ${N}개인 수 / 알고 있는 것: 0.1이 ${N}개`, `0.1이 10개면 1이에요. ${N}개 안에 10개 묶음이 몇 개 있을까요?`, `10개 묶음이 ${t}개예요.`, `${t}개 묶음을 빼면 0.1이 ☐개 남아요.`],
     blank: '☐',
     blankAnswer: String(u),
     explain: {
@@ -260,8 +260,8 @@ function t101Level5(A, d) {
   const answer = Array.from({ length: d - 1 }, (_, i) => lo + 1 + i);
   const options = Array.from({ length: d + 3 }, (_, i) => lo - 1 + i);
   const discs = [
-    { value: [lo, ...answer, hi], category: '개념', kind: 'check', feedback: `${A}.0은 ${A}${jo(A, '과', '와')} 같아요. ${A}보다 커야 하죠?` },
-    { value: [lo, ...answer], category: '개념', kind: 'check', feedback: `${A}.0은 ${A}${jo(A, '과', '와')} 같아요. ${A}보다 커야 하죠?` },
+    { value: [lo, ...answer, hi], category: '개념', kind: 'check', feedback: `0.1이 ${lo}개면 ${ieyo(A)}. ${eun(A)} ${A}보다 클까요?` },
+    { value: [lo, ...answer], category: '개념', kind: 'check', feedback: `0.1이 ${lo}개면 ${ieyo(A)}. ${eun(A)} ${A}보다 클까요?` },
     { value: [...answer, hi], category: '개념', kind: 'check', feedback: `${B}보다 작아야 해요. ${B}도 될까요?` },
   ];
   return {
@@ -271,7 +271,7 @@ function t101Level5(A, d) {
     answer,
     discriminators: discs,
     grade: multiGrade(answer, discs),
-    hints: [`0.1이 □개인 수가 ${A}보다 크고 ${B}보다 작아야 해요. 들어갈 수 있는 □를 모두 물어요.`, `${eun(A)} 0.1이 몇 개일까요? ${B}도 0.1이 몇 개인지 생각해 봐요.`, `${eun(A)} 0.1이 ${lo}개예요.`, `${lo + 1}부터 ☐까지`],
+    hints: [`구하는 것: □에 들어갈 수 있는 수 모두 / 알고 있는 것: 0.1이 □개인 수가 ${A}보다 크고 ${B}보다 작음`, `${eun(A)} 0.1이 몇 개일까요? ${B}도 0.1이 몇 개인지 생각해 봐요.`, `${eun(A)} 0.1이 ${lo}개예요.`, `${lo + 1}부터 ☐까지`],
     blank: `${lo + 1}부터 ☐까지`,
     blankAnswer: String(hi - 1),
     explain: {
@@ -286,15 +286,15 @@ function t101Level6(t1, t2) {
   const d1 = tenth(t1);
   const d2 = tenth(t2);
   return {
-    text: ['사하역에서 괴정역까지 ', V(d1), 'km, 사하역에서 당리역까지 ', V(d2), 'km예요. ', n(0), 'km부터 ', n(2), 'km까지 수직선에 두 거리를 점으로 찍어요.'],
+    text: ['사하역에서 괴정역까지 ', V(d1), 'km, 당리역까지 ', V(d2), 'km라고 해 봐요. 수직선에 두 거리를 점으로 나타내요.'],
     figure: { kind: 'numberline', from: 0, to: 2, ticks: 20, origin: '사하역' },
     input: { kind: 'compound', fields: [{ key: 'goejeong', label: '괴정역', kind: 'numberline' }, { key: 'dangni', label: '당리역', kind: 'numberline' }] },
     answer: { goejeong: d1, dangni: d2 },
     discriminators: [
-      { key: 'goejeong', value: d2, category: '읽기', kind: 'check', feedback: '괴정역까지는 몇 km였죠?' },
-      { key: 'dangni', value: d1, category: '읽기', kind: 'check', feedback: '당리역까지는 몇 km였죠?' },
+      { key: 'goejeong', value: d2, category: '읽기', kind: 'check', feedback: '괴정역까지는 몇 km라고 했나요?' },
+      { key: 'dangni', value: d1, category: '읽기', kind: 'check', feedback: '당리역까지는 몇 km라고 했나요?' },
     ],
-    hints: [`사하역에서 괴정역까지 ${d1}km, 당리역까지 ${d2}km예요. 두 거리를 수직선에 점으로 찍는 문제예요.`, '수직선의 작은 눈금 한 칸은 얼마일까요? 0에서 몇 칸 가야 하는지 세어 봐요.', '작은 눈금 한 칸은 0.1km예요.', `${d1}km는 0.1km가 ☐개`],
+    hints: [`구하는 것: 두 거리를 수직선에 나타낼 점 / 알고 있는 것: 사하역에서 괴정역까지 ${d1}km, 당리역까지 ${d2}km`, '수직선의 작은 눈금 한 칸은 얼마일까요? 0에서 몇 칸 가야 하는지 세어 봐요.', '작은 눈금 한 칸은 0.1km예요.', `${d1}km는 0.1km가 ☐개`],
     blank: '0.1km가 ☐개',
     blankAnswer: String(t1),
     blankThen: '두 점을 어디에 찍을까요?',
@@ -384,7 +384,7 @@ const D3 = {
 function t102Level1(k) {
   const d = tenth(k);
   return {
-    text: ['사하역 출구에서 버스 정류장까지 ', V(d), 'km예요. ', n(0.1), 'km가 몇 개인 길이예요?'],
+    text: ['사하역 출구에서 버스 정류장까지 ', V(d), 'km라고 해 봐요. ', n(0.1), 'km가 몇 개인 길이예요?'],
     figure: null,
     input: { kind: 'number', unit: '개' },
     answer: k,
@@ -392,12 +392,12 @@ function t102Level1(k) {
       { value: d, category: '개념', kind: 'check', feedback: `0.1이 몇 개 모이면 ${d}일까요?` },
       { value: k * 10, category: '개념', kind: 'check', feedback: `0.1이 몇 개 모이면 ${d}일까요?` },
     ],
-    hints: [`사하역 출구에서 버스 정류장까지 ${d}km예요. 0.1km가 몇 개인 길이인지 물어요.`, '0부터 1까지를 10칸으로 나눈 수직선을 떠올려 볼까요? 한 칸이 0.1이에요.', '0.1이 2개면 0.2예요.', `${d}${jo(d, '은', '는')} 0.1이 ☐개`],
+    hints: [`구하는 것: ${d}km 안에 있는 0.1km의 개수 / 알고 있는 것: 사하역 출구에서 버스 정류장까지 ${d}km`, '0부터 1까지를 10칸으로 나눈 수직선을 떠올려 볼까요? 한 칸이 0.1이에요.', '0.1이 2개면 0.2예요.', `${d}${jo(d, '은', '는')} 0.1이 ☐개`],
     blank: '0.1이 ☐개',
     blankAnswer: String(k),
     explain: {
       why: ['0.1은 1을 똑같이 10칸으로 나눈 한 칸이에요.', `${d}${jo(d, '은', '는')} 그 칸이 ${k}개예요.`, `그래서 0.1km가 ${k}개인 길이예요.`],
-      alt: [`${d}km = ${fr(k, 10)}km이고, 1/10km가 ${k}개예요.`, `두 생각 모두 ${k}개예요.`],
+      alt: [`${d}km = ${fr(k, 10)}km이고, 1/10km가 ${k}개예요.`, `어느 길로 해도 답은 ${k}개예요.`],
     },
   };
 }
@@ -411,18 +411,18 @@ function t102Level2(k) {
     { value: Number((k + 0.1).toFixed(1)), category: '개념', kind: 'check', feedback: `1을 10칸으로 나눈 ${k}칸은 어디일까요?` },
   ];
   return {
-    text: ['사하역에서 공원까지 ', V(f), 'km예요. 소수로 몇 km예요?'],
+    text: ['사하역에서 공원까지 ', V(f), 'km라고 해 봐요. 이 거리를 소수로 나타내면 몇 km예요?'],
     figure: null,
     input: { kind: 'decimal', unit: 'km' },
     answer: ans,
     discriminators: discs,
     grade: decGrade(ans, discs, []),
-    hints: [`사하역에서 공원까지 ${f}km예요. 이 거리를 소수로 물어요.`, '1을 10칸으로 똑같이 나눈 한 칸이 1/10, 곧 0.1이에요. 몇 칸인지 생각해 봐요.', `${f}${jo(f, '은', '는')} 1/10이 ${k}개예요.`, '0.☐km'],
+    hints: [`구하는 것: 이 거리를 소수로 나타낸 것 / 알고 있는 것: 사하역에서 공원까지 ${f}km`, '1을 10칸으로 똑같이 나눈 한 칸이 1/10, 곧 0.1이에요. 몇 칸인지 생각해 봐요.', `${f}${jo(f, '은', '는')} 1/10이 ${k}개예요.`, '0.☐km'],
     blank: '0.☐',
     blankAnswer: String(k),
     explain: {
       why: ['1/10은 0.1과 같아요.', `${f}${jo(f, '은', '는')} 1/10이 ${k}개라서 0.1이 ${k}개예요.`, `그래서 ${ans}km예요.`],
-      alt: [`0부터 1까지 10칸으로 나눈 수직선에서 ${k}번째 눈금이 ${ieyo(ans)}.`, `두 생각 모두 ${ans}km예요.`],
+      alt: [`0부터 1까지 10칸으로 나눈 수직선에서 ${k}번째 눈금이 ${ieyo(ans)}.`, `어느 길로 해도 답은 ${ans}km예요.`],
     },
   };
 }
@@ -439,19 +439,19 @@ function t102Level3(k) {
     ans,
   );
   return {
-    text: ['사하역 출구부터 ', V(0.1), 'km마다 표지판을 세운다고 해 봐요. 첫 표지판은 출구에서 ', V(0.1), 'km 떨어진 곳에 있어요. ', V(k), '번째 표지판까지 몇 km예요?'],
+    text: ['사하역 출구부터 ', V(0.1), 'km마다 표지판을 세운다고 해 봐요. 첫 표지판은 ', V(0.1), 'km에 있어요. ', V(k), '번째 표지판까지 몇 km예요?'],
     // 출구(0)에는 표지판이 없고, 0.1km 눈금마다 표지판이 있다.
     figure: { kind: 'numberline', from: 0, to: 1, ticks: 10, origin: '출구' },
     input: { kind: 'decimal', unit: 'km' },
     answer: ans,
     discriminators: discs,
     grade: decGrade(ans, discs, [0.1, k]),
-    hints: [`출구부터 0.1km마다 표지판이 있고, 첫 표지판은 0.1km에 있어요. ${k}번째 표지판까지의 거리를 물어요.`, '표지판마다 거리를 차례로 적어 볼까요?', '첫 번째 0.1km, 두 번째 0.2km예요.', `${k}번째: 0.☐km`],
+    hints: [`구하는 것: 출구에서 ${k}번째 표지판까지의 거리 / 알고 있는 것: 0.1km마다 표지판, 첫 표지판은 0.1km`, '표지판마다 거리를 차례로 적어 볼까요?', '첫 번째 0.1km, 두 번째 0.2km예요.', `${k}번째: 0.☐km`],
     blank: '0.☐km',
     blankAnswer: String(k),
     explain: {
-      why: ['표지판 하나가 0.1km씩이에요.', `${k}번째 표지판까지 0.1km가 ${k}개라서 ${ans}km예요.`],
-      alt: [`${fr(k, 10)}km와 같아요. ${fr(k, 10)} = ${ieyo(ans)}.`, `두 생각 모두 ${ans}km예요.`],
+      why: ['표지판은 0.1km마다 하나씩 있어요.', `출구에서 ${k}번째 표지판까지 0.1km가 ${k}개예요.`, `그래서 ${k}번째 표지판까지 ${ans}km예요.`],
+      alt: [`${fr(k, 10)}km와 같아요. ${fr(k, 10)} = ${ieyo(ans)}.`, `어느 길로 해도 답은 ${ans}km예요.`],
     },
   };
 }
@@ -477,18 +477,18 @@ const T10_2 = {
 function t103Level1(k) {
   const d = tenth(k);
   return {
-    text: ['빈칸을 채워요. ', n(d), ' = ', n(0.1), '이 ', unknown('□'), '개 = ', unknown('□'), '/', n(10)],
+    text: ['사하역에서 공원까지 ', V(d), 'km라고 해 봐요.', '\n', n(d), ' = ', n(0.1), '이 ', unknown('□'), '개 = ', unknown('□'), '/', n(10)],
     figure: null,
     input: { kind: 'compound', fields: [{ key: 'count', label: '0.1이 □개' }, { key: 'num', label: '□/10' }] },
     answer: { count: k, num: k },
     discriminators: [{ key: 'count', value: k * 10, category: '개념', kind: 'nudge', feedbackCheck: `0.1이 ${k * 10}개면 ${d}일까요?`, feedback: '0.1이 10개면 1이에요. 몇 개면 될까요?' }],
-    hints: [`${d}${jo(d, '을', '를')} 0.1의 개수와 분수로 나타내는 문제예요.`, `0과 1 사이를 10칸으로 나눈 수직선에서 ${d}${jo(d, '을', '를')} 찾아볼까요?`, `${d}${jo(d, '은', '는')} 수직선에서 ${k}번째 칸이에요.`, '0.1이 ☐개'],
+    hints: [`구하는 것: ${d}${jo(d, '을', '를')} 0.1의 개수와 분수로 나타낸 것 / 알고 있는 것: ${d}`, `0과 1 사이를 10칸으로 나눈 수직선에서 ${d}${jo(d, '을', '를')} 찾아볼까요?`, '0.1은 수직선의 작은 눈금 한 칸이에요.', '0.1이 ☐개'],
     blank: '0.1이 ☐개',
     blankAnswer: String(k),
     blankThen: '분수 칸도 채워요.',
     explain: {
-      why: ['0.1은 1/10이에요.', `${d}${jo(d, '은', '는')} 0.1이 ${k}개라서 ${fr(k, 10)}${jo(k, '과', '와')} 같아요.`],
-      alt: [`수직선에서 1을 10칸으로 나눈 ${k}칸째가 ${d}이고, 분수로는 ${ieyo(fr(k, 10))}.`.replace(`${d}이고`, `${d}${jo(d, '이고', '고')}`), '두 생각 모두 같은 수예요.'],
+      why: ['0.1은 1/10이에요.', `${d}${jo(d, '은', '는')} 0.1이 ${k}개라서 ${fr(k, 10)}${jo(k, '과', '와')} 같아요.`, `그래서 ${d} = 0.1이 ${k}개 = ${ieyo(fr(k, 10))}.`],
+      alt: [`수직선에서 1을 10칸으로 나눈 ${k}칸째가 ${d}이고, 분수로는 ${ieyo(fr(k, 10))}.`.replace(`${d}이고`, `${d}${jo(d, '이고', '고')}`), `어느 길로 해도 답은 0.1이 ${k}개, ${ieyo(fr(k, 10))}.`],
     },
   };
 }
@@ -498,7 +498,7 @@ function t103Level2(k) {
   const f = fr(k, 10);
   const d = tenth(k);
   return {
-    text: ['빈칸을 채워요. ', unknown('□'), ' = ', n(0.1), '이 ', unknown('□'), '개 = ', n(f)],
+    text: ['사하역에서 공원까지 ', V(f), 'km라고 해 봐요.', '\n', unknown('□'), ' = ', n(0.1), '이 ', unknown('□'), '개 = ', n(f)],
     figure: null,
     input: { kind: 'compound', fields: [{ key: 'dec', label: '소수', kind: 'decimal' }, { key: 'count', label: '0.1이 □개' }] },
     answer: { dec: d, count: k },
@@ -506,13 +506,13 @@ function t103Level2(k) {
       { key: 'dec', value: k / 100, category: '개념', kind: 'check', feedback: `1을 10칸으로 나눈 ${k}칸은 어디일까요?` },
       { key: 'dec', value: k, category: '개념', kind: 'check', feedback: '분자를 그대로 썼어요. 0.1이 몇 개예요?' },
     ],
-    hints: [`${f}${jo(f, '을', '를')} 소수와 0.1의 개수로 나타내는 문제예요.`, '1을 10칸으로 똑같이 나눈 한 칸이 1/10, 곧 0.1이에요. 몇 칸인지 생각해 봐요.', `${f}${jo(f, '은', '는')} 1/10이 ${k}개예요.`, '0.☐'],
+    hints: [`구하는 것: ${f}${jo(f, '을', '를')} 소수와 0.1의 개수로 나타낸 것 / 알고 있는 것: ${f}`, '1을 10칸으로 똑같이 나눈 한 칸이 1/10, 곧 0.1이에요. 몇 칸인지 생각해 봐요.', `${f}${jo(f, '은', '는')} 1/10이 ${k}개예요.`, '0.☐'],
     blank: '0.☐',
     blankAnswer: String(k),
     blankThen: '0.1의 개수 칸도 채워요.',
     explain: {
-      why: ['1/10은 0.1이에요.', `${f}${jo(f, '은', '는')} 1/10이 ${k}개라서 0.1이 ${k}개, 곧 ${ieyo(d)}.`],
-      alt: [`수직선에서 1을 10칸으로 나눈 ${k}칸째가 ${ieyo(d)}.`, '두 생각 모두 같은 수예요.'],
+      why: ['1/10은 0.1이에요.', `${f}${jo(f, '은', '는')} 1/10이 ${k}개라서 0.1이 ${k}개예요.`, `그래서 ${ieyo(d)}.`],
+      alt: [`수직선에서 1을 10칸으로 나눈 ${k}칸째가 ${ieyo(d)}.`, `어느 길로 해도 답은 ${d}, 0.1이 ${k}개예요.`],
     },
   };
 }
@@ -522,22 +522,22 @@ function t103Level3(N) {
   const d = tenth(N);
   const rest = N - 10;
   return {
-    text: ['빈칸을 채워요. ', unknown('□'), ' = ', n(0.1), '이 ', n(N), '개 = ', n(1), '과 ', n(0.1), '이 ', unknown('□'), '개'],
+    text: ['사하역 출구에서 ', V(0.1), 'km마다 있는 표지판 ', V(N), '개를 지났어요.', '\n', unknown('□'), ' = ', n(0.1), '이 ', n(N), '개 = ', n(1), '과 ', n(0.1), '이 ', unknown('□'), '개'],
     figure: null,
     input: { kind: 'compound', fields: [{ key: 'dec', label: '소수', kind: 'decimal' }, { key: 'rest', label: '1과 0.1이 □개' }] },
     answer: { dec: d, rest },
     discriminators: [
       { key: 'dec', value: N / 100, category: '개념', kind: 'nudge', feedbackCheck: '소수점의 자리를 다시 볼까요?', feedback: `0.1이 10개면 1이에요. ${N}개면요?` },
-      { key: 'dec', value: N, category: '개념', kind: 'nudge', feedbackCheck: '소수점의 자리를 다시 볼까요?', feedback: `0.1이 10개면 1이에요. ${N}개면요?` },
-      { key: 'rest', value: N, category: '개념', kind: 'check', feedback: '1을 빼고 나면 0.1이 몇 개 남아요?' },
+      { key: 'dec', value: N, category: '개념', kind: 'nudge', feedbackCheck: '소수점의 자리를 다시 볼까요?', feedback: `0.1이 10개면 1이에요. ${N}개는 1과 0.1이 몇 개일까요?` },
+      { key: 'rest', value: N, category: '개념', kind: 'check', feedback: `0.1이 10개면 1이에요. ${N}개는 1과 0.1이 몇 개일까요?` },
     ],
-    hints: [`0.1이 ${N}개인 수를 소수로, 또 1과 0.1의 개수로 나타내는 문제예요.`, `0.1이 10개면 1이에요. ${N}개 안에 10개 묶음이 몇 개 있을까요?`, `10개 묶음이 1개예요.`, '1개 묶음을 빼면 0.1이 ☐개 남아요.'],
+    hints: [`구하는 것: 0.1이 ${N}개인 수를 소수로, 또 1과 0.1의 개수로 나타낸 것 / 알고 있는 것: 0.1이 ${N}개`, `0.1이 10개면 1이에요. ${N}개 안에 10개 묶음이 몇 개 있을까요?`, `10개 묶음이 1개예요.`, '1개 묶음을 빼면 0.1이 ☐개 남아요.'],
     blank: '☐',
     blankAnswer: String(rest),
-    blankThen: '나머지 칸도 채워요.',
+    blankThen: '다른 칸도 채워요.',
     explain: {
-      why: ['0.1이 10개면 1이에요.', `0.1이 ${N}개면 1과 0.1이 ${rest}개라서 ${ieyo(d)}.`],
-      alt: [`수직선에서 1을 지나 작은 눈금 ${rest}칸을 더 가면 ${ieyo(d)}.`, '두 생각 모두 같은 수예요.'],
+      why: ['0.1이 10개면 1이에요.', `0.1이 ${N}개면 1과 0.1이 ${rest}개예요.`, `그래서 ${d} = 1과 0.1이 ${rest}개예요.`],
+      alt: [`수직선에서 1을 지나 작은 눈금 ${rest}칸을 더 가면 ${ieyo(d)}.`, `어느 길로 해도 답은 ${d}, 0.1이 ${rest}개예요.`],
     },
   };
 }

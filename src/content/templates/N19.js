@@ -93,7 +93,7 @@ function t191Level1(N, s) {
   const ans = q + 1;
   const bl = blankOf(ans);
   return {
-    text: ['부산역에서 출발하는 시티투어 ', TWO(), '층 버스 위층에 한 줄이 ', V(s), '자리라고 해 봐요. 단체 ', V(N), '명이 모두 앉으려면 몇 줄이 필요해요?'],
+    text: ['시티투어 ', TWO(), '층 버스 위층에 한 줄이 ', V(s), '자리라고 해 봐요. 단체 ', V(N), '명이 모두 앉으려면 몇 줄이 필요해요?'],
     figure: null,
     input: { kind: 'number', unit: '줄' },
     answer: ans,
@@ -104,12 +104,12 @@ function t191Level1(N, s) {
       ],
       ans,
     ),
-    hints: [`한 줄에 ${s}자리이고, 단체 ${N}명이 모두 앉아요. 필요한 줄 수를 물어요.`, `${s}명씩 묶어 볼까요? 남은 사람도 앉아야 해요.`, `${N} ÷ ${s} = ${q} … ${ieyo(r)}.`, `모두 앉는 데 필요한 줄: ${bl.blank}줄`],
+    hints: [`구하는 것: 모두 앉는 데 필요한 줄 수 / 알고 있는 것: 한 줄에 ${s}자리, 단체 ${N}명`, `${s}명씩 묶어 볼까요? 남은 사람도 앉아야 해요.`, `${N} ÷ ${s} = ${q} … ${ieyo(r)}.`, `모두 앉는 데 필요한 줄: ${bl.blank}줄`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     explain: {
-      why: [`${N} ÷ ${s} = ${q} … ${ieyo(r)}.`, `${q}줄이 꽉 차도 ${r}명이 남아서 한 줄이 더 필요해요.`, `그래서 ${ans}줄이에요.`],
-      alt: [`${s} × ${q} = ${s * q}명은 ${q}줄, ${N}명은 그보다 많으니 ${ans}줄이에요.`, `두 풀이 모두 ${ans}줄이에요.`],
+      why: [`${N} ÷ ${s} = ${q} … ${ieyo(r)}.`, `${q}줄이 꽉 차도 ${r}명이 남아서 한 줄이 더 필요해요.`, `그래서 ${ans}줄이 필요해요.`],
+      alt: [`${s} × ${q} = ${s * q}명은 ${q}줄, ${N}명은 그보다 많으니 ${ans}줄이에요.`, `어느 길로 해도 답은 ${ans}줄이에요.`],
     },
   };
 }
@@ -120,25 +120,25 @@ function t191Level2(N, s) {
   const r = N % s;
   const answer = { env: q, left: r, chk: N };
   return {
-    text: ['어느 날 기념 승차권 ', V(N), '장을 ', V(s), '장씩 봉투에 넣었어요. 꽉 찬 봉투는 몇 개이고 몇 장이 남았어요? (나누는 수) × (몫) + (나머지)도 계산해 확인해요.'],
+    text: ['부산역에서 기념 승차권 ', V(N), '장을 ', V(s), '장씩 봉투에 넣었어요. 꽉 찬 봉투는 몇 개이고, 몇 장이 남아요?', '\n', '확인 계산: 나누는 수와 몫의 곱에 나머지를 더하면 얼마예요?'],
     figure: null,
     input: { kind: 'compound', fields: [{ key: 'env', label: '꽉 찬 봉투' }, { key: 'left', label: '남은 장' }, { key: 'chk', label: '확인 계산' }] },
     answer,
     discriminators: uniqK(
       [
         { key: 'env', value: q + 1, category: '개념', kind: 'check', feedback: `${q + 1}번째 봉투는 꽉 찼나요?` },
-        { key: 'left', value: r + s, category: '개념', kind: 'nudge', feedbackCheck: '남은 장을 다시 볼까요?', feedback: `남은 ${r + s}장으로 봉투를 하나 더 채울 수 있지 않나요?` },
+        { key: 'left', value: r + s, category: '개념', kind: 'nudge', feedbackCheck: '남은 장을 다시 볼까요?', feedback: `${r + s}장으로 봉투를 하나 더 채울 수 있나요?` },
         { key: 'chk', value: s * q, category: '식', kind: 'nudge', feedbackCheck: '확인 계산을 다시 볼까요?', feedback: '나머지도 더했나요?' },
       ],
       answer,
     ),
-    hints: [`승차권 ${N}장을 ${s}장씩 봉투에 넣어요. 꽉 찬 봉투 수, 남은 장 수, 확인 계산의 값을 물어요.`, `${s}단에서 ${N}보다 크지 않은 가장 큰 수를 찾아볼까요?`, `${s} × ${q} = ${ieyo(s * q)}.`, `${N} − ${s * q} = ☐`],
+    hints: [`구하는 것: 꽉 찬 봉투 수, 남은 장 수, 확인 계산 / 알고 있는 것: 승차권 ${N}장, 봉투 하나에 ${s}장`, `${s}단에서 ${N}보다 크지 않은 가장 큰 수를 찾아볼까요?`, `${s} × ${q} = ${ieyo(s * q)}.`, `${N} − ${s * q} = ☐`],
     blank: `${N} − ${s * q} = ☐`,
     blankAnswer: String(r),
     blankThen: '세 칸을 채워요.',
     explain: {
-      why: [`${N} ÷ ${s} = ${q} … ${ieyo(r)}.`, `${r}장으로는 봉투를 채울 수 없으니 꽉 찬 봉투는 ${q}개예요.`, `그래서 꽉 찬 봉투 ${q}개, 남은 승차권 ${r}장, 확인하면 ${s} × ${q} + ${r} = ${ieyo(N)}.`],
-      alt: [`확인 계산이 처음 수 ${N}${jo(N, '과', '와')} 같으니 바르게 나눴어요.`, `두 풀이 모두 ${q}개와 ${r}장이에요.`],
+      why: [`${N} ÷ ${s} = ${q} … ${ieyo(r)}.`, `${r}장으로는 봉투를 채울 수 없으니 꽉 찬 봉투는 ${q}개예요.`, `확인하면 ${s} × ${q} = ${s * q}, ${s * q} + ${r} = ${N}${jo(N, '이라', '라')} 처음 수와 같아요.`, `그래서 꽉 찬 봉투 ${q}개, 남은 승차권 ${r}장, 확인 계산은 ${ieyo(N)}.`],
+      alt: [`곱셈으로 찾아도 돼요. ${s} × ${q} = ${s * q}, ${N} − ${s * q} = ${ieyo(r)}.`, `어느 길로 해도 답은 꽉 찬 봉투 ${q}개, 남은 승차권 ${r}장이에요.`],
     },
   };
 }
@@ -150,7 +150,7 @@ function t191Level3(N, s) {
   const fb = '(가)와 (나)는 같은 상황인가요?';
   const bl = blankOf(q + 1);
   return {
-    text: ['두 상황의 답을 써요. (가) 한 줄이 ', V(s), '자리라고 해 봐요. ', V(N), '명이 모두 앉으려면 몇 줄이 필요해요? (나) 승차권 ', V(N), '장을 ', V(s), '장씩 묶으면 꽉 찬 묶음은 몇 개예요?'],
+    text: ['(가) 버스 한 줄이 ', V(s), '자리라고 해 봐요. ', V(N), '명이 모두 앉으려면 몇 줄이 필요해요?', '\n', '(나) 승차권 ', V(N), '장을 ', V(s), '장씩 묶으면 꽉 찬 묶음은 몇 개예요?'],
     figure: null,
     input: { kind: 'compound', fields: [{ key: 'ga', label: '(가) 줄' }, { key: 'na', label: '(나) 꽉 찬 묶음' }] },
     answer,
@@ -161,13 +161,13 @@ function t191Level3(N, s) {
       ],
       answer,
     ),
-    hints: [`(가)는 ${N}명이 모두 앉는 줄 수, (나)는 ${N}장을 ${s}장씩 묶은 꽉 찬 묶음 수를 물어요.`, '두 상황 모두 같은 나눗셈이에요. 남은 것을 어떻게 할지 상황마다 생각해 볼까요?', `${N} ÷ ${s} = ${q} … ${ieyo(N % s)}.`, `(가) 모두 앉는 데 필요한 줄: ${bl.blank}줄`],
+    hints: [`구하는 것: (가) 모두 앉는 줄 수, (나) 꽉 찬 묶음 수 / 알고 있는 것: (가) ${N}명, 한 줄 ${s}자리 (나) ${N}장, ${s}장씩`, '두 상황 모두 같은 나눗셈이에요. 남은 것을 어떻게 할지 상황마다 생각해 볼까요?', `${N} ÷ ${s} = ${q} … ${ieyo(N % s)}.`, `(가) 모두 앉는 데 필요한 줄: ${bl.blank}줄`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     blankThen: '(나)도 써요.',
     explain: {
       why: [`${N} ÷ ${s} = ${q} … ${ieyo(N % s)}.`, `(가)는 남은 ${N % s}명도 앉아야 해서 한 줄 더, (나)는 남은 ${N % s}장으로 꽉 찬 묶음을 만들 수 없어요.`, `그래서 (가) ${q + 1}줄, (나) ${q}개예요.`],
-      alt: ['"모두"를 묻는지, "꽉 찬"을 묻는지 보면 나머지를 어떻게 할지 정할 수 있어요.', `두 풀이 모두 (가) ${q + 1}, (나) ${ieyo(q)}.`],
+      alt: ['"모두"를 묻는지, "꽉 찬"을 묻는지 보면 나머지를 어떻게 할지 정할 수 있어요.'],
     },
   };
 }
@@ -177,7 +177,7 @@ function t191Level4(i, T) {
   const q = Math.floor(T / i);
   const ans = q + 1;
   return {
-    text: ['시티투어버스가 부산역에서 첫차부터 ', V(i), '분마다 출발한다고 해 봐요. 첫차가 출발한 뒤 ', V(T), '분 동안 첫차를 포함해 몇 번 출발해요?'],
+    text: ['시티투어버스가 부산역에서 ', V(i), '분마다 출발한다고 해 봐요. 첫차가 출발하고 ', V(T), '분 동안 첫차까지 세어 몇 번 출발해요?'],
     figure: null,
     input: { kind: 'number', unit: '번' },
     answer: ans,
@@ -189,12 +189,12 @@ function t191Level4(i, T) {
       ],
       ans,
     ),
-    hints: [`첫차부터 ${i}분마다 출발해요. ${T}분 동안 첫차를 포함해 몇 번 출발하는지 물어요.`, '출발하는 때를 0분부터 차례로 적어 볼까요?', `0분, ${i}분, ${2 * i}분, …처럼 ${i}분씩 늘어나요. ${T}분을 넘기 전까지 적어 봐요.`, '출발 횟수: ☐번'],
+    hints: [`구하는 것: ${T}분 동안 출발한 횟수(첫차까지 셈) / 알고 있는 것: 첫차부터 ${i}분마다 출발`, '출발하는 때를 0분부터 차례로 적어 볼까요?', `0분, ${i}분, ${2 * i}분, …처럼 ${i}분씩 늘어나요. ${T}분을 넘기 전까지 적어 봐요.`, '출발 횟수: ☐번'],
     blank: '출발 횟수: ☐번',
     blankAnswer: String(ans),
     explain: {
       why: [`${T} ÷ ${i} = ${q} … ${ieyo(T % i)}.`, `첫차 뒤로 ${q}번 더 출발하고, 첫차까지 세면 ${ans}번이에요.`, `그래서 ${ans}번 출발해요.`],
-      alt: [`출발 시각을 적으면 ${Array.from({ length: ans }, (_, k) => `${k * i}`).join(', ')}분으로 ${ans}개예요.`, `두 풀이 모두 ${ans}번이에요.`],
+      alt: [`출발 시각을 적으면 ${Array.from({ length: ans }, (_, k) => `${k * i}`).join(', ')}분으로 ${ans}개예요.`, `어느 길로 해도 답은 ${ans}번이에요.`],
     },
   };
 }
@@ -206,24 +206,24 @@ function t191Level5(s, R) {
   const answer = { min, max };
   const bl = blankOf(min);
   return {
-    text: ['버스 위층에 한 줄이 ', V(s), '자리라고 해 봐요. 어느 날 단체가 앞줄부터 앉았더니 ', V(R), '줄이 필요했어요(마지막 줄은 덜 찰 수 있어요). 단체는 가장 적을 때와 가장 많을 때 몇 명이에요?'],
+    text: ['버스 한 줄이 ', V(s), '자리라고 해 봐요. 단체가 앞줄부터 ', V(R), '줄을 썼어요. 단체는 가장 적으면, 가장 많으면 몇 명이에요?'],
     figure: null,
     input: { kind: 'compound', fields: [{ key: 'min', label: '가장 적을 때' }, { key: 'max', label: '가장 많을 때' }] },
     answer,
     discriminators: uniqK(
       [
-        { key: 'min', value: s * (R - 1), category: '개념', kind: 'nudge', feedbackCheck: `${s * (R - 1)}명이면 몇 줄이 필요해요?`, feedback: `${s * (R - 1)}명이면 ${R - 1}줄로 되지 않나요?` },
+        { key: 'min', value: s * (R - 1), category: '개념', kind: 'nudge', feedbackCheck: `${s * (R - 1)}명이면 몇 줄이 필요해요?`, feedback: `${s * (R - 1)}명이면 ${R - 1}줄이 꽉 차요. ${R}번째 줄에도 사람이 있나요?` },
         { key: 'max', value: s * R + 1, category: '개념', kind: 'check', feedback: `${s * R + 1}명이면 몇 줄이 필요해요?` },
       ],
       answer,
     ),
-    hints: [`한 줄에 ${s}자리, 필요한 줄은 ${R}줄이에요. 단체가 가장 적을 때와 가장 많을 때를 물어요.`, `마지막 줄이 꽉 찰 때와 1명만 앉을 때를 생각해 볼까요?`, `${R}줄이 꽉 차면 ${s} × ${R} = ${s * R}명이에요.`, `${R - 1}줄이 꽉 차고 1명이 더 있으면: ${bl.blank}명`],
+    hints: [`구하는 것: 단체가 가장 적을 때와 가장 많을 때의 사람 수 / 알고 있는 것: 한 줄에 ${s}자리, 앞줄부터 ${R}줄을 씀`, `마지막 줄이 꽉 찰 때와 1명만 앉을 때를 생각해 볼까요?`, `${R}줄이 꽉 차면 ${s} × ${R} = ${s * R}명이에요.`, `${R - 1}줄이 꽉 차고 1명이 더 있으면: ${bl.blank}명`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     blankThen: '두 칸을 채워요.',
     explain: {
-      why: [`가장 많을 때는 ${R}줄이 모두 꽉 찬 ${s} × ${R} = ${max}명이에요.`, `가장 적을 때는 ${R - 1}줄이 꽉 차고 마지막 줄에 1명인 ${min}명이에요.`, `그래서 ${min}명부터 ${max}명까지예요.`],
-      alt: [`${s * (R - 1)}명이면 ${R - 1}줄로 충분해서 ${R}줄이 필요하지 않아요.`, `두 풀이 모두 ${wa(min)} ${max}명이에요.`],
+      why: [`가장 많을 때는 ${R}줄이 모두 꽉 찬 ${s} × ${R} = ${max}명이에요.`, `가장 적을 때는 ${R - 1}줄이 꽉 차고 마지막 줄에 1명인 ${min}명이에요.`, `그래서 가장 적을 때 ${min}명, 가장 많을 때 ${max}명이에요.`],
+      alt: [`${s * (R - 1)}명이면 ${R - 1}줄로 충분하고, ${max + 1}명이면 ${R + 1}줄이 필요해요.`, '확인해 보면 답이 맞아요.'],
     },
   };
 }
@@ -234,7 +234,7 @@ function t191Level6(N, s) {
   const r = N % s;
   const ans = s - r;
   return {
-    text: ['버스 위층에 한 줄이 ', V(s), '자리라고 해 봐요. 어느 날 단체 ', V(N), '명이 앞줄부터 앉아 필요한 줄만 썼어요. 쓴 줄에 남은 빈자리는 몇 개예요?'],
+    text: ['버스 한 줄이 ', V(s), '자리라고 해 봐요. 단체 ', V(N), '명이 앞줄부터 앉았어요. 쓴 줄에 남은 빈자리는 몇 개예요?'],
     figure: null,
     input: { kind: 'number', unit: '개' },
     answer: ans,
@@ -245,12 +245,12 @@ function t191Level6(N, s) {
       ],
       ans,
     ),
-    hints: [`한 줄에 ${s}자리이고, ${N}명이 필요한 줄만 써서 앉았어요. 쓴 줄의 빈자리 수를 물어요.`, '몇 줄이 꽉 차고 마지막 줄에 몇 명이 앉는지 볼까요?', `${N} ÷ ${s} = ${q} … ${ieyo(r)}.`, '쓴 줄의 빈자리: ☐개'],
+    hints: [`구하는 것: 쓴 줄에 남은 빈자리 수 / 알고 있는 것: 한 줄에 ${s}자리, ${N}명이 앞줄부터 앉음`, '몇 줄이 꽉 차고 마지막 줄에 몇 명이 앉는지 볼까요?', `${N} ÷ ${s} = ${q} … ${ieyo(r)}.`, '쓴 줄의 빈자리: ☐개'],
     blank: '빈자리: ☐개',
     blankAnswer: String(ans),
     explain: {
       why: [`${N} ÷ ${s} = ${q} … ${r}, ${q}줄이 꽉 차고 마지막 줄에 ${r}명이 앉아요.`, `마지막 줄은 ${s}자리 중 ${r}자리만 차요.`, `그래서 빈자리는 ${s} − ${r} = ${ans}개예요.`],
-      alt: [`쓴 줄은 ${q + 1}줄, 자리는 ${s * (q + 1)}개예요. ${s * (q + 1)} − ${N} = ${ieyo(ans)}.`, `두 풀이 모두 ${ans}개예요.`],
+      alt: [`쓴 줄은 ${q + 1}줄, 자리는 ${s * (q + 1)}개예요. ${s * (q + 1)} − ${N} = ${ieyo(ans)}.`, `어느 길로 해도 답은 ${ans}개예요.`],
     },
   };
 }
@@ -317,13 +317,13 @@ function t192Level7(a, r1, b, r2, L) {
     answer,
     discriminators: uniq(discs, answer),
     grade: multiGrade(answer, discs),
-    hints: [`${a}명씩 서면 마지막 줄에 ${r1}명, ${b}명씩 서면 마지막 줄에 ${r2}명이에요. ${L}명보다 적은 단체 인원을 모두 물어요.`, `표의 두 칸에 조건마다 될 수 있는 인원을 작은 것부터 적어 볼까요? 두 칸에 모두 있는 수를 찾아요.`, `${a}명씩일 때 될 수 있는 인원은 ${r1}, ${a + r1}, ${2 * a + r1}, …예요.`, `두 칸에 모두 있는 가장 작은 수: ${bl.blank}`],
+    hints: [`구하는 것: ${L}명보다 적은 단체 인원 모두 / 알고 있는 것: ${a}명씩 서면 마지막 줄 ${r1}명, ${b}명씩 서면 마지막 줄 ${r2}명`, `조건마다 될 수 있는 인원을 작은 것부터 적어 두 목록을 만들어 볼까요? 두 목록에 모두 있는 수를 찾아요.`, `${a}명씩일 때 될 수 있는 인원은 ${r1}, ${a + r1}, ${2 * a + r1}, …예요.`, `두 목록에 모두 있는 가장 작은 수: ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     blankThen: '나머지도 모두 골라요.',
     explain: {
-      why: [`${a}명씩일 때 ${r1}, ${a + r1}, ${2 * a + r1}, …, ${b}명씩일 때 ${r2}, ${b + r2}, ${2 * b + r2}, …예요.`, `두 줄에 모두 있는 수는 ${answer.join(', ')}${jo(answer.at(-1), '이에요', '예요')}.`, `그래서 단체는 ${answer.join(', ')}명일 수 있어요.`],
-      alt: [`찾은 수는 ${(a * b) / gcd(a, b)}씩 커져요. 표를 길게 적어 보면 보여요.`, `어느 길로 해도 답은 ${answer.join(', ')}${roOnly(answer.at(-1))} 같아요.`],
+      why: [`${a}명씩일 때 ${r1}, ${a + r1}, ${2 * a + r1}, …, ${b}명씩일 때 ${r2}, ${b + r2}, ${2 * b + r2}, …예요.`, `두 목록에 모두 있는 수는 ${answer.join(', ')}${jo(answer.at(-1), '이에요', '예요')}.`, `그래서 단체는 ${answer.join(', ')}명일 수 있어요.`],
+      alt: [`찾은 수는 ${(a * b) / gcd(a, b)}씩 커져요. 가장 작은 수 ${answer[0]}에서 ${(a * b) / gcd(a, b)}씩 뛰어 세어도 돼요.`, `어느 길로 해도 답은 ${answer.join(', ')}명이에요.`],
     },
   };
 }
@@ -344,19 +344,19 @@ function t192Level8(k, X) {
     answer,
     discriminators: uniqK(
       [
-        { key: 'nth', value: wrongLine, category: '개념', kind: 'nudge', feedbackCheck: '첫차가 무슨 노선이었죠?', feedback: `나머지 ${rem}${jo(rem, '은', '는')} 몇 번째 노선이에요?` },
+        { key: 'nth', value: wrongLine, category: '개념', kind: 'nudge', feedbackCheck: '첫차는 어느 노선이었을까요?', feedback: `나머지 ${rem}${jo(rem, '은', '는')} 몇 번째 노선이에요?` },
         { key: 'cnt', value: Math.floor(k / 3), category: '개념', kind: 'check', feedback: `${k}번째 버스까지 다 세었나요?` },
         { key: 'cnt', value: Math.floor(k / 3) + 1, category: '개념', kind: 'check', feedback: `${k}번째 버스까지 다 세었나요?` },
       ],
       answer,
     ),
-    hints: [`레드, 그린, 블루 차례로 출발해요. ${k}번째 버스의 노선과 ${k}번째까지 ${X}라인 출발 횟수를 물어요.`, '세 노선이 한 번씩 출발하면 한 묶음이에요. 몇 묶음이 돌고 몇 대가 남을까요?', `${k} ÷ 3 = ${Math.floor(k / 3)} … ${ieyo(rem)}.`, `${X}라인 출발 횟수: ${bl.blank}번`],
+    hints: [`구하는 것: ${k}번째 버스의 노선, ${k}번째까지 ${X}라인 출발 횟수 / 알고 있는 것: 레드, 그린, 블루 차례, 첫차는 레드`, '세 노선이 한 번씩 출발하면 한 묶음이에요. 몇 묶음이 돌고 몇 대가 남을까요?', `${k} ÷ 3 = ${Math.floor(k / 3)} … ${ieyo(rem)}.`, `${X}라인 출발 횟수: ${bl.blank}번`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     blankThen: `${k}번째 버스의 노선도 골라요.`,
     explain: {
       why: [`${k} ÷ 3 = ${Math.floor(k / 3)} … ${rem}, 세 노선이 ${Math.floor(k / 3)}번 돌고 ${rem}대가 더 출발해요.`, `남은 ${rem}대는 레드${rem === 2 ? ', 그린' : ''}이라 ${k}번째는 ${nth}라인이고, ${X}라인은 ${cnt}번 출발해요.`, `그래서 ${nth}라인, ${cnt}번이에요.`],
-      alt: [`${X}라인은 ${p}, ${p + 3}, ${p + 6}, …번째 버스예요. ${k}번째까지 세면 ${cnt}번이에요.`, `두 풀이 모두 ${nth}라인, ${cnt}번이에요.`],
+      alt: [`${X}라인은 ${p}, ${p + 3}, ${p + 6}, …번째 버스예요. ${k}번째까지 세면 ${cnt}번이에요.`, `어느 길로 해도 답은 ${nth}라인, ${cnt}번이에요.`],
     },
   };
 }
@@ -368,23 +368,23 @@ function t192Level9(g, X, m) {
   const ans = (idx - 1) * g;
   const bl = blankOf(ans);
   return {
-    text: ['같은 순서(레드, 그린, 블루)로 ', V(g), '분마다 한 대씩 출발한다고 해 봐요. 첫차(레드)가 ', n(0), '분에 출발해요. ', X, '라인이 ', V(m), '번째로 출발하는 것은 첫차가 출발하고 몇 분 뒤예요?'],
+    text: ['시티투어버스가 레드, 그린, 블루 차례로 ', V(g), '분마다 한 대씩 출발한다고 해 봐요. 첫차(레드)는 ', n(0), '분에 출발해요. ', X, '라인 버스만 세어 ', V(m), '번째인 버스는 첫차가 출발하고 몇 분 뒤에 출발해요?'],
     figure: null,
     input: { kind: 'number', unit: '분' },
     answer: ans,
     discriminators: uniq(
       [
-        { value: idx * g, category: '개념', kind: 'nudge', feedbackCheck: '첫차는 몇 분에 출발했나요?', feedback: '첫차는 0분이에요. 2번째 차는 몇 분?' },
+        { value: idx * g, category: '개념', kind: 'nudge', feedbackCheck: '첫차는 몇 분에 출발했나요?', feedback: '첫차는 0분이에요. 2번째 차는 몇 분일까요?' },
         { value: m * g, category: '식', kind: 'nudge', feedbackCheck: '무엇을 물었는지 다시 볼까요?', feedback: `${X}라인 ${m}번째는 전체에서 몇 번째 버스예요?` },
       ],
       ans,
     ),
-    hints: [`세 노선이 차례로 ${g}분마다 출발하고, 첫차는 0분이에요. ${X}라인이 ${m}번째로 출발하는 때를 물어요.`, `${X}라인 ${m}번째가 전체에서 몇 번째 버스인지 먼저 찾아볼까요? 1번째 버스는 0분이에요.`, `${X}라인 ${m}번째는 전체에서 ${idx}번째 버스예요.`, `(${idx} − 1) × ${g} = ${bl.blank}`],
+    hints: [`구하는 것: ${m}번째 ${X}라인 버스가 출발하는 때 / 알고 있는 것: 세 노선이 차례로 ${g}분마다, 첫차는 0분`, `${X}라인 ${m}번째가 전체에서 몇 번째 버스인지 먼저 찾아볼까요? 1번째 버스는 0분이에요.`, `${X}라인 ${m}번째는 전체에서 ${idx}번째 버스예요.`, `간격 ${idx - 1}개: ${idx - 1} × ${g} = ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     explain: {
       why: [`${X}라인은 ${p}, ${p + 3}, ${p + 6}, …번째 버스라서 ${m}번째는 전체에서 ${idx}번째예요.`, `1번째가 0분이고 ${idx}번째까지 간격은 ${idx - 1}개라 ${idx - 1} × ${g} = ${ans}분이에요.`, `그래서 첫차가 출발하고 ${ans}분 뒤예요.`],
-      alt: [`${X}라인끼리는 ${3 * g}분 간격이에요. 첫 ${X}라인이 ${(p - 1) * g}분이니 ${(p - 1) * g} + ${3 * g} × ${m - 1} = ${ieyo(ans)}.`, `두 풀이 모두 ${ans}분이에요.`],
+      alt: [`${X}라인끼리는 ${3 * g}분 간격이에요. 첫 ${X}라인은 ${(p - 1) * g}분에 출발하고, ${3 * g}분씩 ${m - 1}번 더 가요.`, `${3 * g} × ${m - 1} = ${3 * g * (m - 1)}, ${(p - 1) * g} + ${3 * g * (m - 1)} = ${ieyo(ans)}.`, `어느 길로 해도 답은 ${ans}분이에요.`],
     },
   };
 }
@@ -423,17 +423,20 @@ const T19_2 = {
 };
 
 // ── T19-3 버스 좌석 줄 (그림) — 1~3단계, 09 보강 후보 ──
+// 한 줄 자리 수와 줄 수는 그림(좌석 그림과 그 아래 이름표)이 보여 주므로 문장에서 뺀다(02 문서 1절 10).
+// TODO(확인 필요): 시티투어 2층 버스의 실제 좌석 배치(한 줄 자리 수)는 FACTS에 없다. 지금은 3·4자리 가정.
 function seatText(s, R, N, tail) {
-  return ['그림은 시티투어 ', TWO(), '층 버스 위층 좌석이에요. 한 줄에 ', V(s), '자리씩 ', V(R), '줄이라고 해 봐요. 단체 ', V(N), '명이 앞줄부터 앉아요. ', tail];
+  return ['버스 위층 좌석이 그림과 같다고 해 봐요. ', V(N), '명이 앞줄부터 앉아요. ', tail];
 }
+const seatFig = (s, R) => ({ kind: 'array', rows: R, cols: s, label: `한 줄에 ${s}자리씩 ${R}줄` });
 
 function t193Level1(s, R, N) {
   const q = Math.floor(N / s);
   const r = N % s;
   const answer = { full: q, last: r };
   return {
-    text: seatText(s, R, N, '꽉 찬 줄은 몇 줄이고, 마지막 줄에는 몇 명이 앉아요?'),
-    figure: { kind: 'array', rows: R, cols: s },
+    text: seatText(s, R, N, '꽉 찬 줄은 몇 줄, 마지막 줄은 몇 명이에요?'),
+    figure: seatFig(s, R),
     input: { kind: 'compound', fields: [{ key: 'full', label: '꽉 찬 줄' }, { key: 'last', label: '마지막 줄' }] },
     answer,
     discriminators: uniqK(
@@ -443,13 +446,13 @@ function t193Level1(s, R, N) {
       ],
       answer,
     ),
-    hints: [`한 줄에 ${s}자리이고, ${N}명이 앞줄부터 앉아요. 꽉 찬 줄 수와 마지막 줄의 사람 수를 물어요.`, `그림에서 한 줄씩 ${s}명을 채워 볼까요?`, `${s}명씩 두 줄이면 ${2 * s}명이에요.`, '꽉 찬 줄: ☐줄'],
+    hints: [`구하는 것: 꽉 찬 줄 수, 마지막 줄의 사람 수 / 알고 있는 것: 한 줄에 ${s}자리, ${N}명이 앞줄부터 앉음`, `그림에서 한 줄씩 ${s}명을 채워 볼까요?`, `${s}명씩 두 줄이면 ${2 * s}명이에요.`, '꽉 찬 줄: ☐줄'],
     blank: '꽉 찬 줄: ☐줄',
     blankAnswer: String(q),
     blankThen: '마지막 줄의 사람 수도 써요.',
     explain: {
       why: [`${N} ÷ ${s} = ${q} … ${ieyo(r)}.`, `${q}줄이 꽉 차고 마지막 줄에 ${r}명이 앉아요.`, `그래서 꽉 찬 줄은 ${q}줄, 마지막 줄은 ${r}명이에요.`],
-      alt: [`${s} × ${q} + ${r} = ${N}${roOnly(N)} 확인해요.`, `두 풀이 모두 ${q}줄, ${r}명이에요.`],
+      alt: [`그림에서 앞줄부터 ${s}명씩 칠해 보면 ${q}줄이 꽉 차고 ${r}명이 남아요.`, `어느 길로 해도 답은 ${q}줄, ${r}명이에요.`],
     },
   };
 }
@@ -461,8 +464,8 @@ function t193Level2(s, R, N) {
   const used = q + 1;
   const ans = R - used;
   return {
-    text: seatText(s, R, N, '모두 앉고 나면 아무도 앉지 않은 빈 줄은 몇 줄이에요?'),
-    figure: { kind: 'array', rows: R, cols: s },
+    text: seatText(s, R, N, '아무도 앉지 않은 빈 줄은 몇 줄이에요?'),
+    figure: seatFig(s, R),
     input: { kind: 'number', unit: '줄' },
     answer: ans,
     discriminators: uniq(
@@ -473,12 +476,12 @@ function t193Level2(s, R, N) {
       ],
       ans,
     ),
-    hints: [`좌석은 한 줄에 ${s}자리씩 ${R}줄이고, ${N}명이 앞줄부터 앉아요. 아무도 앉지 않은 줄의 수를 물어요.`, '사람이 앉은 줄이 몇 줄인지 먼저 구해 볼까요? 덜 찬 줄도 앉은 줄이에요.', `${N} ÷ ${s} = ${q} … ${ieyo(r)}.`, '빈 줄: ☐줄'],
+    hints: [`구하는 것: 아무도 앉지 않은 줄 수 / 알고 있는 것: 한 줄에 ${s}자리씩 ${R}줄, ${N}명이 앞줄부터 앉음`, '사람이 앉은 줄이 몇 줄인지 먼저 구해 볼까요? 덜 찬 줄도 앉은 줄이에요.', `${N} ÷ ${s} = ${q} … ${ieyo(r)}.`, '빈 줄: ☐줄'],
     blank: '빈 줄: ☐줄',
     blankAnswer: String(ans),
     explain: {
       why: [`${N} ÷ ${s} = ${q} … ${r}, 마지막 줄에도 ${r}명이 앉아서 앉은 줄은 ${used}줄이에요.`, `좌석은 ${R}줄이니 ${R} − ${used} = ${ans}줄이 비어요.`, `그래서 빈 줄은 ${ans}줄이에요.`],
-      alt: [`그림에서 앞줄부터 ${s}명씩 칠해 보면 ${used}줄을 쓰고 ${ans}줄이 남아요.`, `두 풀이 모두 ${ans}줄이에요.`],
+      alt: [`그림에서 앞줄부터 ${s}명씩 칠해 보면 ${used}줄을 쓰고 ${ans}줄이 남아요.`, `어느 길로 해도 답은 ${ans}줄이에요.`],
     },
   };
 }
@@ -490,8 +493,8 @@ function t193Level3(s, R, N) {
   const answer = { rows, can };
   const bl = blankOf(rows);
   return {
-    text: seatText(s, R, N, '모두 앉으려면 몇 줄이 필요하고, 이 버스 위층에 모두 앉을 수 있어요?'),
-    figure: { kind: 'array', rows: R, cols: s },
+    text: seatText(s, R, N, '몇 줄이 필요하고, 모두 앉을 수 있어요?'),
+    figure: seatFig(s, R),
     input: { kind: 'compound', fields: [{ key: 'rows', label: '필요한 줄' }, { key: 'can', label: '모두 앉을 수 있나요?', options: ['예', '아니요'] }] },
     answer,
     discriminators: uniqK(
@@ -501,13 +504,13 @@ function t193Level3(s, R, N) {
       ],
       answer,
     ),
-    hints: [`좌석은 한 줄에 ${s}자리씩 ${R}줄이에요. ${N}명이 모두 앉는 데 필요한 줄 수와, 모두 앉을 수 있는지 물어요.`, `${s}명씩 묶어 볼까요? 남은 사람도 앉아야 해요.`, `${N} ÷ ${s} = ${q} … ${ieyo(N % s)}.`, `필요한 줄: ${bl.blank}줄`],
+    hints: [`구하는 것: 필요한 줄 수, 모두 앉을 수 있는지 / 알고 있는 것: 한 줄에 ${s}자리씩 ${R}줄, ${N}명`, `${s}명씩 묶어 볼까요? 남은 사람도 앉아야 해요.`, `${N} ÷ ${s} = ${q} … ${ieyo(N % s)}.`, `필요한 줄: ${bl.blank}줄`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     blankThen: '모두 앉을 수 있는지 골라요.',
     explain: {
-      why: [`${N} ÷ ${s} = ${q} … ${N % s}, 남은 ${N % s}명도 앉아야 해서 ${rows}줄이 필요해요.`, `버스 위층은 ${R}줄이라 ${rows <= R ? '모두 앉을 수 있어요' : '모두 앉을 수 없어요'}.`, `그래서 ${rows}줄, ${jw(can, '이에요', '예요')}.`],
-      alt: [`좌석은 ${s} × ${R} = ${s * R}자리예요. ${N}명과 견주어도 ${jw(can, '이에요', '예요')}.`, `두 풀이 모두 ${jw(can, '이에요', '예요')}.`],
+      why: [`${N} ÷ ${s} = ${q} … ${N % s}, 남은 ${N % s}명도 앉아야 해서 ${rows}줄이 필요해요.`, `버스 위층은 ${R}줄이라 ${rows <= R ? '모두 앉을 수 있어요' : '모두 앉을 수 없어요'}.`, `그래서 ${rows}줄이 필요하고, ${rows <= R ? '모두 앉을 수 있어요' : '모두 앉을 수는 없어요'}.`],
+      alt: [`좌석은 ${s} × ${R} = ${s * R}자리예요. ${N}명과 비교하면 ${N <= s * R ? '자리가 모자라지 않아요' : '자리가 모자라요'}.`, `어느 길로 해도 ${rows <= R ? '모두 앉을 수 있어요' : '모두 앉을 수는 없어요'}.`],
     },
   };
 }
@@ -540,10 +543,11 @@ const T19_3 = {
 function t194(N, s, level) {
   const q = Math.floor(N / s);
   const r = N % s;
-  const rows = [['(가) 모두 앉는 데 필요한 줄', '□'], ['(나) 꽉 찬 묶음', '□']];
+  const rows = [['(가) 단체가 모두 앉는 데 필요한 줄', '□'], ['(나) 승차권의 꽉 찬 묶음', '□']];
   const fields = [{ key: 'ga', label: '(가) 줄' }, { key: 'na', label: '(나) 묶음' }];
   const answer = { ga: q + 1, na: q };
-  const text = [n(N), ' ÷ ', n(s), ' = ', n(q), ' … ', n(r), jo(r, '이에요', '예요'), '. 이 나눗셈으로 상황마다 답을 써요. (가) 단체 ', V(N), '명이 한 줄 ', V(s), '자리 좌석에 모두 앉는 데 필요한 줄 수 (나) 승차권 ', V(N), '장을 ', V(s), '장씩 묶은 꽉 찬 묶음 수'];
+  // 상황 이름은 표가 보여 주므로 문장은 장면과 나눗셈만 말한다(02 문서 1절 10).
+  const text = [n(N), ' ÷ ', n(s), ' = ', n(q), ' … ', n(r), jo(r, '이에요', '예요'), '.', '\n', '버스 한 줄이 ', V(s), '자리라고 해 봐요. 단체 ', V(N), '명이 앉고, 승차권 ', V(N), '장은 ', V(s), '장씩 묶어요. 표의 답을 써요.'];
   const discs = [
     { key: 'ga', value: q, category: '개념', kind: 'check', feedback: '(가)는 모두 앉아야 해요. 다시 볼까요?' },
     { key: 'na', value: q + 1, category: '개념', kind: 'check', feedback: '(나)는 꽉 찬 묶음을 물었어요.' },
@@ -552,14 +556,12 @@ function t194(N, s, level) {
     rows.push(['(다) (나)에서 남은 승차권', '□']);
     fields.push({ key: 'da', label: '(다) 남은 장' });
     answer.da = r;
-    text.push(' (다) (나)에서 묶고 남은 승차권 수');
     discs.push({ key: 'da', value: s - r, category: '개념', kind: 'check', feedback: '(다)는 남은 승차권을 물었어요.' });
   }
   if (level >= 3) {
     rows.push(['(라) (가)에서 마지막 줄의 빈자리', '□']);
     fields.push({ key: 'ra', label: '(라) 빈자리' });
     answer.ra = s - r;
-    text.push(' (라) (가)에서 마지막 줄의 빈자리 수');
     discs.push({ key: 'ra', value: r, category: '개념', kind: 'check', feedback: '(라)는 빈자리를 물었어요.' });
   }
   const bl = blankOf(q + 1);
@@ -569,13 +571,13 @@ function t194(N, s, level) {
     input: { kind: 'compound', fields },
     answer,
     discriminators: uniqK(discs, answer),
-    hints: ['나눗셈 하나로 여러 상황의 답을 정하는 표예요. 상황마다 답을 물어요.', '남은 것을 한 번 더 셀지, 버릴지, 그대로 답할지 상황마다 생각해 볼까요?', `(나)는 남은 ${r}장으로 꽉 찬 묶음을 만들 수 없어요.`, `(가) 필요한 줄: ${bl.blank}줄`],
+    hints: [`구하는 것: 표의 상황마다 답 / 알고 있는 것: 몫 ${q}, 나머지 ${r}, 한 줄 ${s}자리, 승차권 ${s}장씩`, '남은 것 때문에 하나 더 필요한지, 꽉 찬 묶음만 세는지, 남은 것을 그대로 답하는지 상황마다 생각해 볼까요?', `(나)는 남은 ${r}장으로 꽉 찬 묶음을 만들 수 없어요.`, `(가) 필요한 줄: ${bl.blank}줄`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     blankThen: '표의 칸을 모두 채워요.',
     explain: {
-      why: [`(가)는 남은 ${r}명도 앉아야 하니 ${q} + 1 = ${q + 1}줄, (나)는 남은 것을 버려 ${q}묶음이에요.`, ...(level >= 2 ? [`(다)는 나머지 그대로 ${r}장${level >= 3 ? `, (라)는 ${s} − ${r} = ${s - r}자리예요` : '이에요'}.`] : []), `그래서 표의 답은 ${Object.values(answer).join(', ')}${jo(Object.values(answer).at(-1), '이에요', '예요')}.`],
-      alt: ['"모두", "꽉 찬", "남은", "빈"이라는 말을 보면 나머지를 어떻게 할지 정할 수 있어요.', `두 풀이 모두 ${Object.values(answer).join(', ')}${jo(Object.values(answer).at(-1), '이에요', '예요')}.`],
+      why: [`(가)는 남은 ${r}명도 앉아야 하니 ${q} + 1 = ${q + 1}줄, (나)는 남은 ${r}장으로 묶음을 못 만들어 ${q}묶음이에요.`, ...(level >= 2 ? [`(다)는 나머지 그대로 ${r}장${level >= 3 ? `, (라)는 ${s} − ${r} = ${s - r}자리예요` : '이에요'}.`] : []), `그래서 표의 답은 ${Object.values(answer).join(', ')}${jo(Object.values(answer).at(-1), '이에요', '예요')}.`],
+      alt: ['"모두", "꽉 찬", "남은", "빈"이라는 말을 보면 나머지를 어떻게 할지 정할 수 있어요.'],
     },
   };
 }
@@ -621,7 +623,7 @@ const D2 = {
 const D3 = {
   id: 'N19-D3',
   node: 'N19',
-  title: '급행 진단(예비): 첫차 포함 출발 횟수',
+  title: '급행 진단(예비): 첫차까지 센 출발 횟수',
   repr: '문장',
   minLevel: 4,
   maxLevel: 4,

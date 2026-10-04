@@ -80,10 +80,16 @@ export function pendingText(code) {
  */
 export const RATING_UP = 0.15;
 export const RATING_DOWN = 0.45;
+/**
+ * 운행 종류별 목표 정답률(커리큘럼 04 4절 L2). 평형 정답률 = 내리는 폭 / (올리는 폭 + 내리는 폭).
+ *   normal 75%(0.15 / 0.45), gentle 약 83%(처음 3운행·연속 2오답 직후, 0.1 / 0.5), challenge 60%(도전·동해선, 0.3 / 0.45)
+ */
+export const RATING_STEPS = { normal: [RATING_UP, RATING_DOWN], gentle: [0.1, 0.5], challenge: [0.3, 0.45] };
 export function nextRating(r, a) {
-  if (a.correct && a.hint <= 1) return r + RATING_UP;
-  if (a.correct) return r + 0.05;
-  return Math.max(1, r - RATING_DOWN);
+  const [up, down] = RATING_STEPS[a.target ?? 'normal'] ?? RATING_STEPS.normal;
+  if (a.correct && a.hint <= 1) return r + up;
+  if (a.correct) return r + up / 3;
+  return Math.max(1, r - down);
 }
 
 export const LONG_GAPS = [14, 30, 60];

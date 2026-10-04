@@ -95,57 +95,108 @@ function multiGrade(answer, discs) {
 const tens = (x) => Math.floor(x / 10) % 10;
 const hund = (x) => Math.floor(x / 100);
 
+const ga = (x) => `${x}${jo(x, '이', '가')}`;
+
 /** 뺄셈 판별 오답(받아내림 두 번, 0이 있는 뺄셈) */
 function subDiscs(a, b) {
   const d = a - b;
   const ad = absDigits(a, b);
   const zeroTens = tens(a) === 0;
   const list = [
-    { value: d + 100, category: zeroTens ? '개념' : '계산', kind: zeroTens ? 'check' : 'nudge', ...(zeroTens ? {} : { feedbackCheck: '빌려 준 자리를 다시 볼까요?' }), feedback: zeroTens ? `백의 자리 ${eun(hund(a))} 몇이 됐을까요?` : '빌려 준 자리는 1 줄었나요?' },
-    { value: d + 10, category: zeroTens ? '개념' : '계산', kind: 'nudge', feedbackCheck: zeroTens ? '십의 자리를 다시 볼까요?' : '빌려 준 자리를 다시 볼까요?', feedback: zeroTens ? '십의 자리도 빌려 줬어요. 몇이 남았나요?' : '빌려 준 자리는 1 줄었나요?' },
+    { value: d + 100, category: zeroTens ? '개념' : '계산', kind: zeroTens ? 'check' : 'nudge', ...(zeroTens ? {} : { feedbackCheck: '백의 자리를 다시 볼까요?' }), feedback: zeroTens ? `백의 자리 ${eun(hund(a))} 몇이 됐을까요?` : '백의 자리도 1 작아졌나요?' },
+    { value: d + 10, category: zeroTens ? '개념' : '계산', kind: 'nudge', feedbackCheck: '십의 자리를 다시 볼까요?', feedback: zeroTens ? '십의 자리 10은 몇이 됐을까요?' : '십의 자리는 1 작아졌나요?' },
+    // 대표 오답: 자리마다 큰 수에서 작은 수를 뺌
     { value: ad, category: '개념', kind: 'check', feedback: ad === b ? '답이 빼는 수와 같아요. 더해서 확인해 볼까요?' : `일의 자리 ${a % 10}에서 ${eul(b % 10)} 뺄 수 있나요?` },
-    { value: d + 110, category: '계산', kind: 'nudge', feedbackCheck: '빌려 준 자리를 다시 볼까요?', feedback: '빌려 준 자리는 1 줄었나요?' },
+    { value: d + 110, category: '계산', kind: 'nudge', feedbackCheck: '받아내림한 자리를 다시 볼까요?', feedback: '받아내림한 자리는 1 작아졌나요?' },
   ];
   return uniq(list, d);
 }
 
-function steps(a, b) {
-  if (tens(a) === 0 && a % 10 === 0) return `${a}은 100이 ${hund(a)}개예요. 100 하나를 10이 10개로, 그중 10 하나를 1이 10개로 바꿔요.`;
-  if (tens(a) === 0) return `십의 자리가 0이라 백의 자리에서 먼저 빌려 와요. 십의 자리는 10이 되었다가 일의 자리에 빌려 주고 9가 돼요.`;
-  return `일의 자리 ${a % 10}에서 ${eul(b % 10)} 뺄 수 없어 십의 자리에서 빌려 오고, 십의 자리도 백의 자리에서 빌려 와요.`;
+/** 받아내림 해설(자릿값 말로). 마지막 줄은 자리마다 뺀 결과. */
+function stepsWhy(a, b) {
+  const [ah, at, au] = [hund(a), tens(a), a % 10];
+  const [bh, bt, bu] = [hund(b), tens(b), b % 10];
+  if (at === 0 && au === 0) {
+    return [
+      `${eun(a)} 100이 ${ah}개예요. 100 하나를 10이 10개로, 그중 10 하나를 1이 10개로 바꿔요.`,
+      `그러면 백 ${ah - 1}개, 십 9개, 일 10개예요.`,
+      `일의 자리는 10 − ${bu} = ${10 - bu}, 십의 자리는 9 − ${bt} = ${9 - bt}, 백의 자리는 ${ah - 1} − ${bh} = ${ieyo(ah - 1 - bh)}.`,
+    ];
+  }
+  if (at === 0) {
+    return [
+      `${eun(a)} 100이 ${ah}개, 1이 ${au}개예요. 십의 자리가 0이라 백의 자리에서 먼저 받아내림해요.`,
+      `100 하나를 10이 10개로, 그중 10 하나를 1이 10개로 바꾸면 백 ${ah - 1}개, 십 9개, 일 ${au + 10}개예요.`,
+      `일의 자리는 ${au + 10} − ${bu} = ${au + 10 - bu}, 십의 자리는 9 − ${bt} = ${9 - bt}, 백의 자리는 ${ah - 1} − ${bh} = ${ieyo(ah - 1 - bh)}.`,
+    ];
+  }
+  return [
+    `일의 자리 ${au}에서 ${eul(bu)} 뺄 수 없어 십의 자리에서 받아내림해요. ${au + 10} − ${bu} = ${ieyo(au + 10 - bu)}.`,
+    `십의 자리는 ${ga(at)} ${ga(at - 1)} 되었는데, ${at - 1}에서 ${eul(bt)} 뺄 수 없어 백의 자리에서 받아내림해요. ${at + 9} − ${bt} = ${ieyo(at + 9 - bt)}.`,
+    `백의 자리는 ${ga(ah)} ${ga(ah - 1)} 되어 ${ah - 1} − ${bh} = ${ieyo(ah - 1 - bh)}.`,
+  ];
+}
+
+/** 힌트 ③: 첫 단계의 결과만(빈칸인 십의 자리 값은 말하지 않음) */
+function firstStep(a, b) {
+  const [ah, at, au] = [hund(a), tens(a), a % 10];
+  if (at === 0 && au === 0) return `${eun(a)} 백 ${ah - 1}개, 십 9개, 일 10개로 바꿀 수 있어요. 일의 자리는 10 − ${b % 10} = ${ieyo(10 - (b % 10))}.`;
+  if (at === 0) return `십의 자리가 0이라 백의 자리에서 먼저 받아내림해요. 그러면 백 ${ah - 1}개, 십 9개, 일 ${au + 10}개가 돼요.`;
+  return `일의 자리 ${au}에서 ${eul(b % 10)} 뺄 수 없어 십의 자리에서 받아내림해요. ${au + 10} − ${b % 10} = ${ieyo(au + 10 - (b % 10))}.`;
+}
+
+/** 다른 풀이: 빼는 수에서 빼어지는 수까지 뛰어 세기(예: 396 → 400 → 900 → 903). */
+function countUp(a, b, unit = '') {
+  const d = a - b;
+  const H = (hund(b) + 1) * 100;
+  const A = hund(a) * 100;
+  const pts = [b];
+  const jumps = [];
+  for (const p of [H, A, a]) {
+    const last = pts.at(-1);
+    if (p > last && p <= a) {
+      jumps.push(p - last);
+      pts.push(p);
+    }
+  }
+  const path = pts.map((p, i) => (i === 0 ? `${p}` : `${p}(+${jumps[i - 1]})`)).join(' → ');
+  const ans = unit ? `${d}${unit}이에요` : ieyo(d);
+  return [`${b}에서 ${a}까지 뛰어 세어도 돼요.`, `${path}.`, `뛴 만큼을 모으면 ${jumps.join(' + ')} = ${ieyo(d)}.`, `어느 길로 해도 답은 ${ans}.`];
 }
 
 function routesHint3(a, b) {
-  const d = a - b;
   const up = Math.ceil(b / 10) * 10;
-  const third = `${a - 1}: ${a - 1} − ${b} = ${ieyo(d - 1)}`;
-  return `세로: 십의 자리는 10을 받았다가 일의 자리에 10을 빌려 줘서 9가 돼요. / 더해서 세기: ${b} → ${eun(up)} ${up - b}, ${up} → ${eun((hund(b) + 1) * 100)} ${(hund(b) + 1) * 100 - up}이에요. / ${third}.`;
+  return `세로: ${firstStep(a, b)} / 뛰어 세기: ${b}에서 ${up}까지 ${ieyo(up - b)}. / ${a - 1} 먼저: 일의 자리는 9 − ${b % 10} = ${ieyo(9 - (b % 10))}.`;
 }
 
-/** scene = { text: 식 앞 교통 장면 조각, unit } (없으면 식만) */
+/**
+ * scene = { text: 식 앞 교통 장면 조각, unit, ask: 구하는 것, known: 알고 있는 것, end: 결론 주어 } (없으면 식만)
+ * 장면 한 문장 + 줄바꿈 + 식(04 문서 1절).
+ */
 function buildSub(a, b, scene = null) {
   const d = a - b;
   const bl = blankAt(d, 1);
   const zero = a % 100 === 0;
+  const unit = scene?.unit ?? '';
   return {
-    text: [...(scene?.text ?? []), n(a), ' − ', n(b), ' = ?'],
+    text: [...(scene?.text ?? []), ...(scene ? ['\n'] : []), n(a), ' − ', n(b), ' = ?'],
     figure: { kind: 'vertical', op: '−', a, b },
     input: scene?.unit ? { kind: 'number', unit: scene.unit } : { kind: 'number' },
     answer: d,
     discriminators: subDiscs(a, b),
     hints: [
-      zero ? `${a} − ${b}의 값을 물어요. ${eun(a)} 십의 자리와 일의 자리가 모두 0이에요.` : `${a} − ${b}의 값을 물어요.`,
-      zero ? `편한 길을 골라요. [세로로 받아내림] [${b}에서 ${a}까지 더해서 세기] [${a - 1} − ${b} 먼저]` : '자리를 맞춰 세로로 써 봐요. 받아내림을 한 자리는 1 줄어요.',
-      zero ? routesHint3(a, b) : steps(a, b),
+      scene?.ask ? `구하는 것: ${scene.ask} / 알고 있는 것: ${scene.known}` : `${a} − ${b}의 값을 물어요.`,
+      zero ? `${eun(a)} 십의 자리와 일의 자리가 모두 0이에요. 편한 길을 골라요. [세로로 받아내림] [${b}에서 ${a}까지 뛰어 세기] [${a - 1} − ${b} 먼저]` : '자리를 맞춰 세로로 써 봐요. 받아내림한 자리는 1 작아져요.',
+      zero ? routesHint3(a, b) : firstStep(a, b),
       `${a} − ${b} = ${bl.blank}`,
     ],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     explain: {
-      why: [steps(a, b), '빌려 준 자리는 1 줄어든 수로 계산해요.', `그래서 ${a} − ${b} = ${ieyo(d)}.`],
+      why: [...stepsWhy(a, b), `${a} − ${b} = ${ieyo(d)}.`, scene?.end ? `그래서 ${scene.end} ${d}${unit}이에요.` : `그래서 답은 ${ieyo(d)}.`],
       alt: zero
-        ? [`${a - 1} − ${b} = ${d - 1}는 받아내림이 없어요.`.replace(`${d - 1}는`, `${d - 1}${jo(d - 1, '은', '는')}`), `${eun(a)} ${a - 1}보다 1 크니까 답도 1 커서 ${ieyo(d)}.`, `어느 길로 해도 답은 ${ro(d)} 같아요.`]
-        : [`${b}에서 ${a}까지 더해서 세어도 돼요.`, `${b} + ${d} = ${ieyo(a)}.`, `어느 길로 해도 답은 ${ro(d)} 같아요.`],
+        ? [`${a - 1} − ${eun(b)} 받아내림이 없어서 ${ieyo(d - 1)}.`, `${eun(a)} ${a - 1}보다 1 크니까 답도 1 커서 ${ieyo(d)}.`, `어느 길로 해도 답은 ${unit ? `${d}${unit}이에요` : ieyo(d)}.`]
+        : countUp(a, b, unit),
     },
   };
 }
@@ -179,9 +230,13 @@ const T3_1 = {
   maxLevel: 3,
   generate(rng, level) {
     const [a, b] = pickSub(rng, level);
+    // 종점 가까운 낫개역이라 열차 안 인원 대신 역의 하루 인원을 부분과 전체로 쓴다(04 문서 2절).
     return buildSub(a, b, {
-      text: [level >= 3 ? '어느 날 낫개역에 선 열차에 ' : '낫개역에 선 열차에 ', V(a), '명이 타 있었어요. 그중 ', V(b), '명이 내렸어요. 남은 사람은 몇 명인지 식으로 계산해요. '],
+      text: [level >= 3 ? '토요일에 낫개역에서 ' : '낫개역에서 하루 동안 ', V(a), '명이 내렸어요. 그중 ', V(b), '명은 오전에 내렸어요. 오후에 내린 사람은 몇 명이에요?'],
       unit: '명',
+      ask: '오후에 내린 사람 수',
+      known: `하루 동안 내린 사람 ${a}명, 오전에 내린 사람 ${b}명`,
+      end: '오후에 내린 사람은',
     });
   },
 };
@@ -191,49 +246,62 @@ function t32Level12(a, b) {
   const d = a - b;
   const bl = blankAt(d, 1);
   return {
-    text: ['어느 날 열차에 ', V(a), '명이 타 있었어요. 낫개역에서 ', V(b), '명이 내렸어요. 열차에 남은 사람은 몇 명이에요?'],
+    text: ['노포 쪽에서 오던 열차에 ', V(a), '명이 타 있었어요. 낫개역에서 ', V(b), '명이 내렸어요. 열차에 남은 사람은 몇 명이에요?'],
     figure: { kind: 'train', cars: 8 },
     input: { kind: 'number', unit: '명' },
     answer: d,
     discriminators: uniq([...subDiscs(a, b), { value: a + b, category: '식', kind: 'check', feedback: '남은 사람이 처음보다 많을까요?' }], d),
-    hints: [`열차에 ${a}명이 타 있었고, 낫개역에서 ${b}명이 내렸어요. 열차에 남은 사람 수를 물어요.`, '내린 사람은 열차에서 빠져요. 자리를 맞춰 세로로 써 봐요.', steps(a, b), `${a} − ${b} = ${bl.blank}`],
+    hints: [`구하는 것: 열차에 남은 사람 수 / 알고 있는 것: 처음 ${a}명, 낫개역에서 ${b}명 내림`, '내린 사람은 열차에서 빠져요. 자리를 맞춰 세로로 써 봐요.', firstStep(a, b), `${a} − ${b} = ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     explain: {
-      why: ['내린 사람만큼 열차 안 사람이 줄어요.', steps(a, b), `${a} − ${b} = ${ieyo(d)}.`, `그래서 남은 사람은 ${d}명이에요.`],
-      alt: [`${b}에서 ${a}까지 더해서 세어도 돼요.`, `${b} + ${d} = ${ieyo(a)}.`, `어느 길로 해도 답은 ${ro(d)} 같아요.`],
+      why: ['내린 사람만큼 열차 안 사람이 줄어요.', ...stepsWhy(a, b), `${a} − ${b} = ${ieyo(d)}.`, `그래서 남은 사람은 ${d}명이에요.`],
+      alt: countUp(a, b, '명'),
     },
   };
 }
 
-/** T3-2 3단계: 전체 − 앞 4량 → 뒤 4량 + 비교 */
+/** T3-2 3단계: 전체 − 앞 4칸 → 뒤 4칸 + 비교 */
 function t32Level3(total, front) {
   const back = total - front;
   const more = front > back ? '앞' : '뒤';
+  const [big, small] = more === '앞' ? [front, back] : [back, front];
   const bl = blankAt(back, 1);
+  // 대표 오답(자리마다 큰 수에서 작은 수 빼기)은 다른 판별 오답·정답과 겹치지 않을 때만
+  const ad = absDigits(total, front);
+  const backDiscs = [
+    { key: 'back', value: front, category: '읽기', kind: 'check', feedback: `${front}명은 앞 4칸이에요. 뒤 4칸은요?` },
+    { key: 'back', value: back + 100, category: '계산', kind: 'check', feedback: `백의 자리 ${eun(hund(total))} 몇이 됐을까요?` },
+    { key: 'back', value: back + 10, category: '계산', kind: 'check', feedback: '십의 자리 10은 몇이 됐을까요?' },
+    { key: 'back', value: ad, category: '개념', kind: 'check', feedback: `일의 자리 0에서 ${eul(front % 10)} 뺄 수 있나요?` },
+  ];
   return {
-    text: ['어느 날 ', V(total), '명이 ', L1(), '호선 ', CARS(), '량 열차에 타 있었어요. 그중 앞 ', V(4), '량에 ', V(front), '명이 탔어요. 뒤 ', V(4), '량에는 몇 명이 탔고, 앞과 뒤 중 어느 쪽에 더 많이 탔어요?'],
+    text: [L1(), '호선 열차 ', CARS(), '칸에 ', V(total), '명이 타 있었어요. 앞 ', V(4), '칸에는 ', V(front), '명이 있었어요. 뒤 ', V(4), '칸에는 몇 명이 있어요?'],
     figure: { kind: 'train', cars: 8, split: 4 },
-    input: { kind: 'compound', fields: [{ key: 'back', label: '뒤 4량' }, { key: 'more', label: '더 많은 쪽', options: ['앞', '뒤'] }] },
+    input: { kind: 'compound', fields: [{ key: 'back', label: '뒤 4칸' }, { key: 'more', label: '더 많이 탄 쪽', options: ['앞', '뒤'] }] },
     answer: { back, more },
     discriminators: [
-      { key: 'back', value: front, category: '읽기', kind: 'check', feedback: `${front}명은 앞 4량이에요. 뒤 4량은요?` },
-      { key: 'back', value: back + 100, category: '계산', kind: 'check', feedback: `백의 자리 ${eun(hund(total))} 몇이 됐을까요?` },
-      { key: 'back', value: back + 10, category: '계산', kind: 'check', feedback: '십의 자리는 몇이 남았나요?' },
+      ...uniq(backDiscs, back),
       { key: 'more', value: more === '앞' ? '뒤' : '앞', category: '읽기', kind: 'check', feedback: `${wa(back)} ${front} 중 어느 쪽이 커요?` },
     ],
     hints: [
-      `열차 전체에 ${total}명, 앞 4량에 ${front}명이 탔어요. 뒤 4량에 탄 사람 수와 어느 쪽이 더 많은지 물어요.`,
-      '전체에서 앞 4량을 덜어 내면 뒤 4량이 남아요. 그림의 앞과 뒤에 사람 수를 적어 봐요.',
-      `${total} − ${front}에서 ${eun(total)} 십의 자리와 일의 자리가 모두 0이에요.`,
+      `구하는 것: 뒤 4칸에 있는 사람 수, 더 많이 탄 쪽 / 알고 있는 것: 열차 전체 ${total}명, 앞 4칸 ${front}명`,
+      '전체에서 앞 4칸을 덜어 내면 뒤 4칸이 남아요. 그림의 앞과 뒤에 사람 수를 적어 봐요.',
+      firstStep(total, front),
       `${total} − ${front} = ${bl.blank}`,
     ],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
-    blankThen: '앞과 뒤 중 어느 쪽이 더 많아요?',
+    blankThen: '앞과 뒤 중 어느 쪽에 더 많이 탔어요?',
     explain: {
-      why: [`뒤 4량은 ${total} − ${front} = ${back}명이에요.`, `${front}과 ${back}을 견주면 ${more}쪽이 더 커요.`.replace(`${front}과`, wa(front)).replace(`${back}을`, eul(back)), `그래서 뒤 4량은 ${back}명이고, ${more}쪽에 더 많이 탔어요.`],
-      alt: [`${front}에서 ${total}까지 더해서 세도 ${back}명이에요.`, `어느 길로 해도 답은 ${ro(back)} 같아요.`],
+      why: [
+        '전체에서 앞 4칸을 덜어 내면 뒤 4칸이 남아요.',
+        ...stepsWhy(total, front),
+        `${total} − ${front} = ${back}이라 뒤 4칸에는 ${back}명이 있어요.`.replace(`${back}이라`, `${back}${jo(back, '이라', '라')}`),
+        `${ga(big)} ${small}보다 커서 ${more} 4칸에 더 많이 탔어요.`,
+        `그래서 뒤 4칸은 ${back}명이고, ${more}쪽에 더 많이 탔어요.`,
+      ],
+      alt: countUp(total, front, '명'),
     },
   };
 }
@@ -246,20 +314,22 @@ function t32Level4(s, w) {
   const gap = sw - s;
   const bl = blankAt(ans, 1);
   return {
-    text: ['어느 날 교통카드 잔액을 계산기로 셈했어요. 처음 금액에서 ', V(s), '원을 빼야 하는데, 숫자를 바꿔 ', V(sw), '원을 뺐어요. 계산기에 ', V(w), '원이 나왔어요. 바르게 빼면 얼마예요?'],
+    text: ['동생이 교통카드 잔액에서 ', V(s), '원을 빼려다 ', V(sw), '원을 눌렀어요. 계산기에 ', V(w), '원이 나왔어요. 바르게 빼면 얼마예요?'],
     figure: null,
     input: { kind: 'number', unit: '원' },
     answer: ans,
     discriminators: uniq(
       [
         { value: w - s, category: '식', kind: 'nudge', feedbackCheck: `${eun(w)} 처음 금액일까요?`, feedback: `${eun(w)} 잘못 뺀 결과예요. 처음 금액은 얼마였을까요?` },
-        { value: o, category: '식', kind: 'nudge', feedbackCheck: '무엇을 물었는지 다시 볼까요?', feedback: '처음 금액을 찾았어요. 다음엔 무엇을 하죠?' },
+        { value: o, category: '식', kind: 'nudge', feedbackCheck: '무엇을 물었는지 다시 볼까요?', feedback: '처음 금액을 찾았어요. 다음엔 무엇을 할까요?' },
         { value: w - gap, category: '개념', kind: 'nudge', feedbackCheck: `${eun(w)} 무엇을 뺀 결과예요?`, feedback: '더 많이 뺐으면 답은 커질까요, 작아질까요?' },
+        // 대표 오답: 처음 금액에서 뺄 때 자리마다 큰 수에서 작은 수를 뺌
+        { value: absDigits(o, s), category: '개념', kind: 'check', feedback: o % 10 < s % 10 ? `일의 자리 ${o % 10}에서 ${eul(s % 10)} 뺄 수 있나요?` : `십의 자리 ${tens(o)}에서 ${eul(tens(s))} 뺄 수 있나요?` },
       ],
       ans,
     ),
     hints: [
-      `바르게 뺄 수는 ${s}, 잘못 누른 수는 ${sw}, 계산기에 나온 수는 ${ieyo(w)}. 바르게 했을 때의 금액을 물어요.`,
+      `구하는 것: 바르게 뺐을 때 나오는 금액 / 알고 있는 것: 빼려던 수 ${s}원, 잘못 누른 수 ${sw}원, 계산기에 나온 수 ${w}원`,
       '편한 길을 골라요. [처음 금액을 먼저 찾기] [얼마나 더 뺐는지 보기]',
       `처음 금액 길: ${w} + ${sw} = ${o}원이 처음 금액이에요. / 더 뺀 길: ${eun(sw)} ${s}보다 ${gap} 커요.`,
       `${o} − ${s} = ${bl.blank} / ${w} + ${gap} = ${bl.blank}`,
@@ -268,7 +338,7 @@ function t32Level4(s, w) {
     blankAnswer: bl.blankAnswer,
     explain: {
       why: ['잘못 뺀 계산을 거꾸로 하면 처음 금액이 나와요.', `${w} + ${sw} = ${ieyo(o)}.`, `처음 금액에서 바르게 빼면 ${o} − ${s} = ${ieyo(ans)}.`, `그래서 바르게 빼면 ${ans}원이에요.`],
-      alt: [`${eun(sw)} ${s}보다 ${gap} 커요.`, `${gap}을 더 뺐으니 결과가 ${gap}만큼 작게 나왔어요.`.replace(`${gap}을`, eul(gap)), `${w} + ${gap} = ${ieyo(ans)}.`, `어느 길로 해도 답은 ${ro(ans)} 같아요.`],
+      alt: [`${eun(sw)} ${s}보다 ${gap} 커요.`, `${gap}을 더 뺐으니 결과가 ${gap}만큼 작게 나왔어요.`.replace(`${gap}을`, eul(gap)), `${w} + ${gap} = ${ieyo(ans)}.`, `어느 길로 해도 답은 ${ans}원이에요.`],
     },
   };
 }
@@ -292,7 +362,7 @@ function t32Level5(B) {
     answer: { small: X, answer: ans },
     discriminators: discs,
     hints: [
-      `${eul(B)} 빼는 수로 쓰는 세 자리 수 □□□를 찾아요. 일의 자리와 십의 자리 모두에서 받아내림이 있어야 하고, 답은 세 자리예요. 가장 작은 □□□와 그때 답을 물어요.`,
+      `구하는 것: 가장 작은 □□□와 그때 답 / 알고 있는 것: □□□에서 ${eul(B)} 빼는 식, 일의 자리와 십의 자리 모두 받아내림, 답은 세 자리 수`,
       '답이 세 자리가 되려면 □□□는 적어도 얼마일까요? 그 수부터 차례로 따져 봐요.',
       `□□□는 ${B + 100}보다 작을 수 없어요.`,
       `가장 작은 수는 ${bl.blank}`,
@@ -307,7 +377,7 @@ function t32Level5(B) {
         `${X} − ${B} = ${ieyo(ans)}.`,
         `그래서 가장 작은 수는 ${X}이고, 그때 답은 ${ieyo(ans)}.`,
       ],
-      alt: [`${B + 100}부터 하나씩 올려 가며 두 받아내림이 함께 생기는지 확인해도 돼요.`, `어느 길로 해도 답은 ${ro(X)} 같아요.`],
+      alt: [`${B + 100}부터 하나씩 올려 가며 두 받아내림이 함께 생기는지 확인해도 돼요.`, `어느 길로 해도 가장 작은 수는 ${ieyo(X)}.`],
     },
   };
 }
@@ -326,7 +396,7 @@ function t32Level6(a, b, where) {
     discriminators: options.filter((o) => o !== where).map((o) => ({ value: o, category: '개념', kind: 'check', feedback: `${o} 숫자는 바른 답과 같아요. 다른 자리는 어떨까요?` })),
     hints: [
       `풀이의 답은 ${ieyo(wrong)}. 어느 자리가 틀렸는지 물어요.`,
-      '바른 답을 먼저 구해 볼까요? 두 답을 자리마다 견주어 봐요.',
+      '바른 답을 먼저 구해 볼까요? 두 답을 자리마다 비교해 봐요.',
       `바른 답의 일의 자리는 ${ieyo(d % 10)}.`,
       `${a} − ${b} = ${blankAt(d, where === '백의 자리' ? 2 : 1).blank}`,
     ],
@@ -336,10 +406,10 @@ function t32Level6(a, b, where) {
     explain: {
       why: [
         `바른 답은 ${a} − ${b} = ${ieyo(d)}.`,
-        where === '백의 자리' ? '풀이는 백의 자리에서 빌려 준 1을 줄이지 않았어요.' : '풀이는 십의 자리가 일의 자리에 빌려 준 1을 줄이지 않았어요.',
+        where === '백의 자리' ? '풀이는 십의 자리로 받아내림한 뒤 백의 자리를 1 작게 하지 않았어요.' : '풀이는 일의 자리로 받아내림한 뒤 십의 자리를 1 작게 하지 않았어요.',
         `그래서 틀린 곳은 ${where}예요.`,
       ],
-      alt: [`${wrong} + ${b}를 해 보면 ${ro(wrong + b)} ${a}가 아니에요.`.replace(`${b}를`, eul(b)).replace(`${a}가`, `${a}${jo(a, '이', '가')}`), `어느 길로 해도 답은 ${where}로 같아요.`],
+      alt: [`${a - 1} − ${eun(b)} 받아내림이 없어서 ${ieyo(d - 1)}.`, `1을 더하면 바른 답 ${d}${jo(d, '이', '가')} 나와요. 풀이의 답과 ${where}만 달라요.`, `어느 길로 해도 답은 ${where}예요.`],
     },
   };
 }
@@ -413,13 +483,13 @@ const D1 = {
   maxLevel: 3,
   diagnostic: true,
   generate() {
-    return { ...buildSub(400, 237, { text: ['낫개역에서 열차 승객 ', V(400), '명 중 ', V(237), '명이 내렸어요. '], unit: '명' }), hints: [], blank: null };
+    return { ...buildSub(400, 237, { text: ['낫개역에서 하루 동안 ', V(400), '명이 내렸어요. 그중 ', V(237), '명은 오전에 내렸어요. 오후에 내린 사람은 몇 명이에요?'], unit: '명', end: '오후에 내린 사람은' }), hints: [], blank: null };
   },
 };
 const D2 = {
   id: 'N03-D2',
   node: 'N03',
-  title: '급행 진단: 뒤 4량',
+  title: '급행 진단: 뒤 4칸',
   repr: '문장',
   minLevel: 3,
   maxLevel: 3,
@@ -465,19 +535,16 @@ function t34(a, b, level) {
   let fields;
   let answer;
   let extra;
-  let ask;
   let lastWhy;
   if (level === 1) {
     fields = [{ key: 'count', label: '모형을 바꾼 횟수' }, { key: 'left', label: '남은 사람' }];
     answer = { count: 2, left: d };
-    extra = [{ key: 'count', value: 1, category: '개념', kind: 'nudge', feedbackCheck: '모형을 다시 세어 볼까요?', feedback: '십 모형도 모자라지 않나요?' }];
-    ask = ' 모형을 몇 번 바꿨는지도 써요.';
+    extra = [{ key: 'count', value: 1, category: '개념', kind: 'nudge', feedbackCheck: '모형을 다시 세어 볼까요?', feedback: '십 모형도 모자란지 볼까요?' }];
     lastWhy = '십 모형 1개, 백 모형 1개를 바꿔서 모두 두 번 바꿨어요.';
   } else if (level === 2) {
-    fields = [{ key: 'first', label: '먼저 바꿀 모형', options: [B_H, B_T] }, { key: 'left', label: '남은 사람' }];
+    fields = [{ key: 'first', label: '일 모형이 모자랄 때 먼저 바꿀 모형', options: [B_H, B_T] }, { key: 'left', label: '남은 사람' }];
     answer = { first: B_H, left: d };
-    extra = [{ key: 'first', value: B_T, category: '개념', kind: 'nudge', feedbackCheck: '모형을 다시 세어 볼까요?', feedback: '십 모형이 하나도 없지 않나요?' }];
-    ask = ' 일 모형이 모자랄 때 먼저 바꿀 모형도 골라요.';
+    extra = [{ key: 'first', value: B_T, category: '개념', kind: 'nudge', feedbackCheck: '모형을 다시 세어 볼까요?', feedback: '십 모형은 몇 개 있나요?' }];
     lastWhy = '십 모형이 없어서 백 모형부터 바꿨어요.';
   } else {
     fields = [{ key: 'h2t', label: '백 모형 1개 → 십 모형 몇 개' }, { key: 't2o', label: '십 모형 1개 → 일 모형 몇 개' }, { key: 'left', label: '남은 사람' }];
@@ -486,13 +553,9 @@ function t34(a, b, level) {
       { key: 'h2t', value: 100, category: '개념', kind: 'check', feedback: '백 모형 1개에 십 모형은 몇 개 들어가요?' },
       { key: 't2o', value: 1, category: '개념', kind: 'check', feedback: '십 모형 1개에 일 모형은 몇 개 들어가요?' },
     ];
-    ask = ' 모형을 바꿀 때 몇 개가 되는지도 써요.';
     lastWhy = '백 모형 1개는 십 모형 10개, 십 모형 1개는 일 모형 10개예요.';
   }
-  const hint1 =
-    level === 3
-      ? `처음에 ${a}명이 있었고, 낫개역에서 ${b}명이 내렸어요. 남은 사람을 물어요. ${eun(a)} 백 모형 ${ah}개뿐이에요.`
-      : `처음에 ${a}명이 있었고, 낫개역에서 ${b}명이 내렸어요. 남은 사람을 물어요.`;
+  const hint1 = `구하는 것: 열차에 남은 사람 수 / 알고 있는 것: 처음 ${a}명${level === 3 ? `(백 모형 ${ah}개)` : ''}, 낫개역에서 ${b}명 내림`;
   const hint2 =
     level === 1
       ? '일 모형이 모자라면 십 모형 1개를 일 모형 10개로 바꿔 볼까요? 십 모형이 모자라면 백 모형을 바꿔요.'
@@ -504,7 +567,7 @@ function t34(a, b, level) {
       ? `십 모형 1개를 바꾸면 일 모형이 ${O}개, 백 모형 1개를 바꾸면 십 모형이 ${T}개가 돼요. 백 ${H}, 십 ${T}, 일 ${ieyo(O)}.`
       : `백 모형 1개를 바꾸면 십 모형 10개, 그중 1개를 바꾸면 일 모형 ${O}개예요. 백 ${H}, 십 ${T}, 일 ${O}${jo(O, '이', '가')} 돼요.`;
   return {
-    text: [(level >= 3 ? '어느 날 ' : '') + '열차에 ', V(a), '명이 타 있었어요. 낫개역에서 ', V(b), '명이 내렸어요. 수 모형을 바꾸어 가며 남은 사람을 구해요.' + ask],
+    text: ['노포 쪽에서 오던 열차에 ', V(a), '명이 타 있었어요. 낫개역에서 ', V(b), '명이 내렸어요. 수 모형으로 남은 사람을 구해요.'],
     figure: { kind: 'base10', hundreds: ah, tens: at, ones: au },
     input: { kind: 'compound', fields },
     answer,
@@ -520,7 +583,7 @@ function t34(a, b, level) {
         lastWhy,
         `그래서 남은 사람은 ${d}명이에요.`,
       ],
-      alt: [`${b}에서 ${a}까지 더해서 세어도 돼요.`, `${b} + ${d} = ${ieyo(a)}.`, `두 풀이 모두 ${d}명이에요.`],
+      alt: countUp(a, b, '명'),
     },
   };
 }

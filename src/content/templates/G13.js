@@ -133,12 +133,12 @@ function t131Level1(h, m, k) {
     answer,
     discriminators: discs,
     grade: cgrade(HMS_FIELDS, answer, discs),
-    hints: ['서면역 시계의 시, 분, 초를 물어요. 짧은바늘, 긴바늘, 초침이 있어요.', `초침이 숫자 1을 가리키면 5초예요. 숫자 ${k}${eun(k).slice(String(k).length)} 몇 초일까요?`, '초침이 숫자 하나를 지날 때마다 5초씩 늘어요.', `${h}시 ${m}분 ☐초`],
+    hints: ['서면역 시계의 시, 분, 초를 물어요. 짧은바늘, 긴바늘, 초침이 있어요.', `초침이 숫자 1을 가리키면 5초예요. 숫자 ${k}${eun(k).slice(String(k).length)} 몇 초일까요?`, '초침이 숫자 하나를 지날 때마다 5초씩 늘어요.', `${h}시 ${m}분 ${s >= 10 ? blankAt(s, 1).blank : '☐'}초`],
     blank: s >= 10 ? blankAt(s, 1).blank : '☐',
     blankAnswer: s >= 10 ? blankAt(s, 1).blankAnswer : String(s),
     explain: {
       why: ['초침은 1분에 한 바퀴를 돌아요.', `숫자와 숫자 사이가 5초라서, 숫자 ${k}${jo(k, '을', '를')} 가리키면 5 × ${k} = ${s}초예요.`, `그래서 ${hms(h, m, s)}예요.`],
-      alt: [`작은 눈금을 12부터 하나씩 세면 ${s}칸이라 ${s}초예요.`, `두 방법 모두 ${s}초예요.`],
+      alt: [`작은 눈금을 12부터 하나씩 세면 ${s}칸이라 ${s}초예요.`, `어느 길로 해도 답은 ${s}초예요.`],
     },
   };
 }
@@ -155,7 +155,7 @@ function t131Level2(h, m, k, j) {
     blankAnswer: blankAt(s, 0).blankAnswer,
     explain: {
       why: [`초침이 숫자 ${k}${jo(k, '을', '를')} 지나 작은 눈금 ${j}칸을 더 갔어요.`, `숫자 ${k}${eun(k).slice(String(k).length)} ${5 * k}초, 작은 눈금 한 칸은 1초예요.`, `그래서 ${5 * k} + ${j} = ${s}초예요.`],
-      alt: [`숫자 ${k + 1}${eun(k + 1).slice(String(k + 1).length)} ${5 * (k + 1)}초예요. 거기서 ${5 - j}칸 모자라요.`, `두 방법 모두 ${s}초예요.`],
+      alt: [`숫자 ${k + 1}${eun(k + 1).slice(String(k + 1).length)} ${5 * (k + 1)}초예요. 거기서 ${5 - j}칸 모자라요.`, `어느 길로 해도 답은 ${s}초예요.`],
     },
   };
 }
@@ -179,7 +179,7 @@ function t131Level3(rng, h, m, k, j) {
     blankThen: '같은 시각의 디지털 시계는?',
     explain: {
       why: [`짧은바늘은 ${h}시, 긴바늘은 ${m}분을 가리켜요.`, `초침은 숫자 ${k}에서 ${j}칸 더 가서 ${s}초예요.`, `그래서 ${right} 시계예요.`],
-      alt: [`보기마다 가운데 수(분)와 끝 수(초)를 바늘과 맞춰 봐요.`, `어느 길로 해도 ${right}예요.`],
+      alt: [`보기마다 가운데 수(분)와 끝 수(초)를 바늘과 맞춰 봐요.`, `어느 길로 해도 답은 ${right}예요.`],
     },
   };
 }
@@ -211,30 +211,30 @@ const T13_1 = {
 function t132Level1(x) {
   const ans = 60 + x;
   return {
-    text: ['어느 날 서면역에서 ', label('1'), '호선에서 ', label('2'), '호선으로 갈아타는 데 ', V(1), '분 ', V(x), '초가 걸렸어요. 몇 초예요?'],
+    text: ['오늘 서면역에서 ', label('1'), '호선에서 ', label('2'), '호선으로 갈아타는 데 ', V(1), '분 ', V(x), '초가 걸렸어요. 몇 초예요?'],
     figure: null,
     input: { kind: 'number', unit: '초' },
     answer: ans,
     discriminators: [{ value: 100 + x, category: '개념', kind: 'check', feedback: '1분은 몇 초예요?' }],
-    hints: [`갈아타는 데 1분 ${x}초가 걸렸어요. 이 시간을 초로만 나타내면 몇 초인지 물어요.`, '1분을 초로 바꿔 볼까요? 초침이 한 바퀴 도는 시간이에요.', '1분은 60초예요.', `60 + ${x} = ${blankAt(ans, 1).blank}`],
+    hints: [`구하는 것: 갈아타는 데 걸린 시간(초) / 알고 있는 것: 1분 ${x}초`, '1분을 초로 바꿔 볼까요? 초침이 한 바퀴 도는 시간이에요.', '1분은 60초예요.', `60 + ${x} = ${blankAt(ans, 1).blank}`],
     blank: blankAt(ans, 1).blank,
     blankAnswer: blankAt(ans, 1).blankAnswer,
-    explain: { why: ['1분은 60초예요.', `1분 ${x}초는 60초와 ${x}초를 합친 시간이에요.`, `그래서 60 + ${x} = ${ans}초예요.`], alt: [`60초에서 ${x}초를 이어 세어도 ${ans}초예요.`, `두 방법 모두 ${ans}초예요.`] },
+    explain: { why: ['1분은 60초예요.', `1분 ${x}초는 60초와 ${x}초를 합친 시간이에요.`, `그래서 60 + ${x} = ${ans}초예요.`], alt: [`60초에서 ${x}초를 이어 세어도 ${ans}초예요.`, `어느 길로 해도 답은 ${ans}초예요.`] },
   };
 }
 function t132Level2(T) {
   const answer = msAns(T);
   const wrong100 = { m: Math.floor(T / 100), s: T % 100 };
   return {
-    text: ['어느 날 서면역 환승 통로를 걷는 데 ', V(T), '초가 걸렸어요. 몇 분 몇 초예요?'],
+    text: ['퇴근 시간에 서면역 환승 통로를 걷는 데 ', V(T), '초가 걸렸어요. 몇 분 몇 초예요?'],
     figure: null,
     input: { kind: 'compound', fields: MS_FIELDS },
     answer,
-    discriminators: cleanDiscs([{ value: wrong100, category: '개념', kind: 'check', feedback: '1분은 몇 초였죠? 다시 볼까요?' }], answer),
-    hints: [`환승 통로를 걷는 데 ${T}초가 걸렸어요. 몇 분 몇 초인지 물어요.`, '60초씩 묶어 볼까요? 60초가 1분이에요.', `60초씩 묶으면 ${answer.m}묶음이에요.`, `${T} − ${60 * answer.m} = ${answer.s >= 10 ? blankAt(answer.s, 1).blank : '☐'}`],
+    discriminators: cleanDiscs([{ value: wrong100, category: '개념', kind: 'check', feedback: '1분은 몇 초일까요?' }], answer),
+    hints: [`구하는 것: 환승 통로를 걸은 시간(몇 분 몇 초) / 알고 있는 것: ${T}초`, '60초씩 묶어 볼까요? 60초가 1분이에요.', `60초씩 묶으면 ${answer.m}묶음이에요.`, `${T} − ${60 * answer.m} = ${answer.s >= 10 ? blankAt(answer.s, 1).blank : '☐'}`],
     blank: answer.s >= 10 ? blankAt(answer.s, 1).blank : '☐',
     blankAnswer: answer.s >= 10 ? blankAt(answer.s, 1).blankAnswer : String(answer.s),
-    explain: { why: ['60초가 1분이에요.', `${T}초에는 60초가 ${answer.m}번 들어가고 ${answer.s}초가 남아요.`, `그래서 ${ms0(T)}예요.`], alt: [`${answer.m}분은 ${60 * answer.m}초예요. ${60 * answer.m}초에서 ${answer.s}초 더 가면 ${T}초예요.`, `두 방법 모두 ${ms0(T)}예요.`] },
+    explain: { why: ['60초가 1분이에요.', `${T}초에는 60초가 ${answer.m}번 들어가고 ${answer.s}초가 남아요.`, `그래서 ${ms0(T)}예요.`], alt: [`${answer.m}분은 ${60 * answer.m}초예요. ${60 * answer.m}초에서 ${answer.s}초 더 가면 ${T}초예요.`, `어느 길로 해도 답은 ${ms0(T)}예요.`] },
   };
 }
 const LONGER = ['계단 길', '에스컬레이터 길'];
@@ -251,25 +251,26 @@ function t132Level3(A, B) {
     [
       { value: { esc: 100 + B, longer: wrongLonger }, category: '개념', kind: 'nudge', feedbackCheck: `1분 ${B}초가 ${100 + B}초인지 다시 볼까요?`, feedback: `1분 ${B}초를 초로 다시 바꿔 볼까요?` },
       { value: { esc: 100 + B }, category: '개념', kind: 'nudge', feedbackCheck: `1분 ${B}초가 ${100 + B}초인지 다시 볼까요?`, feedback: `1분 ${B}초를 초로 다시 바꿔 볼까요?` },
-      { value: { esc, longer: longer === LONGER[0] ? LONGER[1] : LONGER[0] }, category: '개념', kind: 'check', feedback: '두 시간을 다시 견주어 볼까요?' },
+      { value: { esc, longer: longer === LONGER[0] ? LONGER[1] : LONGER[0] }, category: '개념', kind: 'check', feedback: '두 시간을 다시 비교해 볼까요?' },
     ],
     answer,
   );
   const bl = blankAt(esc, 1);
   return {
-    text: ['서면역에서 갈아타는 길이 두 가지예요. 계단 길은 ', V(A), '초, 에스컬레이터 길은 ', V(1), '분 ', V(B), '초가 걸려요. 에스컬레이터 길은 몇 초예요? 더 오래 걸리는 길은 어느 쪽이에요?'],
+    // 물음 둘 중 '에스컬레이터 길은 몇 초'는 칸 이름에 맡긴다(02 문서 규칙 10).
+    text: ['서면역에서 갈아탈 때 계단 길은 ', V(A), '초, 에스컬레이터 길은 ', V(1), '분 ', V(B), '초 걸려요. 더 오래 걸리는 길은 어느 쪽이에요?'],
     figure: null,
     input: { kind: 'compound', fields },
     answer,
     discriminators: discs,
     grade: cgrade(fields, answer, discs),
-    hints: [`계단 길은 ${A}초, 에스컬레이터 길은 1분 ${B}초 걸려요. 더 오래 걸리는 길을 물어요.`, '두 시간을 같은 단위로 바꿔 볼까요?', '1분은 60초예요.', `1분 ${B}초 = ${bl.blank}초`],
+    hints: [`구하는 것: 더 오래 걸리는 길 / 알고 있는 것: 계단 길 ${A}초, 에스컬레이터 길 1분 ${B}초`, '두 시간을 같은 단위로 바꿔 볼까요?', '1분은 60초예요.', `1분 ${B}초 = ${bl.blank}초`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     blankThen: '더 오래 걸리는 길은?',
     explain: {
       why: [`1분 ${B}초는 60 + ${B} = ${esc}초예요.`, A > esc ? `${A}초가 ${esc}초보다 ${A - esc}초 길어요.` : `${esc}초가 ${A}초보다 ${esc - A}초 길어요.`, `그래서 ${longer}이 더 오래 걸려요.`],
-      alt: [`${A}초를 분초로 바꾸면 ${ms(A)}예요.`, `${ms(A)}와 1분 ${B}초를 견주어도 ${longer}이 더 길어요.`, `두 풀이 모두 ${longer}이에요.`],
+      alt: [`${A}초를 분초로 바꾸면 ${ms(A)}예요.`, `${ms(A)}와 1분 ${B}초를 비교해도 ${longer}이 더 길어요.`, `어느 길로 해도 답은 ${longer}이에요.`],
     },
   };
 }
@@ -310,7 +311,7 @@ function t133Level1(a, scene = null) {
     hints: [`${a}분을 초로만 나타내면 몇 초인지 물어요.`, '1분이 몇 초인지 먼저 떠올려 볼까요?', '1분은 60초예요.', `60 × ${a} = ${blankAt(ans, 1).blank}`],
     blank: blankAt(ans, 1).blank,
     blankAnswer: blankAt(ans, 1).blankAnswer,
-    explain: { why: ['1분은 60초예요.', `${a}분은 60초가 ${a}번이에요.`, `그래서 ${a}분 = ${ans}초예요.`], alt: [`60초씩 ${a}번 이어 세어도 ${ans}초예요.`, `두 방법 모두 ${ans}초예요.`] },
+    explain: { why: ['1분은 60초예요.', `${a}분은 60초가 ${a}번이에요.`, `그래서 ${a}분 = ${ans}초예요.`], alt: [`60초씩 ${a}번 이어 세어도 ${ans}초예요.`, `어느 길로 해도 답은 ${ans}초예요.`] },
   };
 }
 function t133Level2(a, b, scene = null) {
@@ -324,7 +325,7 @@ function t133Level2(a, b, scene = null) {
     hints: [`${a}분 ${b}초를 초로만 나타내면 몇 초인지 물어요.`, `${a}분을 먼저 초로 바꿔 볼까요?`, `${a}분은 ${60 * a}초예요.`, `${60 * a} + ${b} = ${blankAt(ans, 1).blank}`],
     blank: blankAt(ans, 1).blank,
     blankAnswer: blankAt(ans, 1).blankAnswer,
-    explain: { why: [`${a}분은 60 × ${a} = ${60 * a}초예요.`, `여기에 ${b}초를 더해요.`, `그래서 ${a}분 ${b}초 = ${ans}초예요.`], alt: [`1분씩 60초, ${a}번이면 ${60 * a}초, 이어서 ${b}초를 세면 ${ans}초예요.`, `두 방법 모두 ${ans}초예요.`] },
+    explain: { why: [`${a}분은 60 × ${a} = ${60 * a}초예요.`, `여기에 ${b}초를 더해요.`, `그래서 ${a}분 ${b}초 = ${ans}초예요.`], alt: [`1분씩 60초, ${a}번이면 ${60 * a}초, 이어서 ${b}초를 세면 ${ans}초예요.`, `어느 길로 해도 답은 ${ans}초예요.`] },
   };
 }
 function t133Level3(T, scene = null) {
@@ -332,7 +333,7 @@ function t133Level3(T, scene = null) {
   const fields = MS_FIELDS;
   const discs = cleanDiscs(
     [
-      { value: { m: Math.floor(T / 100), s: T % 100 }, category: '개념', kind: 'check', feedback: '1분은 몇 초였죠? 다시 볼까요?' },
+      { value: { m: Math.floor(T / 100), s: T % 100 }, category: '개념', kind: 'check', feedback: '1분은 몇 초일까요?' },
       { value: { m: answer.m - 1, s: answer.s + 60 }, category: '계산', kind: 'check', feedback: '초 칸이 60보다 커도 될까요?' },
     ].filter((d) => d.value.m >= 0 && d.value.s < 100),
     answer,
@@ -347,7 +348,7 @@ function t133Level3(T, scene = null) {
     hints: [`${T}초를 몇 분 몇 초로 나타내는 문제예요.`, '60초씩 묶으면 몇 분이 될까요?', `60초가 ${answer.m}번이면 ${60 * answer.m}초예요.`, `${T} − ${60 * answer.m} = ${answer.s >= 10 ? blankAt(answer.s, 1).blank : '☐'}초`],
     blank: answer.s >= 10 ? blankAt(answer.s, 1).blank : '☐',
     blankAnswer: answer.s >= 10 ? blankAt(answer.s, 1).blankAnswer : String(answer.s),
-    explain: { why: [`${T}초 안에 60초가 ${answer.m}번 들어가요.`, `${60 * answer.m}초를 빼면 ${answer.s}초가 남아요.`, `그래서 ${ms0(T)}예요.`], alt: [`${answer.m}분 ${answer.s}초를 다시 초로 바꾸면 ${60 * answer.m} + ${answer.s} = ${T}초예요.`, `두 방법 모두 ${ms0(T)}예요.`] },
+    explain: { why: [`${T}초 안에 60초가 ${answer.m}번 들어가요.`, `${60 * answer.m}초를 빼면 ${answer.s}초가 남아요.`, `그래서 ${ms0(T)}예요.`], alt: [`${answer.m}분 ${answer.s}초를 다시 초로 바꾸면 ${60 * answer.m} + ${answer.s} = ${T}초예요.`, '확인해 보면 답이 맞아요.'] },
   };
 }
 const TURNS = [
@@ -367,7 +368,7 @@ function t133Level4(word, ans) {
     hints: [`초침이 ${word} 돈 시간을 초로 물어요.`, '한 바퀴와 반 바퀴가 각각 몇 초인지 볼까요?', '초침 한 바퀴는 60초, 반 바퀴는 30초예요.', `${60 * whole} + 30 = ${blankAt(ans, 1).blank}`],
     blank: blankAt(ans, 1).blank,
     blankAnswer: blankAt(ans, 1).blankAnswer,
-    explain: { why: ['초침이 한 바퀴 돌면 60초예요.', `${whole}바퀴는 ${60 * whole}초, 반 바퀴는 30초예요.`, `그래서 ${60 * whole} + 30 = ${ans}초예요.`], alt: [`반 바퀴가 ${2 * whole + 1}번이라고 보면 30 × ${2 * whole + 1} = ${ans}초예요.`, `두 방법 모두 ${ans}초예요.`] },
+    explain: { why: ['초침이 한 바퀴 돌면 60초예요.', `${whole}바퀴는 ${60 * whole}초, 반 바퀴는 30초예요.`, `그래서 ${60 * whole} + 30 = ${ans}초예요.`], alt: [`반 바퀴가 ${2 * whole + 1}번이라고 보면 30 × ${2 * whole + 1} = ${ans}초예요.`, `어느 길로 해도 답은 ${ans}초예요.`] },
   };
 }
 function t133Level5(L, U) {
@@ -390,7 +391,7 @@ function t133Level5(L, U) {
     hints: [`□분 □0초를 초로 바꾼 값이 ${L}초보다 길고 ${U}초보다 짧은 경우를 모두 찾아요.`, '보기마다 초로 바꿔 볼까요?', `${ms0(L + 10)}는 ${L + 10}초예요.`, `${ms0(U - 10)} = ${blankAt(U - 10, 1).blank}초`],
     blank: blankAt(U - 10, 1).blank,
     blankAnswer: blankAt(U - 10, 1).blankAnswer,
-    explain: { why: [`보기를 초로 바꾸면 ${all.join('초, ')}초예요.`, `${L}초보다 길고 ${U}초보다 짧은 것은 ${all.filter((t) => t > L && t < U).join('초, ')}초예요.`, `그래서 ${answer.join(', ')}예요.`], alt: [`${L}초는 ${ms0(L)}, ${U}초는 ${ms0(U)}예요. 그 사이의 시간을 고르면 돼요.`, `두 풀이 모두 ${answer.join(', ')}예요.`] },
+    explain: { why: [`보기를 초로 바꾸면 ${all.join('초, ')}초예요.`, `${L}초보다 길고 ${U}초보다 짧은 것은 ${all.filter((t) => t > L && t < U).join('초, ')}초예요.`, `그래서 ${answer.join(', ')}예요.`], alt: [`${L}초는 ${ms0(L)}, ${U}초는 ${ms0(U)}예요. 그 사이의 시간을 고르면 돼요.`, `어느 길로 해도 답은 ${answer.join(', ')}예요.`] },
   };
 }
 const T13_3 = {
@@ -403,15 +404,15 @@ const T13_3 = {
   generate(rng, level) {
     if (level === 1) {
       const a = rng.int(2, 5);
-      return t133Level1(a, ['서면역에서 갈아타는 데 ', V(a), '분이 걸렸어요. 몇 초일까요? ']);
+      return t133Level1(a, ['서면역에서 갈아타는 데 ', V(a), '분이 걸렸어요. 몇 초일까요?', '\n']);
     }
     if (level === 2) {
       const [a, b] = draw(rng, () => [rng.int(2, 4), rng.pick([5, 10, 15, 20, 25, 30, 35, 40, 45, 50])], ([x, y]) => 60 * x + y !== y, [3, 10]);
-      return t133Level2(a, b, ['서면역 환승 통로를 걷는 데 ', V(a), '분 ', V(b), '초가 걸렸어요. 몇 초일까요? ']);
+      return t133Level2(a, b, ['서면역 환승 통로를 걷는 데 ', V(a), '분 ', V(b), '초가 걸렸어요. 몇 초일까요?', '\n']);
     }
     if (level === 3) {
       const T = draw(rng, () => rng.int(121, 299), (t) => t % 60 >= 5 && t % 100 < 60 && Math.floor(t / 100) !== Math.floor(t / 60), 205);
-      return t133Level3(T, ['어느 날 서면역 승강장에서 열차를 ', V(T), '초 기다렸어요. 몇 분 몇 초일까요? ']);
+      return t133Level3(T, ['아침에 서면역 승강장에서 열차를 ', V(T), '초 기다렸어요. 몇 분 몇 초일까요?', '\n']);
     }
     if (level === 4) {
       const [w, a] = rng.pick(TURNS);
@@ -432,11 +433,11 @@ const D1 = {
   maxLevel: 2,
   diagnostic: true,
   generate() {
-    const p = t133Level2(1, 30, ['서면역 환승 통로를 ', V(1), '분 ', V(30), '초 걸었어요. ']);
+    const p = t133Level2(1, 30, ['서면역 환승 통로를 ', V(1), '분 ', V(30), '초 걸었어요.', '\n']);
     return asDiag({ ...p, discriminators: [{ value: 130, category: '개념', kind: 'check', feedback: '1분은 몇 초예요?' }] });
   },
 };
 const D2 = { id: 'G13-D2', node: 'G13', title: '급행 진단: 초침 눈금 읽기', repr: '그림', minLevel: 2, maxLevel: 2, diagnostic: true, generate: () => asDiag(t131Level2(7, 15, 7, 2)) };
-const D3 = { id: 'G13-D3', node: 'G13', title: '급행 진단(예비): 초를 분과 초로', repr: '빈칸', minLevel: 3, maxLevel: 3, diagnostic: true, generate: () => asDiag(t133Level3(205, ['서면역에서 열차를 ', V(205), '초 기다렸어요. '])) };
+const D3 = { id: 'G13-D3', node: 'G13', title: '급행 진단(예비): 초를 분과 초로', repr: '빈칸', minLevel: 3, maxLevel: 3, diagnostic: true, generate: () => asDiag(t133Level3(205, ['서면역에서 열차를 ', V(205), '초 기다렸어요.', '\n'])) };
 
 export default [T13_1, T13_2, T13_3, D1, D2, D3];

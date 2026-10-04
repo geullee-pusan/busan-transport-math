@@ -52,3 +52,36 @@ export function figCar(x, y, w = 48, h = 28, { state = 'empty', front = false, m
   if (front) parts.push(`<rect x="${x + w - 9}" y="${y + 5}" width="5" height="9" rx="1.5" fill="${FIG.ink}"/>`);
   return parts.join('');
 }
+
+/**
+ * 순환 노선(N15 T15-2 6단계 { kind: 'cycle', stops: K, start: 1 }) — 시각 자문 4차.
+ * 원 하나 + 정류장 점 K개(번호 글자) + 출발 꼬리표 + 도는 방향 화살 하나. 답(도착 정류장)·바퀴 수·지나는 길은 그리지 않는다.
+ * - 정류장 1번(start)이 맨 위(12시), 시계 방향으로 2, 3, … (방향은 화살 하나로만 — 정류장 사이마다 화살을 두면 아이가 화살을 센다)
+ * - 원은 버스 노선이라 노선 색 없이 진한 선 3. 점은 흰 원 r15 + 진한 테 2 + 번호 16 굵게(번호가 곧 답의 형식이라 모두 쓴다)
+ * - 출발: 1번 점 위쪽 밖에 [출발] 꼬리표(테 1.5, 둥근 네모, 16px)와 점까지 짧은 선. 이중 고리는 쓰지 않는다(노선도의 "목적지"와 헷갈림)
+ * - 정류장 사이 호 길이 ≥ 44(점 지름 30 + 틈 14) → 반지름 R = max(84, K × 44 / 2π). K = 8~10이면 R 84, 그림 260×268
+ * - 정류장 점은 누를 수 없다(그림). 원 위에 점을 찍는 입력(SPEC 9.4)은 따로 정한다
+ */
+export function cycleFig({ stops: K, start = 1 }) {
+  const R = Math.max(84, (K * 44) / (2 * Math.PI));
+  const C = R + 46; // 가운데(위쪽에 출발 꼬리표 자리)
+  const W = C * 2, Hh = C * 2 + 8;
+  const at = (i, rr = R) => { const a = -Math.PI / 2 + (i * 2 * Math.PI) / K; return [C + rr * Math.cos(a), C + 8 + rr * Math.sin(a)]; };
+  const out = [`<circle cx="${C}" cy="${C + 8}" r="${R}" fill="none" stroke="${FIG.ink}" stroke-width="3"/>`];
+  // 방향 화살: 원 밖, 1번과 2번 사이 호를 따라 짧게(시계 방향)
+  const a0 = -Math.PI / 2 + (0.28 * 2 * Math.PI) / K, a1 = -Math.PI / 2 + (0.72 * 2 * Math.PI) / K, ro = R + 20;
+  const p0 = [C + ro * Math.cos(a0), C + 8 + ro * Math.sin(a0)], p1 = [C + ro * Math.cos(a1), C + 8 + ro * Math.sin(a1)];
+  const tan = [-Math.sin(a1), Math.cos(a1)], nrm = [Math.cos(a1), Math.sin(a1)];
+  const tip = [p1[0] + tan[0] * 2, p1[1] + tan[1] * 2];
+  out.push(`<path d="M${p0[0]} ${p0[1]} A${ro} ${ro} 0 0 1 ${p1[0]} ${p1[1]}" fill="none" stroke="${FIG.ink}" stroke-width="2" stroke-linecap="round"/>`);
+  out.push(`<path d="M${tip[0] - tan[0] * 9 + nrm[0] * 5} ${tip[1] - tan[1] * 9 + nrm[1] * 5}L${tip[0]} ${tip[1]}L${tip[0] - tan[0] * 9 - nrm[0] * 5} ${tip[1] - tan[1] * 9 - nrm[1] * 5}" fill="none" stroke="${FIG.ink}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`);
+  for (let i = 0; i < K; i++) {
+    const [x, y] = at(i);
+    const n = ((start - 1 + i) % K) + 1;
+    out.push(`<circle cx="${x}" cy="${y}" r="15" fill="${FIG.paper}" stroke="${FIG.ink}" stroke-width="2"/><text x="${x}" y="${y}" dy="0.36em" text-anchor="middle" font-size="16" font-weight="700" fill="${FIG.ink}">${n}</text>`);
+  }
+  // 출발 꼬리표
+  const [sx, sy] = at(0);
+  out.push(`<line x1="${sx}" y1="${sy - 15}" x2="${sx}" y2="${sy - 24}" stroke="${FIG.ink}" stroke-width="1.5"/><rect x="${sx - 24}" y="${sy - 46}" width="48" height="22" rx="6" fill="${FIG.paper}" stroke="${FIG.ink}" stroke-width="1.5"/><text x="${sx}" y="${sy - 35}" dy="0.36em" text-anchor="middle" font-size="15" font-weight="700" fill="${FIG.ink}">출발</text>`);
+  return `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="정류장 ${K}곳을 도는 순환 노선, ${start}번에서 출발">${out.join('')}</svg>`;
+}

@@ -17,10 +17,11 @@
 | [08-line1-templates-11-20.md](08-line1-templates-11-20.md) | **MVP 구현용**: 1호선 11~20역(괴정~초량) 템플릿, 07과 같은 형식. 토성 1~11단계 전부 |
 | [09-templates-additions.md](09-templates-additions.md) | 1~10역 일반 템플릿 보강(역마다 표현 3가지 이상), 11~20역 보강 후보 |
 | [10-line2-pilot.md](10-line2-pilot.md) | 2호선 시범 구간(서면·부암·가야·동의대·개금: 초 단위 시간, 시간표, mm·km), 서면 갈아타기 지도 규칙, 금 도장과 판별 피드백(check/nudge) |
-| [concept-graph.json](concept-graph.json) | 엔진이 읽는 개념 그래프 137노드(B11·N40·G43·R10·D10·X23) |
+| [11-review-11-20.md](11-review-11-20.md) | 11~20역 구현 검토(f74f174): 꼭 고칠 것 8건, check/nudge 판정, 바뀐 곳 판정 |
+| [concept-graph.json](concept-graph.json) | 엔진이 읽는 개념 그래프 139노드(B13·N40·G43·R10·D10·X23) |
 | [concept-graph.schema.json](concept-graph.schema.json) | 그래프 JSON 스키마 |
 | [tools/validate-graph.mjs](tools/validate-graph.mjs) | 그래프 검사(순환, 없는 선수, 노선 순서 위반, 단계 조건). `node docs/curriculum/tools/validate-graph.mjs --verbose` |
 
 ## 남은 확인 사항
 1. 중학교 확장 노드의 2022 개정 중1 성취기준 코드(`02-concept-graph.md` 7절)
-2. 생선 가격, 배차 간격 등 FACTS에 없는 값은 모두 "(가상)"으로 쓴다. 실제 값을 쓰려면 FACTS에 추가 검증이 필요하다
+2. 생선 가격, 배차 간격 등 FACTS에 없는 값은 virtual 꼬리표만 달고 문장에는 표시하지 않는다(07 0.4절 12~14). 제원은 지어내지 않는다. 실제 값을 쓰려면 FACTS에 추가 검증이 필요하다

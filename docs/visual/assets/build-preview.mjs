@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { ICONS, svgIcon, iconSprite } from './icons.mjs';
 import { stationMark, stationTail, transferMark, lineBadge, trackPath, vehicleMarker, miniMap, sizeTier, TIERS } from './map-marks.mjs';
 import { vehicleArt, VEHICLES, ARCHETYPES } from './vehicle-art.mjs';
-import { FIG, hatchDefs, peopleRow, figCar } from './figure-kit.mjs';
+import { FIG, hatchDefs, peopleRow, figCar, cycleFig } from './figure-kit.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const css = readFileSync(resolve(here, 'tokens.css'), 'utf8') + readFileSync(resolve(here, 'components.css'), 'utf8');
@@ -171,6 +171,7 @@ ${iconHtml}
 <h2>8. 문제 그림</h2>
 <p class="small">8량 열차: 칠함 3 · 반 칸(빗금) 1 · 빈칸 4 · 짚는 표시(굵은 테) 1. 창문 없음, 앞 유리 하나로 방향.</p>${trainFig}
 <p class="small">사람 13명: 5명마다 틈, 한 줄 10명.</p>${peopleFig}
+<p class="small">순환 노선(cycle): 정류장 8곳 · 10곳, 1번 출발. 방향 화살 하나, 답은 그리지 않음. 그림 1.5배(기준 기기)로.</p><div class="row">${[8, 10].map((k) => '<div style="width:' + 1.5 * 268 + 'px;background:#fff;border-radius:12px">' + cycleFig({ stops: k, start: 1 }) + '</div>').join('')}</div>
 </body></html>`;
 writeFileSync(resolve(here, 'preview.html'), html);
 console.log('preview.html, icons.svg 만듦');

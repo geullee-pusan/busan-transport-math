@@ -6,9 +6,11 @@ import { LINES, LINE1_NODES, stationOf } from '../engine/world.js';
 import { line2Open, playableNodes } from '../engine/run.js';
 import { nodeState } from '../engine/state.js';
 import { FULL } from '../engine/mastery.js';
+import { stationMark, stationTail, TIERS } from './art/marks.js';
 
 const INK = '#1F3342';
 const DONE = new Set(['lit', 'passed', 'confirmed']);
+const MARK_TIER = TIERS.mid; // 격자 한 칸 = 20 단위. 이웃 역 간격이 약 12~20 단위라 중간 단계
 
 export function drawMap(state, { destId, onStation, onAnyStation } = {}) {
   // 1호선에 맞춰 확대한다. 다른 노선(개통 예정)은 가장자리에서 잘려도 된다.
@@ -87,10 +89,10 @@ function drawTrack(svg, { nodes, stations, color, label }, { state, destId, P, o
       const nss = nodes.map((n) => nodeState(state, n.id));
   const ns = (i) => nss[i];
   const status = nss.map((x) => x.status);
-  svg.append(s('polyline', { points: pos.map((p) => p.join(',')).join(' '), fill: 'none', stroke: INK, 'stroke-width': 13, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+  svg.append(s('polyline', { points: pos.map((p) => p.join(',')).join(' '), fill: 'none', stroke: INK, 'stroke-width': 10, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
   for (let i = 0; i < pos.length - 1; i++) {
     const on = DONE.has(status[i]) && DONE.has(status[i + 1]);
-    svg.append(s('line', { x1: pos[i][0], y1: pos[i][1], x2: pos[i + 1][0], y2: pos[i + 1][1], stroke: on ? color : '#FFFFFF', 'stroke-width': 8, 'stroke-linecap': 'round' }));
+    svg.append(s('line', { x1: pos[i][0], y1: pos[i][1], x2: pos[i + 1][0], y2: pos[i + 1][1], stroke: on ? color : '#FFFFFF', 'stroke-width': 7, 'stroke-linecap': 'round' }));
   }
   const destIdx = nodes.findIndex((n) => n.id === destId);
   if (destIdx > 0) {
@@ -107,21 +109,15 @@ function drawTrack(svg, { nodes, stations, color, label }, { state, destId, P, o
     const g = s('g', { class: 'station', tabindex: 0, role: 'button', 'aria-label': `${stations[i].name}역` });
     g.append(s('circle', { cx: x, cy: y, r: 14, fill: 'transparent' })); // 누르는 영역
     const isDest = n.id === destId;
-    if (st === 'confirmed') g.append(s('circle', { cx: x, cy: y, r: 7, fill: INK, stroke: INK, 'stroke-width': 3 }));
-    else if (st === 'lit') g.append(s('circle', { cx: x, cy: y, r: 7, fill: '#fff', stroke: INK, 'stroke-width': 3 })); // 켜진 역은 통과역과 같은 흰 원 + 진한 테(≫ 없음, 시각 3차 6절)
-    else if (st === 'passed' && ns(i).inspect) {
-      // 점검 중인 추정 역: 켜진 역 모양 그대로 + 바깥 점선 고리(점선 = 아직). 글자·≫·공구 없음(시각 3차 5절)
-      // 지금 목적지이면 목적지 이중 고리의 바깥 고리를 점선으로 그린 한 가지 모양(점 하나에 표시 하나, UX 확인)
-      if (isDest) g.append(s('circle', { cx: x, cy: y, r: 10, fill: '#fff', stroke: INK, 'stroke-width': 2.5, 'stroke-dasharray': '3 2.6' }), s('circle', { cx: x, cy: y, r: 5, fill: '#fff', stroke: INK, 'stroke-width': 2.5 }));
-      else g.append(s('circle', { cx: x, cy: y, r: 7, fill: '#fff', stroke: INK, 'stroke-width': 3 }), s('circle', { cx: x, cy: y, r: 12, fill: 'none', stroke: INK, 'stroke-width': 1.8, 'stroke-dasharray': '3 2.6' }));
-    } else if (st === 'passed') {
-      // 급행 통과·시승으로 미리 켠 역은 같은 모양(실선 + ≫). 점선은 다시 풀게 될 점검에만 쓴다(시각 3차 6절). 추정이라는 것은 역 시트 글로
-      g.append(s('circle', { cx: x, cy: y, r: 7, fill: '#fff', stroke: INK, 'stroke-width': 3 }));
-      g.append(s('text', { x: x + 9, y: y - 8, class: 'pass-mark' }, '≫'));
-    } else if (isDest) {
-      g.append(s('circle', { cx: x, cy: y, r: 10, fill: '#fff', stroke: INK, 'stroke-width': 2.5 }));
-      g.append(s('circle', { cx: x, cy: y, r: 5, fill: '#fff', stroke: INK, 'stroke-width': 2.5 }));
-    } else g.append(s('circle', { cx: x, cy: y, r: 5.5, fill: '#fff', stroke: '#7A8691', 'stroke-width': 2 })); // 아직 못 감: --line-mute(흰 3.72:1)
+    // 역 점 모양은 art/marks.js(시각 4차 map-marks.mjs): 켜짐 = 노선 색 굵은 고리(흰 구멍) + 진한 테 + 옅은 빛 테, 확정 = 꽉 참,
+    // 통과 = 켜짐 + ≫, 점검 = 켜진 모양 + 바깥 점선 고리, 점검 목적지 = 이중 고리의 바깥만 점선.
+    // 목적지가 아닌 꺼진 역은 모두 회색 빈 원(아직, UX 8차 5a — 진한 빈 원은 쓰지 않음)
+    const inspect = DONE.has(st) && ns(i).inspect;
+    const mark = isDest ? (inspect ? 'check-dest' : 'dest') : inspect ? 'check' : DONE.has(st) ? st : 'locked';
+    const tail = DONE.has(st) && !isDest ? stationTail(x, y, pos[i - 1] ?? null, pos[i + 1] ?? null, color, MARK_TIER) : '';
+    const art = s('g', {});
+    art.innerHTML = tail + stationMark(x, y, mark, color, MARK_TIER);
+    g.append(art);
     const showName = isDest || DONE.has(st) || (label === '1' && (i === 0 || i === pos.length - 1));
     if (showName) g.append(s('text', { x: x - 12, y: y + 4, class: `st-name${DONE.has(st) || isDest ? ' bold' : ''}`, 'text-anchor': 'end' }, stations[i].name));
     (svg.__targets ??= []).push({ x, y, id: stations[i].id, node: n.id });

@@ -32,7 +32,7 @@ export function renderSetup(root, app, { onDone }) {
   );
 }
 
-export function renderHome(root, app, { onStart, onExpress, onChallenge, onGarage, onParent, onSettings }) {
+export function renderHome(root, app, { onStart, onExpress, onChallenge, onGarage, onParent, onSettings, onPlacement }) {
   const state = app.state;
   const dest = destination(state);
   const ns = dest ? nodeState(state, dest.id) : null;
@@ -58,7 +58,9 @@ export function renderHome(root, app, { onStart, onExpress, onChallenge, onGarag
       returning,
       h('div.map-wrap', drawMap(state, { destId: dest?.id, onAnyStation: (id) => root.querySelector('.home')?.append(stationSheet(id)) })),
       h('p.small', '역을 누르면 그 역 이야기를 볼 수 있어요.'),
-      dest && doneToday
+      !state.placementDone && onPlacement
+        ? h('section.next', h('div.next-dest', '먼저 시승 운행으로 어느 역에서 출발할지 정해요.'), h('div.next-btns', h('button.primary.big', { type: 'button', onclick: onPlacement }, '시승 운행 출발'), h('button.secondary', { type: 'button', onclick: onStart }, '그냥 처음 역부터 출발')))
+        : dest && doneToday
         ? h('section.next', h('div.next-dest', '오늘 운행은 끝났어요. 차량은 차고에서 쉬어요. 내일 첫차에 만나요.'), h('div.next-btns', h('button.secondary', { type: 'button', onclick: onGarage }, '차고')))
         : dest
         ? h('section.next',

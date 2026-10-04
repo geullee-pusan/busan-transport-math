@@ -1,6 +1,6 @@
 {
   "$schema": "./concept-graph.schema.json",
-  "version": "2026-10-04.1",
+  "version": "2026-10-04.2",
   "source": "docs/curriculum/02-concept-graph.md, 03-line1-mvp-map.md; 성취기준 코드는 docs/CURRICULUM.md(별책 8 원문 대조)",
   "rules": {
     "prereqDefault": "mastered",
@@ -66,7 +66,8 @@
       "name": "2호선",
       "domain": "도형과 측정",
       "stations": null,
-      "stationCount": 43
+      "stationCount": 43,
+      "note": "추천 순서는 서면에서 시작해 양산 방향(3~4학년), 그다음 서면에서 장산 방향(5~6학년). 시범 구간: 서면·부암·가야·동의대·개금 (docs/curriculum/10-line2-pilot.md)"
     },
     "L3": {
       "name": "3호선",
@@ -1163,230 +1164,6 @@
       "scope": "in"
     },
     {
-      "id": "G01",
-      "title": "직선·선분·반직선",
-      "codes": [
-        "4수03-01"
-      ],
-      "gradeBand": "3-4",
-      "line": "L2",
-      "order": 1,
-      "station": null,
-      "strand": "geometry-measurement",
-      "prereqs": [],
-      "ceiling": 5,
-      "scope": "in",
-      "provisional": true
-    },
-    {
-      "id": "G02",
-      "title": "각, 직각·예각·둔각",
-      "codes": [
-        "4수03-02"
-      ],
-      "gradeBand": "3-4",
-      "line": "L2",
-      "order": 2,
-      "station": null,
-      "strand": "geometry-measurement",
-      "prereqs": [
-        {
-          "node": "G01"
-        }
-      ],
-      "ceiling": 6,
-      "scope": "in",
-      "provisional": true
-    },
-    {
-      "id": "G03",
-      "title": "수직·평행",
-      "codes": [
-        "4수03-03"
-      ],
-      "gradeBand": "3-4",
-      "line": "L2",
-      "order": 3,
-      "station": null,
-      "strand": "geometry-measurement",
-      "prereqs": [
-        {
-          "node": "G02"
-        }
-      ],
-      "ceiling": 6,
-      "scope": "in",
-      "provisional": true
-    },
-    {
-      "id": "G04",
-      "title": "밀기·뒤집기·돌리기",
-      "codes": [
-        "4수03-04"
-      ],
-      "gradeBand": "3-4",
-      "line": "L2",
-      "order": 4,
-      "station": null,
-      "strand": "geometry-measurement",
-      "prereqs": [],
-      "ceiling": 7,
-      "scope": "in",
-      "provisional": true
-    },
-    {
-      "id": "G05",
-      "title": "평면에서 점의 이동",
-      "codes": [
-        "4수03-05"
-      ],
-      "gradeBand": "3-4",
-      "line": "L2",
-      "order": 5,
-      "station": null,
-      "strand": "geometry-measurement",
-      "prereqs": [],
-      "ceiling": 7,
-      "scope": "in",
-      "provisional": true
-    },
-    {
-      "id": "G06",
-      "title": "원의 중심·반지름·지름",
-      "codes": [
-        "4수03-06"
-      ],
-      "gradeBand": "3-4",
-      "line": "L2",
-      "order": 6,
-      "station": null,
-      "strand": "geometry-measurement",
-      "prereqs": [],
-      "ceiling": 6,
-      "scope": "in",
-      "provisional": true
-    },
-    {
-      "id": "G07",
-      "title": "컴퍼스로 원 그리기",
-      "codes": [
-        "4수03-07"
-      ],
-      "gradeBand": "3-4",
-      "line": "L2",
-      "order": 7,
-      "station": null,
-      "strand": "geometry-measurement",
-      "prereqs": [
-        {
-          "node": "G06"
-        }
-      ],
-      "ceiling": 5,
-      "scope": "in",
-      "provisional": true
-    },
-    {
-      "id": "G08",
-      "title": "이등변삼각형·정삼각형",
-      "codes": [
-        "4수03-08"
-      ],
-      "gradeBand": "3-4",
-      "line": "L2",
-      "order": 8,
-      "station": null,
-      "strand": "geometry-measurement",
-      "prereqs": [
-        {
-          "node": "G02"
-        }
-      ],
-      "ceiling": 6,
-      "scope": "in",
-      "provisional": true
-    },
-    {
-      "id": "G09",
-      "title": "직각·예각·둔각삼각형",
-      "codes": [
-        "4수03-09"
-      ],
-      "gradeBand": "3-4",
-      "line": "L2",
-      "order": 9,
-      "station": null,
-      "strand": "geometry-measurement",
-      "prereqs": [
-        {
-          "node": "G02"
-        }
-      ],
-      "ceiling": 6,
-      "scope": "in",
-      "provisional": true
-    },
-    {
-      "id": "G10",
-      "title": "여러 가지 사각형",
-      "codes": [
-        "4수03-10"
-      ],
-      "gradeBand": "3-4",
-      "line": "L2",
-      "order": 10,
-      "station": null,
-      "strand": "geometry-measurement",
-      "prereqs": [
-        {
-          "node": "G03"
-        }
-      ],
-      "ceiling": 7,
-      "scope": "in",
-      "provisional": true
-    },
-    {
-      "id": "G11",
-      "title": "다각형·정다각형",
-      "codes": [
-        "4수03-11"
-      ],
-      "gradeBand": "3-4",
-      "line": "L2",
-      "order": 11,
-      "station": null,
-      "strand": "geometry-measurement",
-      "prereqs": [
-        {
-          "node": "G10"
-        }
-      ],
-      "ceiling": 6,
-      "scope": "in",
-      "provisional": true
-    },
-    {
-      "id": "G12",
-      "title": "모양 만들기·채우기",
-      "codes": [
-        "4수03-12"
-      ],
-      "gradeBand": "3-4",
-      "line": "L2",
-      "order": 12,
-      "station": null,
-      "strand": "geometry-measurement",
-      "prereqs": [
-        {
-          "node": "G11"
-        }
-      ],
-      "ceiling": 7,
-      "scope": "in",
-      "provisional": true
-    },
-    {
       "id": "G13",
       "title": "1분과 1초, 초 단위 시각",
       "codes": [
@@ -1394,8 +1171,8 @@
       ],
       "gradeBand": "3-4",
       "line": "L2",
-      "order": 13,
-      "station": null,
+      "order": 1,
+      "station": "서면",
       "strand": "geometry-measurement",
       "prereqs": [],
       "ceiling": 5,
@@ -1410,8 +1187,8 @@
       ],
       "gradeBand": "3-4",
       "line": "L2",
-      "order": 14,
-      "station": null,
+      "order": 2,
+      "station": "부암",
       "strand": "geometry-measurement",
       "prereqs": [
         {
@@ -1436,8 +1213,8 @@
       ],
       "gradeBand": "3-4",
       "line": "L2",
-      "order": 15,
-      "station": null,
+      "order": 3,
+      "station": "가야",
       "strand": "geometry-measurement",
       "prereqs": [
         {
@@ -1456,8 +1233,8 @@
       ],
       "gradeBand": "3-4",
       "line": "L2",
-      "order": 16,
-      "station": null,
+      "order": 4,
+      "station": "동의대",
       "strand": "geometry-measurement",
       "prereqs": [],
       "ceiling": 5,
@@ -1472,8 +1249,8 @@
       ],
       "gradeBand": "3-4",
       "line": "L2",
-      "order": 17,
-      "station": null,
+      "order": 5,
+      "station": "개금",
       "strand": "geometry-measurement",
       "prereqs": [
         {
@@ -1481,6 +1258,230 @@
         }
       ],
       "ceiling": 6,
+      "scope": "in",
+      "provisional": true
+    },
+    {
+      "id": "G01",
+      "title": "직선·선분·반직선",
+      "codes": [
+        "4수03-01"
+      ],
+      "gradeBand": "3-4",
+      "line": "L2",
+      "order": 6,
+      "station": null,
+      "strand": "geometry-measurement",
+      "prereqs": [],
+      "ceiling": 5,
+      "scope": "in",
+      "provisional": true
+    },
+    {
+      "id": "G02",
+      "title": "각, 직각·예각·둔각",
+      "codes": [
+        "4수03-02"
+      ],
+      "gradeBand": "3-4",
+      "line": "L2",
+      "order": 7,
+      "station": null,
+      "strand": "geometry-measurement",
+      "prereqs": [
+        {
+          "node": "G01"
+        }
+      ],
+      "ceiling": 6,
+      "scope": "in",
+      "provisional": true
+    },
+    {
+      "id": "G03",
+      "title": "수직·평행",
+      "codes": [
+        "4수03-03"
+      ],
+      "gradeBand": "3-4",
+      "line": "L2",
+      "order": 8,
+      "station": null,
+      "strand": "geometry-measurement",
+      "prereqs": [
+        {
+          "node": "G02"
+        }
+      ],
+      "ceiling": 6,
+      "scope": "in",
+      "provisional": true
+    },
+    {
+      "id": "G04",
+      "title": "밀기·뒤집기·돌리기",
+      "codes": [
+        "4수03-04"
+      ],
+      "gradeBand": "3-4",
+      "line": "L2",
+      "order": 9,
+      "station": null,
+      "strand": "geometry-measurement",
+      "prereqs": [],
+      "ceiling": 7,
+      "scope": "in",
+      "provisional": true
+    },
+    {
+      "id": "G05",
+      "title": "평면에서 점의 이동",
+      "codes": [
+        "4수03-05"
+      ],
+      "gradeBand": "3-4",
+      "line": "L2",
+      "order": 10,
+      "station": null,
+      "strand": "geometry-measurement",
+      "prereqs": [],
+      "ceiling": 7,
+      "scope": "in",
+      "provisional": true
+    },
+    {
+      "id": "G06",
+      "title": "원의 중심·반지름·지름",
+      "codes": [
+        "4수03-06"
+      ],
+      "gradeBand": "3-4",
+      "line": "L2",
+      "order": 11,
+      "station": null,
+      "strand": "geometry-measurement",
+      "prereqs": [],
+      "ceiling": 6,
+      "scope": "in",
+      "provisional": true
+    },
+    {
+      "id": "G07",
+      "title": "컴퍼스로 원 그리기",
+      "codes": [
+        "4수03-07"
+      ],
+      "gradeBand": "3-4",
+      "line": "L2",
+      "order": 12,
+      "station": null,
+      "strand": "geometry-measurement",
+      "prereqs": [
+        {
+          "node": "G06"
+        }
+      ],
+      "ceiling": 5,
+      "scope": "in",
+      "provisional": true
+    },
+    {
+      "id": "G08",
+      "title": "이등변삼각형·정삼각형",
+      "codes": [
+        "4수03-08"
+      ],
+      "gradeBand": "3-4",
+      "line": "L2",
+      "order": 13,
+      "station": null,
+      "strand": "geometry-measurement",
+      "prereqs": [
+        {
+          "node": "G02"
+        }
+      ],
+      "ceiling": 6,
+      "scope": "in",
+      "provisional": true
+    },
+    {
+      "id": "G09",
+      "title": "직각·예각·둔각삼각형",
+      "codes": [
+        "4수03-09"
+      ],
+      "gradeBand": "3-4",
+      "line": "L2",
+      "order": 14,
+      "station": null,
+      "strand": "geometry-measurement",
+      "prereqs": [
+        {
+          "node": "G02"
+        }
+      ],
+      "ceiling": 6,
+      "scope": "in",
+      "provisional": true
+    },
+    {
+      "id": "G10",
+      "title": "여러 가지 사각형",
+      "codes": [
+        "4수03-10"
+      ],
+      "gradeBand": "3-4",
+      "line": "L2",
+      "order": 15,
+      "station": null,
+      "strand": "geometry-measurement",
+      "prereqs": [
+        {
+          "node": "G03"
+        }
+      ],
+      "ceiling": 7,
+      "scope": "in",
+      "provisional": true
+    },
+    {
+      "id": "G11",
+      "title": "다각형·정다각형",
+      "codes": [
+        "4수03-11"
+      ],
+      "gradeBand": "3-4",
+      "line": "L2",
+      "order": 16,
+      "station": null,
+      "strand": "geometry-measurement",
+      "prereqs": [
+        {
+          "node": "G10"
+        }
+      ],
+      "ceiling": 6,
+      "scope": "in",
+      "provisional": true
+    },
+    {
+      "id": "G12",
+      "title": "모양 만들기·채우기",
+      "codes": [
+        "4수03-12"
+      ],
+      "gradeBand": "3-4",
+      "line": "L2",
+      "order": 17,
+      "station": null,
+      "strand": "geometry-measurement",
+      "prereqs": [
+        {
+          "node": "G11"
+        }
+      ],
+      "ceiling": 7,
       "scope": "in",
       "provisional": true
     },

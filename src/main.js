@@ -21,12 +21,16 @@ const seed = () => (Date.now() ^ (app.state.runs * 2654435761)) >>> 0;
 function home() {
   if (!app.state.placementDone && app.state.runs === 0 && !app.state.profile.nickname && Object.keys(app.state.nodes).length === 0) return setup();
   renderHome(root, app, {
-    onStart: () => go(startRun(app.state, { day: dayNumber(), seed: seed() })),
+    onStart: () => {
+      if (!app.state.placementDone) app.save({ ...app.state, placementDone: true });
+      go(startRun(app.state, { day: dayNumber(), seed: seed() }));
+    },
     onExpress: () => go(startExpress(app.state, { day: dayNumber(), seed: seed() })),
     onChallenge: () => go(startRun(app.state, { day: dayNumber(), seed: seed(), mode: 'challenge' })),
     onGarage: () => renderGarage(root, app, { onHome: home }),
     onParent: () => renderParent(root, app, { onHome: home, onReset: () => { app.save({ ...createState(), parentPin: app.state.parentPin }); home(); } }),
     onSettings: () => renderSettings(root, app, { onHome: home }),
+    onPlacement: () => go(startPlacement(app.state, { day: dayNumber(), seed: seed() })),
   });
 }
 
@@ -65,5 +69,11 @@ home();
 
 // 홈 화면 설치·오프라인(서비스 워커). 개발 서버에서는 등록하지 않는다.
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  // 새 판이 깔리면(이미 예전 판을 쓰던 기기) 한 번 새로 열어 새 판을 바로 보여준다.
+  // 운행 중이면 새로 열지 않는다(다음에 열 때 새 판).
+  const hadController = Boolean(navigator.serviceWorker.controller);
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (hadController && !document.querySelector('.run-screen')) location.reload();
+  });
   navigator.serviceWorker.register('./sw.js').catch(() => {});
 }

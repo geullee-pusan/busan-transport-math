@@ -83,11 +83,11 @@ function multiGrade(answer, discs) {
   const key = (arr) => [...new Set((Array.isArray(arr) ? arr : []).map(Number))].sort((x, y) => x - y).join(',');
   const want = key(answer);
   return (r) => {
-    if (!Array.isArray(r) || r.length === 0) return { correct: false, flags: { careless: true }, feedback: '답을 먼저 골라 볼까요?' };
+    if (!Array.isArray(r) || r.length === 0) return { correct: false, flags: { careless: true }, kind: 'check', feedback: '답을 먼저 골라 볼까요?' };
     const got = key(r);
     if (got === want) return { correct: true };
     const d = discs.find((x) => key(x.value) === got);
-    return d ? { correct: false, category: d.category, feedback: d.feedback } : { correct: false, category: null, feedback: null };
+    return d ? { correct: false, category: d.category, kind: d.kind ?? 'check', feedbackCheck: d.feedbackCheck, feedback: d.feedback } : { correct: false, category: null, kind: 'check', feedback: null };
   };
 }
 
@@ -105,20 +105,20 @@ const SRC_LEN = SRC_L1;
  */
 function decGrade(ans, discs, textNums) {
   return (r) => {
-    if (isBlank(r)) return { correct: false, flags: { careless: true }, feedback: '답을 먼저 써 볼까요?' };
+    if (isBlank(r)) return { correct: false, flags: { careless: true }, kind: 'check', feedback: '답을 먼저 써 볼까요?' };
     const s = String(r).trim();
     const f = s.match(/^(\d+)\s*\/\s*(\d+)$/);
     if (f && Number(f[2]) !== 0) {
-      if (near(Number(f[1]) / Number(f[2]), ans)) return { correct: false, flags: { careless: true, reask: true }, feedback: '소수로 물었어요. 소수로 써 볼까요?' };
-      return { correct: false, category: '개념', feedback: '소수로 써 볼까요?' };
+      if (near(Number(f[1]) / Number(f[2]), ans)) return { correct: false, flags: { careless: true, reask: true }, kind: 'check', feedback: '소수로 물었어요. 소수로 써 볼까요?' };
+      return { correct: false, category: '개념', kind: 'check', feedback: '소수로 써 볼까요?' };
     }
     const v = Number(s);
-    if (Number.isNaN(v)) return { correct: false, flags: { careless: true }, feedback: '소수로 써 볼까요?' };
+    if (Number.isNaN(v)) return { correct: false, flags: { careless: true }, kind: 'check', feedback: '소수로 써 볼까요?' };
     if (near(v, ans)) return { correct: true };
     const d = discs.find((x) => near(Number(x.value), v));
-    if (d) return { correct: false, category: d.category, feedback: d.feedback };
-    if (textNums.some((x) => near(x, v))) return { correct: false, flags: { careless: true }, feedback: '문제에 있는 수를 그대로 썼어요' };
-    return { correct: false, category: null, feedback: null };
+    if (d) return { correct: false, category: d.category, kind: d.kind ?? 'check', feedbackCheck: d.feedbackCheck, feedback: d.feedback };
+    if (textNums.some((x) => near(x, v))) return { correct: false, flags: { careless: true }, kind: 'check', feedback: '문제에 있는 수를 그대로 썼어요' };
+    return { correct: false, category: null, kind: 'check', feedback: null };
   };
 }
 
@@ -127,8 +127,8 @@ function t101Level1(k) {
   const ans = tenth(k);
   const discs = uniq(
     [
-      { value: k, category: '개념', feedback: '칸 수가 아니라 길이를 물었어요. 한 칸은 몇 km예요?' },
-      { value: k / 100, category: '개념', feedback: '1을 10칸으로 나눈 한 칸은 얼마예요?' },
+      { value: k, category: '개념', kind: 'nudge', feedbackCheck: '무엇을 물었는지 다시 볼까요?', feedback: '칸 수가 아니라 길이를 물었어요. 한 칸은 몇 km예요?' },
+      { value: k / 100, category: '개념', kind: 'check', feedback: '1을 10칸으로 나눈 한 칸은 얼마예요?' },
     ],
     ans,
   );
@@ -156,9 +156,9 @@ function t101Level2(a, b) {
   const dec = tenth(a);
   const fb = fr(b, 10);
   const discs = [
-    { key: 'dec', value: a / 100, category: '개념', feedback: `1을 10칸으로 나눈 ${a}칸은 어디일까요?` },
-    { key: 'dec', value: a + 0.1, category: '개념', feedback: `1을 10칸으로 나눈 ${a}칸은 어디일까요?` },
-    { key: 'frac', value: fr(b, 100), category: '개념', feedback: '0.1은 몇 분의 1일까요?' },
+    { key: 'dec', value: a / 100, category: '개념', kind: 'check', feedback: `1을 10칸으로 나눈 ${a}칸은 어디일까요?` },
+    { key: 'dec', value: a + 0.1, category: '개념', kind: 'check', feedback: `1을 10칸으로 나눈 ${a}칸은 어디일까요?` },
+    { key: 'frac', value: fr(b, 100), category: '개념', kind: 'check', feedback: '0.1은 몇 분의 1일까요?' },
   ];
   return {
     text: [n(fa), jo(fa, '을', '를'), ' 소수로, ', n(db), jo(db, '을', '를'), ' 분수로 써요.'],
@@ -169,17 +169,17 @@ function t101Level2(a, b) {
     grade(r) {
       const D = r?.dec;
       const F = r?.frac;
-      if (isBlank(D) && isBlank(F)) return { correct: false, flags: { careless: true }, feedback: '답을 먼저 써 볼까요?' };
+      if (isBlank(D) && isBlank(F)) return { correct: false, flags: { careless: true }, kind: 'check', feedback: '답을 먼저 써 볼까요?' };
       const fm = String(F ?? '').trim().match(/^(\d+)\s*\/\s*(\d+)$/);
       const decOk = !isBlank(D) && near(Number(String(D).trim()), dec) && !String(D).includes('/');
       const fracOk = fm && Number(fm[1]) === b && Number(fm[2]) === 10;
       if (decOk && fracOk) return { correct: true };
-      if (String(D ?? '').trim() === fa || near(Number(String(F ?? '').trim()), db)) return { correct: false, flags: { careless: true, reask: true }, feedback: '묻는 꼴과 다르게 썼어요. 다시 볼까요?' };
+      if (String(D ?? '').trim() === fa || near(Number(String(F ?? '').trim()), db)) return { correct: false, flags: { careless: true, reask: true }, kind: 'check', feedback: '묻는 꼴과 다르게 썼어요. 다시 볼까요?' };
       for (const d of discs) {
         const got = d.key === 'dec' ? Number(String(D ?? '').trim()) : String(F ?? '').trim();
-        if (d.key === 'dec' ? near(got, d.value) : got === d.value) return { correct: false, category: d.category, feedback: d.feedback };
+        if (d.key === 'dec' ? near(got, d.value) : got === d.value) return { correct: false, category: d.category, kind: d.kind ?? 'check', feedbackCheck: d.feedbackCheck, feedback: d.feedback };
       }
-      return { correct: false, category: null, feedback: `${!decOk ? '소수' : '분수'} 칸을 다시 볼까요?` };
+      return { correct: false, category: null, kind: 'check', feedback: `${!decOk ? '소수' : '분수'} 칸을 다시 볼까요?` };
     },
     hints: [`${fa}${jo(fa, '은', '는')} 소수로, ${db}${jo(db, '은', '는')} 분수로 바꿔 쓰는 것을 물어요.`, '1을 10칸으로 똑같이 나눈 한 칸이 1/10, 곧 0.1이에요. 몇 칸인지 생각해 봐요.', `${fa}${jo(fa, '은', '는')} 0.1이 ${a}개예요.`, `${db}${jo(db, '은', '는')} ☐/10`],
     blank: '☐/10',
@@ -194,8 +194,8 @@ function t101Level2(a, b) {
 /** 3단계: 1호선 39.9km 쪼개기 */
 function t101Level3() {
   const discs = [
-    { key: 'tenth', value: 99, category: '개념', feedback: '0.9km는 0.1km가 몇 개일까요?' },
-    { key: 'tenth', value: 0.9, category: '개념', feedback: '0.1km가 몇 개인지 물었어요. 몇 개일까요?' },
+    { key: 'tenth', value: 99, category: '개념', kind: 'check', feedback: '0.9km는 0.1km가 몇 개일까요?' },
+    { key: 'tenth', value: 0.9, category: '개념', kind: 'check', feedback: '0.1km가 몇 개인지 물었어요. 몇 개일까요?' },
   ];
   return {
     text: [L1(), '호선 전체 길이는 ', n(39.9, { real: true, source: SRC_LEN }), 'km예요. ', n(1), 'km가 몇 개, ', n(0.1), 'km가 몇 개인 길이예요?'],
@@ -206,12 +206,12 @@ function t101Level3() {
     grade(r) {
       const o = Number(String(r?.one ?? '').trim());
       const t = Number(String(r?.tenth ?? '').trim());
-      if (isBlank(r?.one) && isBlank(r?.tenth)) return { correct: false, flags: { careless: true }, feedback: '답을 먼저 써 볼까요?' };
+      if (isBlank(r?.one) && isBlank(r?.tenth)) return { correct: false, flags: { careless: true }, kind: 'check', feedback: '답을 먼저 써 볼까요?' };
       if (o === 39 && t === 9) return { correct: true };
-      if (o === 0 && t === 399) return { correct: false, flags: { careless: true, reask: true }, feedback: '1km로 묶을 수 있는 만큼은 몇 개일까요?' };
+      if (o === 0 && t === 399) return { correct: false, flags: { careless: true, reask: true }, kind: 'check', feedback: '1km로 묶을 수 있는 만큼은 몇 개일까요?' };
       const d = discs.find((x) => near(Number(x.value), t));
-      if (o === 39 && d) return { correct: false, category: d.category, feedback: d.feedback };
-      return { correct: false, category: null, feedback: `${o === 39 ? '0.1km' : '1km'} 칸을 다시 볼까요?` };
+      if (o === 39 && d) return { correct: false, category: d.category, kind: d.kind ?? 'check', feedbackCheck: d.feedbackCheck, feedback: d.feedback };
+      return { correct: false, category: null, kind: 'check', feedback: `${o === 39 ? '0.1km' : '1km'} 칸을 다시 볼까요?` };
     },
     hints: ['1호선 전체 길이는 39.9km예요. 1km가 몇 개, 0.1km가 몇 개인지 물어요.', '39.9를 자연수 부분과 소수 부분으로 나눠 볼까요?', '자연수 부분은 39예요.', '0.9km는 0.1km가 ☐개'],
     blank: '0.1km가 ☐개',
@@ -230,8 +230,8 @@ function t101Level4(N) {
   const u = N % 10;
   const discs = uniq(
     [
-      { value: N, category: '개념', feedback: `0.1이 10개면 1이에요. ${N}개면요?` },
-      { value: N / 100, category: '개념', feedback: `0.1이 10개면 1이에요. ${N}개면요?` },
+      { value: N, category: '개념', kind: 'nudge', feedbackCheck: '소수점의 자리를 다시 볼까요?', feedback: `0.1이 10개면 1이에요. ${N}개면요?` },
+      { value: N / 100, category: '개념', kind: 'nudge', feedbackCheck: '소수점의 자리를 다시 볼까요?', feedback: `0.1이 10개면 1이에요. ${N}개면요?` },
     ],
     ans,
   );
@@ -260,9 +260,9 @@ function t101Level5(A, d) {
   const answer = Array.from({ length: d - 1 }, (_, i) => lo + 1 + i);
   const options = Array.from({ length: d + 3 }, (_, i) => lo - 1 + i);
   const discs = [
-    { value: [lo, ...answer, hi], category: '개념', feedback: `${A}.0은 ${A}${jo(A, '과', '와')} 같아요. ${A}보다 커야 하죠?` },
-    { value: [lo, ...answer], category: '개념', feedback: `${A}.0은 ${A}${jo(A, '과', '와')} 같아요. ${A}보다 커야 하죠?` },
-    { value: [...answer, hi], category: '개념', feedback: `${B}보다 작아야 해요. ${B}도 될까요?` },
+    { value: [lo, ...answer, hi], category: '개념', kind: 'check', feedback: `${A}.0은 ${A}${jo(A, '과', '와')} 같아요. ${A}보다 커야 하죠?` },
+    { value: [lo, ...answer], category: '개념', kind: 'check', feedback: `${A}.0은 ${A}${jo(A, '과', '와')} 같아요. ${A}보다 커야 하죠?` },
+    { value: [...answer, hi], category: '개념', kind: 'check', feedback: `${B}보다 작아야 해요. ${B}도 될까요?` },
   ];
   return {
     text: [n(0.1), '이 ', unknown('□'), '개인 수가 ', n(A), '보다 크고 ', n(B), '보다 작아요. □에 들어갈 수 있는 수를 모두 골라요.'],
@@ -291,8 +291,8 @@ function t101Level6(t1, t2) {
     input: { kind: 'compound', fields: [{ key: 'goejeong', label: '괴정역', kind: 'numberline' }, { key: 'dangni', label: '당리역', kind: 'numberline' }] },
     answer: { goejeong: d1, dangni: d2 },
     discriminators: [
-      { key: 'goejeong', value: d2, category: '읽기', feedback: '괴정역까지는 몇 km였죠?' },
-      { key: 'dangni', value: d1, category: '읽기', feedback: '당리역까지는 몇 km였죠?' },
+      { key: 'goejeong', value: d2, category: '읽기', kind: 'check', feedback: '괴정역까지는 몇 km였죠?' },
+      { key: 'dangni', value: d1, category: '읽기', kind: 'check', feedback: '당리역까지는 몇 km였죠?' },
     ],
     hints: [`사하역에서 괴정역까지 ${d1}km, 당리역까지 ${d2}km예요. 두 거리를 수직선에 점으로 찍는 문제예요.`, '수직선의 작은 눈금 한 칸은 얼마일까요? 0에서 몇 칸 가야 하는지 세어 봐요.', '작은 눈금 한 칸은 0.1km예요.', `${d1}km는 0.1km가 ☐개`],
     blank: '0.1km가 ☐개',
@@ -338,8 +338,8 @@ const D1 = {
   diagnostic: true,
   generate() {
     const discs = [
-      { value: 0.07, category: '개념', feedback: '1을 10칸으로 나눈 7칸은 어디일까요?' },
-      { value: 7.1, category: '개념', feedback: '1을 10칸으로 나눈 7칸은 어디일까요?' },
+      { value: 0.07, category: '개념', kind: 'check', feedback: '1을 10칸으로 나눈 7칸은 어디일까요?' },
+      { value: 7.1, category: '개념', kind: 'check', feedback: '1을 10칸으로 나눈 7칸은 어디일까요?' },
     ];
     return {
       text: [n('7/10'), '을 소수로 써요.'],
@@ -389,8 +389,8 @@ function t102Level1(k) {
     input: { kind: 'number', unit: '개' },
     answer: k,
     discriminators: [
-      { value: d, category: '개념', feedback: `0.1이 몇 개 모이면 ${d}일까요?` },
-      { value: k * 10, category: '개념', feedback: `0.1이 몇 개 모이면 ${d}일까요?` },
+      { value: d, category: '개념', kind: 'check', feedback: `0.1이 몇 개 모이면 ${d}일까요?` },
+      { value: k * 10, category: '개념', kind: 'check', feedback: `0.1이 몇 개 모이면 ${d}일까요?` },
     ],
     hints: [`사하역 출구에서 버스 정류장까지 ${d}km예요. 0.1km가 몇 개인 길이인지 물어요.`, '0부터 1까지를 10칸으로 나눈 수직선을 떠올려 볼까요? 한 칸이 0.1이에요.', '0.1이 2개면 0.2예요.', `${d}${jo(d, '은', '는')} 0.1이 ☐개`],
     blank: '0.1이 ☐개',
@@ -407,8 +407,8 @@ function t102Level2(k) {
   const f = fr(k, 10);
   const ans = tenth(k);
   const discs = [
-    { value: k / 100, category: '개념', feedback: `1을 10칸으로 나눈 ${k}칸은 어디일까요?` },
-    { value: Number((k + 0.1).toFixed(1)), category: '개념', feedback: `1을 10칸으로 나눈 ${k}칸은 어디일까요?` },
+    { value: k / 100, category: '개념', kind: 'check', feedback: `1을 10칸으로 나눈 ${k}칸은 어디일까요?` },
+    { value: Number((k + 0.1).toFixed(1)), category: '개념', kind: 'check', feedback: `1을 10칸으로 나눈 ${k}칸은 어디일까요?` },
   ];
   return {
     text: ['사하역에서 공원까지 ', V(f), 'km예요. 소수로 몇 km예요?'],
@@ -432,14 +432,14 @@ function t102Level3(k) {
   const ans = tenth(k);
   const discs = uniq(
     [
-      { value: tenth(k - 1), category: '개념', feedback: '첫 표지판은 몇 km에 있나요?' },
-      { value: tenth(k + 1), category: '개념', feedback: '첫 표지판은 몇 km에 있나요?' },
-      { value: k, category: '개념', feedback: `0.1km가 ${k}개면 몇 km예요?` },
+      { value: tenth(k - 1), category: '개념', kind: 'check', feedback: '첫 표지판은 몇 km에 있나요?' },
+      { value: tenth(k + 1), category: '개념', kind: 'check', feedback: '첫 표지판은 몇 km에 있나요?' },
+      { value: k, category: '개념', kind: 'check', feedback: `0.1km가 ${k}개면 몇 km예요?` },
     ],
     ans,
   );
   return {
-    text: ['(가상) 사하역 출구부터 ', n(0.1), 'km마다 표지판이 있어요. 첫 표지판은 출구에서 ', n(0.1), 'km 떨어진 곳에 있어요. ', n(k), '번째 표지판까지 몇 km예요?'],
+    text: ['(가상) 사하역 출구부터 ', V(0.1), 'km마다 표지판이 있어요. 첫 표지판은 출구에서 ', V(0.1), 'km 떨어진 곳에 있어요. ', V(k), '번째 표지판까지 몇 km예요?'],
     // 출구(0)에는 표지판이 없고, 0.1km 눈금마다 표지판이 있다.
     figure: { kind: 'numberline', from: 0, to: 1, ticks: 10, origin: '출구' },
     input: { kind: 'decimal', unit: 'km' },
@@ -481,7 +481,7 @@ function t103Level1(k) {
     figure: null,
     input: { kind: 'compound', fields: [{ key: 'count', label: '0.1이 □개' }, { key: 'num', label: '□/10' }] },
     answer: { count: k, num: k },
-    discriminators: [{ key: 'count', value: k * 10, category: '개념', feedback: '0.1이 10개면 1이에요. 몇 개면 될까요?' }],
+    discriminators: [{ key: 'count', value: k * 10, category: '개념', kind: 'nudge', feedbackCheck: `0.1이 ${k * 10}개면 ${d}일까요?`, feedback: '0.1이 10개면 1이에요. 몇 개면 될까요?' }],
     hints: [`${d}${jo(d, '을', '를')} 0.1의 개수와 분수로 나타내는 문제예요.`, `0과 1 사이를 10칸으로 나눈 수직선에서 ${d}${jo(d, '을', '를')} 찾아볼까요?`, `${d}${jo(d, '은', '는')} 수직선에서 ${k}번째 칸이에요.`, '0.1이 ☐개'],
     blank: '0.1이 ☐개',
     blankAnswer: String(k),
@@ -503,8 +503,8 @@ function t103Level2(k) {
     input: { kind: 'compound', fields: [{ key: 'dec', label: '소수', kind: 'decimal' }, { key: 'count', label: '0.1이 □개' }] },
     answer: { dec: d, count: k },
     discriminators: [
-      { key: 'dec', value: k / 100, category: '개념', feedback: `1을 10칸으로 나눈 ${k}칸은 어디일까요?` },
-      { key: 'dec', value: k, category: '개념', feedback: '분자를 그대로 썼어요. 0.1이 몇 개예요?' },
+      { key: 'dec', value: k / 100, category: '개념', kind: 'check', feedback: `1을 10칸으로 나눈 ${k}칸은 어디일까요?` },
+      { key: 'dec', value: k, category: '개념', kind: 'check', feedback: '분자를 그대로 썼어요. 0.1이 몇 개예요?' },
     ],
     hints: [`${f}${jo(f, '을', '를')} 소수와 0.1의 개수로 나타내는 문제예요.`, '1을 10칸으로 똑같이 나눈 한 칸이 1/10, 곧 0.1이에요. 몇 칸인지 생각해 봐요.', `${f}${jo(f, '은', '는')} 1/10이 ${k}개예요.`, '0.☐'],
     blank: '0.☐',
@@ -527,9 +527,9 @@ function t103Level3(N) {
     input: { kind: 'compound', fields: [{ key: 'dec', label: '소수', kind: 'decimal' }, { key: 'rest', label: '1과 0.1이 □개' }] },
     answer: { dec: d, rest },
     discriminators: [
-      { key: 'dec', value: N / 100, category: '개념', feedback: `0.1이 10개면 1이에요. ${N}개면요?` },
-      { key: 'dec', value: N, category: '개념', feedback: `0.1이 10개면 1이에요. ${N}개면요?` },
-      { key: 'rest', value: N, category: '개념', feedback: '1을 빼고 나면 0.1이 몇 개 남아요?' },
+      { key: 'dec', value: N / 100, category: '개념', kind: 'nudge', feedbackCheck: '소수점의 자리를 다시 볼까요?', feedback: `0.1이 10개면 1이에요. ${N}개면요?` },
+      { key: 'dec', value: N, category: '개념', kind: 'nudge', feedbackCheck: '소수점의 자리를 다시 볼까요?', feedback: `0.1이 10개면 1이에요. ${N}개면요?` },
+      { key: 'rest', value: N, category: '개념', kind: 'check', feedback: '1을 빼고 나면 0.1이 몇 개 남아요?' },
     ],
     hints: [`0.1이 ${N}개인 수를 소수로, 또 1과 0.1의 개수로 나타내는 문제예요.`, `0.1이 10개면 1이에요. ${N}개 안에 10개 묶음이 몇 개 있을까요?`, `10개 묶음이 1개, 0.1이 ${rest}개 남아요.`, `☐.${rest}`],
     blank: `☐.${rest}`,

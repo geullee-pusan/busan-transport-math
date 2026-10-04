@@ -5,18 +5,39 @@ import { createRng, hashSeed } from './rng.js';
 import { grade } from './grade.js';
 import { applyAttempt, applyReview, emptyNode, FULL } from './mastery.js';
 import { nodeState } from './state.js';
-import { LINE1_NODES, NODES, segmentMeters } from './world.js';
+import { LINE_NODES, NODES, segmentMeters } from './world.js';
 
 const DONE = new Set(['lit', 'passed', 'confirmed']);
 
-/** 템플릿이 있는 1호선 노드(역 순서) */
-export function playableNodes() {
-  return LINE1_NODES.filter((n) => templatesFor(n.id).length > 0);
+/** 템플릿이 있는 노드(그 노선의 추천 순서) */
+export function playableNodes(line = 'L1') {
+  return (LINE_NODES[line] ?? []).filter((n) => templatesFor(n.id).length > 0);
 }
 
-/** 목적지 = 노선 순서상 가장 앞의 꺼진 역(템플릿이 있는 역만) */
-export function destination(state) {
-  return playableNodes().find((n) => !DONE.has(nodeState(state, n.id).status)) ?? null;
+/**
+ * 2호선은 지도 규칙으로 연다(개념 잠금이 아님, 커리큘럼 자문 10 1.3절):
+ * 1호선 서면(N25)이 켜지면 서면에서 갈아탈 수 있다.
+ */
+export function line2Open(state) {
+  return DONE.has(nodeState(state, 'N25').status) && playableNodes('L2').length > 0;
+}
+
+/**
+ * 이번 운행의 노선. 2호선이 열렸으면 운행마다 1호선 : 2호선 = 2 : 1로 번갈아 고른다(아이는 고르지 않음).
+ * 고른 노선에 갈 역이 없으면 다른 노선.
+ */
+export function chooseLine(state) {
+  const has = (line) => playableNodes(line).some((n) => !DONE.has(nodeState(state, n.id).status));
+  const want = line2Open(state) && state.runs % 3 === 2 ? 'L2' : 'L1';
+  if (has(want)) return want;
+  const other = want === 'L1' ? 'L2' : 'L1';
+  if (other === 'L2' && !line2Open(state)) return want;
+  return has(other) ? other : want;
+}
+
+/** 목적지 = 그 노선의 추천 순서상 가장 앞의 꺼진 역(템플릿이 있는 역만) */
+export function destination(state, line = chooseLine(state)) {
+  return playableNodes(line).find((n) => !DONE.has(nodeState(state, n.id).status)) ?? null;
 }
 
 const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
@@ -51,7 +72,8 @@ function reviewDue(state, day, exclude) {
  * @returns {object|null} run (목적지가 없으면 null — 1호선 완주)
  */
 export function startRun(state, { day, seed, mode = 'normal' }) {
-  const dest = destination(state);
+  const line = chooseLine(state);
+  const dest = destination(state, line);
   if (!dest) return null;
   const L = workingLevel(state, dest.id);
   const ceil = ceilingOf(dest.id);
@@ -75,6 +97,7 @@ export function startRun(state, { day, seed, mode = 'normal' }) {
     mode,
     day,
     seed,
+    line,
     dest: dest.id,
     slots,
     index: 0,
@@ -87,11 +110,12 @@ export function startRun(state, { day, seed, mode = 'normal' }) {
     startMeters: state.meters,
     startDone: Object.entries(state.nodes).filter(([, ns]) => DONE.has(ns.status)).map(([id]) => id),
     finished: false,
+    stateRef: state,
   };
 }
 
 /** 지금 슬롯의 문제를 만든다(이미 만들었으면 그대로). */
-export function currentProblem(run) {
+export function currentProblem(run, state = run.stateRef) {
   if (run.finished) return null;
   if (run.current) return run.current;
   const slot = run.slots[run.index];
@@ -103,7 +127,23 @@ export function currentProblem(run) {
   if (!template) template = slot.diagnostic ? diagnosticsFor(slot.node)[slot.diagIndex ?? 0] : pickTemplate(slot.node, slot.level, rng, run.recentReprs);
   if (!template) return null;
   const level = clamp(slot.level, template.minLevel, template.maxLevel);
-  const problem = template.generate(createRng(s), level);
+  // 출제 조건(requires): 문제에 필요한 다른 개념(예: 5자리 수 N20, 서면 환승 N25)을 아직 켜지 않았으면 씨앗값을 바꿔 다시 만든다.
+  // 열 번 안에 조건 없는 문제가 안 나오면 그 템플릿의 가장 쉬운 단계로.
+  const met = (p) => !p.requires || p.requires.every((id) => DONE.has(state?.nodes?.[id]?.status));
+  let problem = template.generate(createRng(s), level);
+  for (let k = 1; k <= 10 && !met(problem); k++) problem = template.generate(createRng(hashSeed(s, 'req', k)), level);
+  if (!met(problem)) {
+    // 이 템플릿은 조건이 늘 필요하다(예: 서면 환승 융합). 같은 역의 다른 템플릿으로 바꾼다.
+    const others = templatesFor(slot.node).filter((t) => t.id !== template.id && t.minLevel <= level && level <= t.maxLevel);
+    for (const t of others) {
+      const p = t.generate(createRng(s), clamp(level, t.minLevel, t.maxLevel));
+      if (met(p)) {
+        template = t;
+        problem = p;
+        break;
+      }
+    }
+  }
   run.current = { slot, template, level, seed: s, problem };
   // 이어 타기: 정차했던 문제는 틀린 횟수와 연 힌트를 그대로 이어받는다(다시 나와도 첫 시도가 아님)
   if (slot.kind === 'parked') {
@@ -133,6 +173,13 @@ export function submit(state, run, response) {
     return { ...next, result, outcome: 'correct' };
   }
   run.tries += 1;
+  // 첫 오답에는 점검(check)만 보여준다. 도움(nudge) 문구는 같은 문제의 두 번째 오답부터.
+  // 그래야 두 번째 정답이 "스스로 고친 것"이 되어 금 도장을 줄 수 있다(커리큘럼 자문 10 2절).
+  if (run.tries === 1 && result.kind === 'nudge') {
+    result.feedback = result.feedbackCheck ?? '다시 확인해 볼까요?';
+    result.kind = 'check';
+  }
+  if (result.kind === 'nudge') run.nudged = true;
   return { state, run, result, outcome: run.tries >= 2 ? 'giveup-offer' : 'retry' };
 }
 
@@ -162,13 +209,14 @@ function finishProblem(state0, run, correct, hint) {
       state.meters += Math.round(perHalf * gained);
       run.events.push({ type: 'tick', node: slot.node, gained });
     }
+    if (correct && gained === 0) state.meters += Math.round(segmentMeters(slot.node) / 16);
     if (lit) run.events.push({ type: 'lit', node: slot.node });
     if (pending) run.events.push({ type: 'pending', node: slot.node, code: pending });
   }
 
   // 금 도장: 힌트 ① 이하로 두 번 안에 맞힘, 2단계 이상. "첫 시도" 조건은 실수 공포와 앱 끄기 꼼수를 만들어서 뺐다.
   // 엄격함은 칸(숙달)이 맡는다: 두 번째 정답은 칸에서 반 칸이다.
-  if (correct && run.hint <= 1 && run.tries <= 1 && level >= 2 && slot.kind !== 'diag') {
+  if (correct && run.hint <= 1 && run.tries <= 1 && !run.nudged && level >= 2 && slot.kind !== 'diag') {
     state.goldTotal += 1;
     const card = state.cards.includes(state.activeCard) ? state.activeCard : state.license;
     state.cardGold = { ...state.cardGold, [card]: (state.cardGold[card] ?? 0) + 1 };
@@ -179,7 +227,7 @@ function finishProblem(state0, run, correct, hint) {
   if (correct && run.tries > 0) run.events.push({ type: 'retried' }); // 다시 생각해서 맞힘(행동 기록, 메달 아님)
   // 자기 변화: 이 역에서 바로 전 정답은 힌트 ②~④와 함께였는데 이번엔 힌트 없이 첫 시도에 맞힘
   if (correct && hint === 0 && run.tries === 0) {
-    const prev = ns.attempts.filter((x) => x.c).at(-1);
+    const prev = ns.attempts.filter((x) => x.c && typeof x.d === 'number' && x.d < run.day).at(-1); // 다른 날의 기록과만 비교
     if (prev && prev.h >= 2 && !run.events.some((e) => e.type === 'grew')) run.events.push({ type: 'grew', node: slot.node });
   }
 
@@ -201,6 +249,7 @@ function finishProblem(state0, run, correct, hint) {
     run.events.push({ type: 'license', tier: lic, evidence });
   }
 
+  run.stateRef = state;
   run.wrongStreak = correct ? 0 : run.wrongStreak + 1;
   run.recentReprs.push(template.repr);
   advance(state, run, correct);
@@ -222,10 +271,11 @@ function advance(state, run, correct) {
   run.index += 1;
   run.tries = 0;
   run.hint = 0;
+  run.nudged = false;
   run.current = null;
   // 목적지에 도착(점등)하면 남은 목적지 문제는 다음 역 문제로 바꾼다.
   if (run.events.some((e) => e.type === 'lit' && e.node === run.dest)) {
-    const nd = destination(state);
+    const nd = destination(state, run.line ?? 'L1');
     if (nd && nd.id !== run.dest) {
       for (let i = run.index; i < run.slots.length; i++) {
         if (run.slots[i].node === run.dest && run.slots[i].kind !== 'review') run.slots[i] = { ...run.slots[i], node: nd.id, level: Math.min(run.slots[i].level, ceilingOf(nd.id)) };
@@ -233,7 +283,7 @@ function advance(state, run, correct) {
       run.dest = nd.id;
     }
   }
-  if (run.index >= run.slots.length || !destination(state)) run.finished = true;
+  if (run.index >= run.slots.length || !destination(state, run.line ?? 'L1')) run.finished = true;
 }
 
 export function licenseOf(state) {
@@ -273,8 +323,9 @@ export function summary(state, run) {
     license: run.events.find((e) => e.type === 'license')?.tier ?? null,
     pending: run.events.filter((e) => e.type === 'pending').at(-1) ?? null,
     redo: state.redo.length,
-    dest: destination(state)?.id ?? null,
-    destHalves: destination(state) ? nodeState(state, destination(state).id).halves : 0,
+    dest: destination(state, run.line ?? 'L1')?.id ?? null,
+    destHalves: destination(state, run.line ?? 'L1') ? nodeState(state, destination(state, run.line ?? 'L1').id).halves : 0,
+    line2Opened: run.line === 'L1' && run.events.some((e) => e.type === 'lit' && e.node === 'N25') && line2Open(state),
   };
 }
 

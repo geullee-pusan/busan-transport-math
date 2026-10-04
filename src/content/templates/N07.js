@@ -83,11 +83,11 @@ function multiGrade(answer, discs) {
   const key = (arr) => [...new Set((Array.isArray(arr) ? arr : []).map(Number))].sort((x, y) => x - y).join(',');
   const want = key(answer);
   return (r) => {
-    if (!Array.isArray(r) || r.length === 0) return { correct: false, flags: { careless: true }, feedback: '답을 먼저 골라 볼까요?' };
+    if (!Array.isArray(r) || r.length === 0) return { correct: false, flags: { careless: true }, kind: 'check', feedback: '답을 먼저 골라 볼까요?' };
     const got = key(r);
     if (got === want) return { correct: true };
     const d = discs.find((x) => key(x.value) === got);
-    return d ? { correct: false, category: d.category, feedback: d.feedback } : { correct: false, category: null, feedback: null };
+    return d ? { correct: false, category: d.category, kind: d.kind ?? 'check', feedbackCheck: d.feedbackCheck, feedback: d.feedback } : { correct: false, category: null, kind: 'check', feedback: null };
   };
 }
 
@@ -101,11 +101,11 @@ function mulDiscs(a, m) {
   const c = Math.floor((u * m) / 10);
   const P = a * m;
   const list = [
-    { value: (t * m) * 10 + ((u * m) % 10), category: '계산', feedback: `일의 자리 ${u * m}에서 ${eun(c * 10)} 어디 갔나요?` },
-    { value: t * 10 + u * m, category: '개념', feedback: `${a}의 ${t * 10}도 ${m}배 했나요?` },
-    { value: a + m, category: '식', feedback: '곱셈이에요. 몇 번 더하는 셈일까요?' },
+    { value: (t * m) * 10 + ((u * m) % 10), category: '계산', kind: 'check', feedback: `일의 자리 ${u * m}에서 ${eun(c * 10)} 어디 갔나요?` },
+    { value: t * 10 + u * m, category: '개념', kind: 'nudge', feedbackCheck: '십의 자리를 다시 볼까요?', feedback: `${a}의 ${t * 10}도 ${m}배 했나요?` },
+    { value: a + m, category: '식', kind: 'nudge', feedbackCheck: '문제를 다시 읽어 볼까요?', feedback: '곱셈이에요. 몇 번 더하는 셈일까요?' },
   ];
-  if (c > 0) list.unshift({ value: (t + c) * m * 10 + ((u * m) % 10), category: '개념', feedback: '올린 수는 언제 더했나요?' });
+  if (c > 0) list.unshift({ value: (t + c) * m * 10 + ((u * m) % 10), category: '개념', kind: 'check', feedback: '올린 수는 언제 더했나요?' });
   return uniq(list.filter((d) => c > 0 || d.category === '식'), P);
 }
 
@@ -199,8 +199,8 @@ function t72Level1(c) {
     answer: P,
     discriminators: uniq(
       [
-        { value: (c / 10) * 8, category: '계산', feedback: '끝의 0은 어디 갔나요?' },
-        { value: c + 8, category: '식', feedback: '칸마다 같은 수예요. 몇 번 더할까요?' },
+        { value: (c / 10) * 8, category: '계산', kind: 'check', feedback: '끝의 0은 어디 갔나요?' },
+        { value: c + 8, category: '식', kind: 'nudge', feedbackCheck: '문제를 다시 읽어 볼까요?', feedback: '칸마다 같은 수예요. 몇 번 더할까요?' },
       ],
       P,
     ),
@@ -243,8 +243,8 @@ function t72Level3(a, k, b) {
     input: { kind: 'compound', fields: [{ key: 'ga', label: '가 열차' }, { key: 'na', label: '나 열차' }, { key: 'more', label: '더 많은 열차', options: ['가', '나'] }] },
     answer: { ga, na, more },
     discriminators: [
-      { key: 'na', value: b * 8, category: '읽기', feedback: '나 열차는 몇 칸에 탔나요?' },
-      { key: 'more', value: more === '가' ? '나' : '가', category: '개념', feedback: `${wa(ga)} ${eul(na)} 견주어 볼까요?` },
+      { key: 'na', value: b * 8, category: '읽기', kind: 'check', feedback: '나 열차는 몇 칸에 탔나요?' },
+      { key: 'more', value: more === '가' ? '나' : '가', category: '개념', kind: 'check', feedback: `${wa(ga)} ${eul(na)} 견주어 볼까요?` },
     ],
     hints: [`가 열차는 8칸에 ${a}명씩, 나 열차는 ${k}칸에 ${b}명씩 탔어요. 어느 열차에 사람이 더 많은지 물어요.`, '두 열차에 탄 사람을 각각 구해서 견주어 볼까요?', `가 열차는 ${a} × 8 = ${ga}명이에요.`, `나 열차는 ${b} × ${k} = ${bl.blank}명`],
     blank: bl.blank,
@@ -274,9 +274,9 @@ function t72Level4(m, x) {
     answer: P,
     discriminators: uniq(
       [
-        { value: w * m, category: '식', feedback: `${eun(w)} 잘못 나온 수예요. 한 칸 사람 수는요?` },
-        { value: x, category: '식', feedback: `${x}명을 찾았어요. 다음엔요?` },
-        { value: w - m, category: '식', feedback: `${x}명을 찾았어요. 다음엔요?` },
+        { value: w * m, category: '식', kind: 'nudge', feedbackCheck: `${eun(w)} 무엇을 곱한 결과예요?`, feedback: `${eun(w)} 잘못 나온 수예요. 한 칸 사람 수는요?` },
+        { value: x, category: '식', kind: 'nudge', feedbackCheck: '무엇을 물었는지 다시 볼까요?', feedback: `${x}명을 찾았어요. 다음엔요?` },
+        { value: w - m, category: '식', kind: 'nudge', feedbackCheck: '무엇을 물었는지 다시 볼까요?', feedback: `${x}명을 찾았어요. 다음엔요?` },
       ],
       P,
     ),
@@ -294,8 +294,8 @@ function t72Level4(m, x) {
 function t72Level5(u, m, k, T) {
   const answer = Array.from({ length: k }, (_, i) => i + 1);
   const rough = [1, 2, 3, 4, 5, 6, 7, 8, 9].filter((d) => d * 10 * m < T);
-  const discs = [{ value: answer.slice(0, -1), category: '개념', feedback: `${k}${u} × ${m}도 계산해 봤나요?` }];
-  if (rough.length !== answer.length) discs.push({ value: rough, category: '개념', feedback: `${k + 1}${u} × ${m}도 계산해 봤나요?` });
+  const discs = [{ value: answer.slice(0, -1), category: '개념', kind: 'nudge', feedbackCheck: '빠진 것이 없나요?', feedback: `${k}${u} × ${m}도 계산해 봤나요?` }];
+  if (rough.length !== answer.length) discs.push({ value: rough, category: '개념', kind: 'check', feedback: `${k + 1}${u} × ${m}도 계산해 봤나요?` });
   return {
     text: [unknown(`□${u}`), ' × ', n(m), jo(m, '이', '가'), ' ', n(T), '보다 작아요. □에 들어갈 수 있는 수를 모두 골라요.'],
     figure: null,
@@ -339,7 +339,7 @@ function t72Level6(cards) {
     challenge: true,
     input: { kind: 'number' },
     answer: best,
-    discriminators: uniq([{ value: wrong, category: '개념', feedback: '다른 자리에도 놓아 봤나요?' }], best),
+    discriminators: uniq([{ value: wrong, category: '개념', kind: 'check', feedback: '다른 자리에도 놓아 봤나요?' }], best),
     hints: ['카드 세 장으로 두 자리 수 하나와 한 자리 수 하나를 만들어요. 두 수의 곱이 가장 클 때를 물어요.', '가장 큰 숫자를 한 자리 수 자리에 놓으면 어떨까요? 여러 가지로 놓아 견주어 봐요.', `${d[0] * 10 + d[1]} × ${d[2]} = ${ieyo(wrong)}.`, `${pair[0]} × ${pair[1]} = ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
@@ -458,7 +458,7 @@ function t74(a, m) {
   const P = a * m;
   const bl = p2 >= 10 ? blankAt(p2, 1) : { blank: '☐', blankAnswer: String(p2) };
   const discs = [
-    { key: 'p1', value: t * m, category: '개념', feedback: `${T} × ${eun(m)} ${t} × ${m}${jo(m, '과', '와')} 같나요?` },
+    { key: 'p1', value: t * m, category: '개념', kind: 'check', feedback: `${T} × ${eun(m)} ${t} × ${m}${jo(m, '과', '와')} 같나요?` },
     ...mulDiscs(a, m).map((d) => ({ ...d, key: 'total' })),
   ];
   const alt =

@@ -83,11 +83,11 @@ function multiGrade(answer, discs) {
   const key = (arr) => [...new Set((Array.isArray(arr) ? arr : []).map(Number))].sort((x, y) => x - y).join(',');
   const want = key(answer);
   return (r) => {
-    if (!Array.isArray(r) || r.length === 0) return { correct: false, flags: { careless: true }, feedback: '답을 먼저 골라 볼까요?' };
+    if (!Array.isArray(r) || r.length === 0) return { correct: false, flags: { careless: true }, kind: 'check', feedback: '답을 먼저 골라 볼까요?' };
     const got = key(r);
     if (got === want) return { correct: true };
     const d = discs.find((x) => key(x.value) === got);
-    return d ? { correct: false, category: d.category, feedback: d.feedback } : { correct: false, category: null, feedback: null };
+    return d ? { correct: false, category: d.category, kind: d.kind ?? 'check', feedbackCheck: d.feedbackCheck, feedback: d.feedback } : { correct: false, category: null, kind: 'check', feedback: null };
   };
 }
 
@@ -120,7 +120,7 @@ function t41Level1(a, b) {
     estimate: { answer: c, min: c - 100, max: c + 100 },
     input: { kind: 'choice', options: [String(c - 100), String(c), String(c + 100)], howLabel: HOW, unit: '명' },
     answer: String(c),
-    discriminators: [{ value: String(front), category: '개념', feedback: `${wa(a)} ${b}의 뒷자리도 봤나요?` }],
+    discriminators: [{ value: String(front), category: '개념', kind: 'nudge', feedbackCheck: '두 수를 다시 어림해 볼까요?', feedback: `${wa(a)} ${b}의 뒷자리도 봤나요?` }],
     hints: [`오전에 ${a}명, 오후에 ${b}명이 탔어요. 하루 동안 탄 사람이 대충 몇백 명인지 물어요.`, `${eun(a)} 약 몇백 몇십일까요? 두 수를 몇백 몇십으로 바꿔서 어림해 봐요.`, `${eun(a)} 약 ${ra}, ${eun(b)} 약 ${ieyo(rb)}.`, `${ra} + ${rb} = ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
@@ -149,7 +149,7 @@ function t41Level2(a, b, w) {
     estimate: { answer: c, min: c - 100, max: c + 100 },
     input: { kind: 'choice', options: ['맞아요', '틀려요'], howLabel: HOW },
     answer: ans,
-    discriminators: [{ value: right ? '틀려요' : '맞아요', category: '개념', feedback: right ? '어림한 수와 가까운가요?' : '어림한 수와 몇백이나 차이 나요. 맞을까요?' }],
+    discriminators: [{ value: right ? '틀려요' : '맞아요', category: '개념', kind: right ? 'check' : 'nudge', ...(right ? {} : { feedbackCheck: '어림한 수와 견주어 볼까요?' }), feedback: right ? '어림한 수와 가까운가요?' : '어림한 수와 몇백이나 차이 나요. 맞을까요?' }],
     hints: [`친구가 계산한 답은 ${ieyo(w)}. 그 답이 맞는지 대충 몇백쯤인지 어림해서 판단해요.`, `${wa(a)} ${eul(b)} 각각 몇백 몇십으로 바꿔 봐요. 어림한 수와 친구의 답을 견주어 봐요.`, `${eun(a)} 약 ${ra}, ${eun(b)} 약 ${ieyo(rb)}.`, `${ra} + ${rb} = ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
@@ -179,7 +179,7 @@ function t41Level3(C, x, y, z) {
     estimate: { answer: sum, min: sum - 50, max: sum + 50 },
     input: { kind: 'choice', options: ['탈 수 있어요', '탈 수 없어요'], howLabel: HOW },
     answer: ans,
-    discriminators: [{ value: can ? '탈 수 없어요' : '탈 수 있어요', category: '개념', feedback: can ? '너무 크게 어림하지 않았나요?' : '너무 작게 어림하지 않았나요?' }],
+    discriminators: [{ value: can ? '탈 수 없어요' : '탈 수 있어요', category: '개념', kind: 'nudge', feedbackCheck: '어림한 수를 다시 볼까요?', feedback: can ? '너무 크게 어림하지 않았나요?' : '너무 작게 어림하지 않았나요?' }],
     hints: [
       `이번 열차에는 ${C}명이 더 탈 수 있어요. 기다리는 단체는 세 개예요. 모두 탈 수 있는지 물어요.`,
       `${eun(x)} 약 몇십일까요? 세 단체를 몇십으로 바꿔서 ${C}보다 많은지 적은지 봐요.`,
@@ -249,9 +249,9 @@ function t42Level1(s, p, q) {
     answer: ans,
     discriminators: uniq(
       [
-        { value: mid, category: '식', feedback: '장림역 뒤까지 따라갔나요?' },
-        { value: s + q, category: '읽기', feedback: '신장림역에서 탄 사람은요?' },
-        { value: ans - 10, category: '계산', feedback: '받아올린 1을 더했나요?' },
+        { value: mid, category: '식', kind: 'nudge', feedbackCheck: '무엇을 물었는지 다시 볼까요?', feedback: '장림역 뒤까지 따라갔나요?' },
+        { value: s + q, category: '읽기', kind: 'nudge', feedbackCheck: '문제의 수를 모두 썼나요?', feedback: '신장림역에서 탄 사람은요?' },
+        { value: ans - 10, category: '계산', kind: 'nudge', feedbackCheck: '십의 자리를 다시 계산해 볼까요?', feedback: '받아올린 1을 더했나요?' },
       ],
       ans,
     ),
@@ -275,14 +275,14 @@ function t42Level2(s, p, q, v2) {
     : ['열차에 ', V(s), '명이 타 있었어요. 신장림역에서 ', V(p), '명이 타고, 장림역에서 ', V(q), '명이 내렸어요. 지금 열차에 있는 사람은 몇 명이에요?'];
   const discs = v2
     ? [
-        { value: s + p + q, category: '식', feedback: '내린 사람도 열차에 남았나요?' },
-        { value: s - q, category: '식', feedback: '장림역 뒤까지 따라갔나요?' },
-        { value: s + p, category: '읽기', feedback: '신장림역에서 내린 사람은요?' },
+        { value: s + p + q, category: '식', kind: 'nudge', feedbackCheck: '처음 수와 답을 비교해 볼까요?', feedback: '내린 사람도 열차에 남았나요?' },
+        { value: s - q, category: '식', kind: 'nudge', feedbackCheck: '무엇을 물었는지 다시 볼까요?', feedback: '장림역 뒤까지 따라갔나요?' },
+        { value: s + p, category: '읽기', kind: 'nudge', feedbackCheck: '문제의 수를 모두 썼나요?', feedback: '신장림역에서 내린 사람은요?' },
       ]
     : [
-        { value: s + p + q, category: '식', feedback: '내린 사람도 열차에 남았나요?' },
-        { value: s + p, category: '식', feedback: '장림역 뒤까지 따라갔나요?' },
-        { value: s - q, category: '읽기', feedback: '신장림역에서 탄 사람은요?' },
+        { value: s + p + q, category: '식', kind: 'nudge', feedbackCheck: '처음 수와 답을 비교해 볼까요?', feedback: '내린 사람도 열차에 남았나요?' },
+        { value: s + p, category: '식', kind: 'nudge', feedbackCheck: '무엇을 물었는지 다시 볼까요?', feedback: '장림역 뒤까지 따라갔나요?' },
+        { value: s - q, category: '읽기', kind: 'nudge', feedbackCheck: '문제의 수를 모두 썼나요?', feedback: '신장림역에서 탄 사람은요?' },
       ];
   return {
     text: story,
@@ -325,9 +325,9 @@ function t42Level3(s, p, q, offFirst) {
     answer: ans,
     discriminators: uniq(
       [
-        { value: end, category: '읽기', feedback: `${before} 전을 물었어요. 어디서 멈출까요?` },
-        { value: s + p + q, category: '식', feedback: '내린 사람도 열차에 남았나요?' },
-        { value: offFirst ? s + q : s - p, category: '식', feedback: offFirst ? '내린 사람이 열차에 남았나요?' : '탄 사람은 열차에서 빠질까요?' },
+        { value: end, category: '읽기', kind: 'check', feedback: `${before} 전을 물었어요. 어디서 멈출까요?` },
+        { value: s + p + q, category: '식', kind: 'nudge', feedbackCheck: '처음 수와 답을 비교해 볼까요?', feedback: '내린 사람도 열차에 남았나요?' },
+        { value: offFirst ? s + q : s - p, category: '식', kind: 'nudge', feedbackCheck: '처음 수와 답을 비교해 볼까요?', feedback: offFirst ? '내린 사람이 열차에 남았나요?' : '탄 사람은 열차에서 빠질까요?' },
       ],
       ans,
     ),
@@ -363,10 +363,10 @@ function t42Level4(s, p, q, offFirst) {
     answer: s,
     discriminators: uniq(
       [
-        { value: e + p - q, category: '개념', feedback: '거꾸로 갈 때 탄 사람은 어떻게 할까요?' },
-        { value: e + p + q, category: '식', feedback: '모두 더해도 될까요? 거꾸로 따라가 봐요.' },
-        { value: e - p, category: '식', feedback: '내린 사람도 되돌렸나요?' },
-        { value: e + q, category: '식', feedback: '탄 사람도 되돌렸나요?' },
+        { value: e + p - q, category: '개념', kind: 'nudge', feedbackCheck: '구한 수에서 다시 따라가 볼까요?', feedback: '거꾸로 갈 때 탄 사람은 어떻게 할까요?' },
+        { value: e + p + q, category: '식', kind: 'nudge', feedbackCheck: '구한 수에서 다시 따라가 볼까요?', feedback: '모두 더해도 될까요? 거꾸로 따라가 봐요.' },
+        { value: e - p, category: '식', kind: 'nudge', feedbackCheck: '구한 수에서 다시 따라가 볼까요?', feedback: '내린 사람도 되돌렸나요?' },
+        { value: e + q, category: '식', kind: 'nudge', feedbackCheck: '구한 수에서 다시 따라가 볼까요?', feedback: '탄 사람도 되돌렸나요?' },
       ],
       s,
     ),
@@ -399,9 +399,9 @@ function t42Level5(K, s, q) {
     answer: ans,
     discriminators: uniq(
       [
-        { value: K - s, category: '식', feedback: '내린 사람 자리도 셌나요?' },
-        { value: now, category: '식', feedback: '지금 탄 사람 수예요. 더 탈 수는요?' },
-        { value: K - s - q, category: '개념', feedback: '내리면 자리가 늘까요, 줄까요?' },
+        { value: K - s, category: '식', kind: 'nudge', feedbackCheck: '빈자리를 다시 세어 볼까요?', feedback: '내린 사람 자리도 셌나요?' },
+        { value: now, category: '식', kind: 'check', feedback: '지금 탄 사람 수예요. 더 탈 수는요?' },
+        { value: K - s - q, category: '개념', kind: 'nudge', feedbackCheck: '빈자리를 다시 세어 볼까요?', feedback: '내리면 자리가 늘까요, 줄까요?' },
       ].filter((d) => d.value > 0),
       ans,
     ),
@@ -437,7 +437,7 @@ function t42Level6(s, rows) {
     figure: { kind: 'table', columns: ['역', '탄 사람', '내린 사람'], rows: rows.map(([on, off], i) => [names[i], on, off]) },
     input: { kind: 'choice', options: SECTIONS },
     answer: ans,
-    discriminators: SECTIONS[maxOn] !== ans ? [{ value: SECTIONS[maxOn], category: '읽기', feedback: '탄 사람만 봤나요? 표에 차례로 적어 봐요.' }] : [],
+    discriminators: SECTIONS[maxOn] !== ans ? [{ value: SECTIONS[maxOn], category: '읽기', kind: 'nudge', feedbackCheck: '구간마다 다시 확인해 볼까요?', feedback: '탄 사람만 봤나요? 표에 차례로 적어 봐요.' }] : [],
     hints: [
       `처음 ${s}명이 신장림역에 왔고, 신장림·장림·동매역에서 사람이 타고 내렸어요. 역과 역 사이에서 열차 안 사람이 가장 많았던 구간을 물어요.`,
       '역을 지날 때마다 열차 안 사람 수를 표에 적어 볼까요? 세 구간의 수를 견주어 봐요.',
@@ -454,19 +454,35 @@ function t42Level6(s, rows) {
   };
 }
 
+/** 7단계 보기 */
+const OPTS7 = [10, 20, 30, 40, 50, 60, 70, 80, 90];
+/** 7단계 경계값(장림역 뒤 사람이 꼭 T명이 되는 □) */
+const edge7 = (s, q, T) => T + q - s;
+/**
+ * 7단계 생성 거르기: 경계값이 보기에 있으면 20 이상일 때만 쓴다.
+ * 경계값이 10이면 [경계, ...답] = [10, 20, …]이 "장림역 조건 빠짐" 오답(10부터 가장 큰 □까지)과 같아져
+ * 판별 오답 둘이 겹친다.
+ */
+const ok7 = (s, q, T) => {
+  const edge = edge7(s, q, T);
+  return !OPTS7.includes(edge) || edge >= 20;
+};
+
 /** 7단계: 두 조건을 모두 만족하는 □ 모두 */
 function t42Level7(s, q, K, T) {
-  const opts = [10, 20, 30, 40, 50, 60, 70, 80, 90];
+  const opts = OPTS7;
   const ok1 = (x) => s + x <= K;
   const ok2 = (x) => s + x - q > T;
   const answer = opts.filter((x) => ok1(x) && ok2(x));
   const low = answer[0];
   const high = answer.at(-1);
-  const edge = T + q - s;
+  const edge = edge7(s, q, T);
+  // 검사 순서: 더 구체적인 것(경계) → 조건 하나 빠짐. multiGrade는 앞에서부터 찾는다.
+  // 경계값이 보기에 없으면 경계 판별("T명보다 많아야 해요")은 넣지 않는다.
   const discs = [
-    { value: opts.filter(ok1), category: '개념', feedback: '장림역을 지난 뒤도 확인했나요?' },
-    { value: opts.filter(ok2), category: '개념', feedback: '신장림역을 지난 뒤도 확인했나요?' },
-    { value: [edge, ...answer], category: '개념', feedback: `${T}명보다 많아야 해요. 같아도 될까요?` },
+    ...(opts.includes(edge) ? [{ value: [edge, ...answer], category: '개념', kind: 'check', feedback: `${T}명보다 많아야 해요. 같아도 될까요?` }] : []),
+    { value: opts.filter(ok1), category: '개념', kind: 'check', feedback: '장림역을 지난 뒤도 확인했나요?' },
+    { value: opts.filter(ok2), category: '개념', kind: 'check', feedback: '신장림역을 지난 뒤도 확인했나요?' },
   ];
   return {
     text: ['열차에 ', V(s), '명이 타 있었어요. 신장림역에서 ', unknown('□'), '명이 타고, 장림역에서 ', V(q), '명이 내렸어요. 신장림역을 지난 뒤 열차 안 사람은 ', V(K), '명을 넘지 않았고, 장림역을 지난 뒤에는 ', V(T), '명보다 많았어요. □에 들어갈 수 있는 수를 보기에서 모두 골라요.'],
@@ -576,6 +592,7 @@ const T4_2 = {
         const low = high - rng.int(1, 3) * 10; // 가장 작은 □
         const TT = ss + low - 10 - qq; // 경계값(low − 10)은 답이 아님
         if (low - 10 < 10 || TT < 50) continue;
+        if (!ok7(ss, qq, TT)) continue; // 경계값 10 → 판별 오답 겹침, 다시 뽑기
         return [ss, qq, ss + high, TT];
       }
       return [240, 60, 300, 210];
@@ -634,7 +651,7 @@ const sign43 = (o) => {
 const OPS43 = ['+', '−'];
 const JUDGE43 = ['맞아요', '틀려요'];
 const JUDGE_LABEL = '친구의 계산';
-const careless43 = (feedback = '답을 먼저 써 볼까요?') => ({ correct: false, flags: { careless: true }, feedback });
+const careless43 = (feedback = '답을 먼저 써 볼까요?') => ({ correct: false, flags: { careless: true }, kind: 'check', feedback });
 
 /** 1·2단계: a − b = c 를 c + b = a 로 검산 */
 function t43Sub(a, b, c) {
@@ -651,9 +668,9 @@ function t43Sub(a, b, c) {
     { key: 'judge', label: JUDGE_LABEL, options: JUDGE43 },
   ];
   const wrongJudge = right
-    ? { key: 'judge', value: '틀려요', category: '개념', feedback: `검산 결과 ${eun(back)} 처음 수와 같지 않나요?` }
-    : { key: 'judge', value: '맞아요', category: '개념', feedback: `검산 결과 ${eun(back)} 처음 수와 같나요?` };
-  const subCheck = { key: 'op', value: '−', category: '식', feedback: '뺄셈의 검산은 덧셈으로 해요' };
+    ? { key: 'judge', value: '틀려요', category: '개념', kind: 'nudge', feedbackCheck: '검산 결과를 처음 수와 견주어 볼까요?', feedback: `검산 결과 ${eun(back)} 처음 수와 같지 않나요?` }
+    : { key: 'judge', value: '맞아요', category: '개념', kind: 'nudge', feedbackCheck: '검산 결과를 처음 수와 견주어 볼까요?', feedback: `검산 결과 ${eun(back)} 처음 수와 같나요?` };
+  const subCheck = { key: 'op', value: '−', category: '식', kind: 'nudge', feedbackCheck: '검산식을 계산하면 처음 수가 나오나요?', feedback: '뺄셈의 검산은 덧셈으로 해요' };
   return {
     text: ['친구가 신장림역에서 남은 승객을 계산했어요. 열차에 ', V(a), '명이 있었고 ', V(b), '명이 내려서 ', n(a), ' − ', n(b), ' = ', n(c), jo(c, '이라고', '라고'), ' 했어요. 검산식을 쓰고 맞는지 판단해요.'],
     figure: null,
@@ -669,11 +686,11 @@ function t43Sub(a, b, c) {
       if (pairOk && num43(r?.result) === back) {
         if (blank43(r?.judge)) return careless43('맞아요, 틀려요도 골라 볼까요?');
         if (String(r.judge).trim() === judge) return { correct: true };
-        return { correct: false, category: wrongJudge.category, feedback: wrongJudge.feedback };
+        return { correct: false, category: wrongJudge.category, kind: wrongJudge.kind ?? 'check', feedbackCheck: wrongJudge.feedbackCheck, feedback: wrongJudge.feedback };
       }
-      if (pairOk) return { correct: false, category: '식', feedback: '검산식을 다시 계산해 볼까요?' };
-      if (s === -1 && L === c && R === b) return { correct: false, category: '식', feedback: subCheck.feedback };
-      return { correct: false, category: '식', feedback: '친구의 답에서 처음 수로 되돌아가는 식일까요?' };
+      if (pairOk) return { correct: false, category: '식', kind: 'check', feedback: '검산식을 다시 계산해 볼까요?' };
+      if (s === -1 && L === c && R === b) return { correct: false, category: '식', kind: subCheck.kind ?? 'check', feedbackCheck: subCheck.feedbackCheck, feedback: subCheck.feedback };
+      return { correct: false, category: '식', kind: 'check', feedback: '친구의 답에서 처음 수로 되돌아가는 식일까요?' };
     },
     hints: [
       `친구는 ${a} − ${b} = ${c}${jo(c, '이라고', '라고')} 했어요. 검산식을 쓰고 맞는지 물어요.`,
@@ -712,11 +729,11 @@ function t43Three(s, p, q) {
   const forward = key([[1, s], [1, p], [-1, q]]);
   const bl = blankAt(s, 1);
   return {
-    text: ['신장림역에 열차가 오기 전에 ', V(s), '명이 타 있었어요. 신장림역에서 ', V(p), '명이 타고 ', V(q), '명이 내렸어요. 친구는 지금 열차 안 사람이 ', n(r), '명이라고 했어요. 처음 수로 되돌아가는 검산식을 쓰고 맞는지 판단해요.'],
+    text: ['신장림역에 열차가 오기 전에 ', V(s), '명이 타 있었어요. 신장림역에서 ', V(p), '명이 타고 ', V(q), '명이 내렸어요. 친구는 지금 열차 안 사람이 ', V(r), '명이라고 했어요. 처음 수로 되돌아가는 검산식을 쓰고 맞는지 판단해요.'],
     figure: null,
     input: { kind: 'compound', fields },
     answer: { n1: r, op1: '+', n2: q, op2: '−', n3: p, result: s, judge: '맞아요' },
-    discriminators: [{ key: 'judge', value: '틀려요', category: '개념', feedback: `검산 결과 ${eun(s)} 처음 수와 같지 않나요?` }],
+    discriminators: [{ key: 'judge', value: '틀려요', category: '개념', kind: 'nudge', feedbackCheck: '검산 결과를 처음 수와 견주어 볼까요?', feedback: `검산 결과 ${eun(s)} 처음 수와 같지 않나요?` }],
     grade(res) {
       if (fields.every((f) => blank43(res?.[f.key]))) return careless43();
       const terms = [
@@ -728,11 +745,11 @@ function t43Three(s, p, q) {
       if (got === want && num43(res?.result) === s) {
         if (blank43(res?.judge)) return careless43('맞아요, 틀려요도 골라 볼까요?');
         if (String(res.judge).trim() === '맞아요') return { correct: true };
-        return { correct: false, category: '개념', feedback: `검산 결과 ${eun(s)} 처음 수와 같지 않나요?` };
+        return { correct: false, category: '개념', kind: 'nudge', feedbackCheck: '검산 결과를 처음 수와 견주어 볼까요?', feedback: `검산 결과 ${eun(s)} 처음 수와 같지 않나요?` };
       }
-      if (got === want) return { correct: false, category: '식', feedback: '검산식을 다시 계산해 볼까요?' };
-      if (got === forward) return { correct: false, category: '식', feedback: '처음부터 다시 계산했어요. 거꾸로 되돌려 볼까요?' };
-      return { correct: false, category: '식', feedback: '탄 사람과 내린 사람을 거꾸로 되돌렸나요?' };
+      if (got === want) return { correct: false, category: '식', kind: 'check', feedback: '검산식을 다시 계산해 볼까요?' };
+      if (got === forward) return { correct: false, category: '식', kind: 'nudge', feedbackCheck: '검산식을 계산하면 처음 수가 나오나요?', feedback: '처음부터 다시 계산했어요. 거꾸로 되돌려 볼까요?' };
+      return { correct: false, category: '식', kind: 'nudge', feedbackCheck: '검산식을 계산하면 처음 수가 나오나요?', feedback: '탄 사람과 내린 사람을 거꾸로 되돌렸나요?' };
     },
     hints: [
       `처음 ${s}명에서 ${p}명이 타고 ${q}명이 내렸어요. 친구는 ${r}명이라고 했어요. 처음 수로 되돌아가는 검산식을 쓰고 맞는지 물어요.`,

@@ -11,8 +11,13 @@ import N08 from './templates/N08.js';
 import N09 from './templates/N09.js';
 import N10 from './templates/N10.js';
 import B from './templates/B.js';
+import G13 from './templates/G13.js';
+import G14 from './templates/G14.js';
+import G15 from './templates/G15.js';
+import G16 from './templates/G16.js';
+import G17 from './templates/G17.js';
 
-const ALL = [...N01, ...N02, ...N03, ...N04, ...N05, ...N06, ...N07, ...N08, ...N09, ...N10, ...B];
+const ALL = [...N01, ...N02, ...N03, ...N04, ...N05, ...N06, ...N07, ...N08, ...N09, ...N10, ...B, ...G13, ...G14, ...G15, ...G16, ...G17];
 
 const byNode = new Map();
 for (const t of ALL) {

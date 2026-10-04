@@ -1,6 +1,6 @@
 {
   "$schema": "./concept-graph.schema.json",
-  "version": "2026-10-04.2",
+  "version": "2026-10-04.3",
   "source": "docs/curriculum/02-concept-graph.md, 03-line1-mvp-map.md; 성취기준 코드는 docs/CURRICULUM.md(별책 8 원문 대조)",
   "rules": {
     "prereqDefault": "mastered",
@@ -292,6 +292,45 @@
       "prereqs": [
         {
           "node": "B10"
+        }
+      ],
+      "ceiling": 3,
+      "scope": "in"
+    },
+    {
+      "id": "B12",
+      "title": "시각 읽기(몇 시 몇 분), 1시간 = 60분, 시간 단위 관계",
+      "codes": [
+        "2수03-07",
+        "2수03-08",
+        "2수03-09"
+      ],
+      "gradeBand": "1-2",
+      "line": "DEPOT",
+      "order": 12,
+      "station": null,
+      "strand": "foundation",
+      "prereqs": [],
+      "ceiling": 3,
+      "scope": "in"
+    },
+    {
+      "id": "B13",
+      "title": "길이 1cm·1m, 1m = 100cm, 길이 어림과 덧셈·뺄셈",
+      "codes": [
+        "2수03-10",
+        "2수03-11",
+        "2수03-12",
+        "2수03-13"
+      ],
+      "gradeBand": "1-2",
+      "line": "DEPOT",
+      "order": 13,
+      "station": null,
+      "strand": "foundation",
+      "prereqs": [
+        {
+          "node": "B06"
         }
       ],
       "ceiling": 3,
@@ -1174,7 +1213,11 @@
       "order": 1,
       "station": "서면",
       "strand": "geometry-measurement",
-      "prereqs": [],
+      "prereqs": [
+        {
+          "node": "B12"
+        }
+      ],
       "ceiling": 5,
       "scope": "in",
       "provisional": true
@@ -1236,7 +1279,11 @@
       "order": 4,
       "station": "동의대",
       "strand": "geometry-measurement",
-      "prereqs": [],
+      "prereqs": [
+        {
+          "node": "B13"
+        }
+      ],
       "ceiling": 5,
       "scope": "in",
       "provisional": true

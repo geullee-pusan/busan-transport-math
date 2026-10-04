@@ -83,11 +83,11 @@ function multiGrade(answer, discs) {
   const key = (arr) => [...new Set((Array.isArray(arr) ? arr : []).map(Number))].sort((x, y) => x - y).join(',');
   const want = key(answer);
   return (r) => {
-    if (!Array.isArray(r) || r.length === 0) return { correct: false, flags: { careless: true }, feedback: '답을 먼저 골라 볼까요?' };
+    if (!Array.isArray(r) || r.length === 0) return { correct: false, flags: { careless: true }, kind: 'check', feedback: '답을 먼저 골라 볼까요?' };
     const got = key(r);
     if (got === want) return { correct: true };
     const d = discs.find((x) => key(x.value) === got);
-    return d ? { correct: false, category: d.category, feedback: d.feedback } : { correct: false, category: null, feedback: null };
+    return d ? { correct: false, category: d.category, kind: d.kind ?? 'check', feedbackCheck: d.feedbackCheck, feedback: d.feedback } : { correct: false, category: null, kind: 'check', feedback: null };
   };
 }
 
@@ -112,10 +112,10 @@ function subDiscs(a, b) {
   const where = pos.includes(0) ? `일의 자리 ${au}에서 ${eul(bu)} 뺄 수 있나요?` : `십의 자리 ${at}에서 ${eul(bt)} 뺄 수 있나요?`;
   return uniq(
     [
-      { value: absDigits(a, b), category: '개념', feedback: where },
-      { value: d + 10, category: '계산', feedback: '빌려 준 자리는 1 줄었나요?' },
-      { value: d + 100, category: '계산', feedback: '빌려 준 자리는 1 줄었나요?' },
-      { value: a + b, category: '식', feedback: '빼기 문제예요. 답이 커질까요?' },
+      { value: absDigits(a, b), category: '개념', kind: 'check', feedback: where },
+      { value: d + 10, category: '계산', kind: 'nudge', feedbackCheck: '빌려 준 자리를 다시 볼까요?', feedback: '빌려 준 자리는 1 줄었나요?' },
+      { value: d + 100, category: '계산', kind: 'nudge', feedbackCheck: '빌려 준 자리를 다시 볼까요?', feedback: '빌려 준 자리는 1 줄었나요?' },
+      { value: a + b, category: '식', kind: 'nudge', feedbackCheck: '답을 처음 수와 견주어 볼까요?', feedback: '빼기 문제예요. 답이 커질까요?' },
     ].filter((x) => pos.length > 0 || x.value === a + b),
     d,
   );
@@ -179,8 +179,8 @@ function build(a, b, d, level) {
     input: { kind: 'equation' },
     answer: { left: d, op: '+', right: b, result: a, commutative: true },
     discriminators: [
-      { match: (r) => Number(r?.left) === wrongs[0] || Number(r?.right) === wrongs[0], category: '개념', feedback: '작은 숫자에서 큰 숫자를 뺄 수 있나요?' },
-      { match: (r) => wrongs.slice(1).includes(Number(r?.left)) || wrongs.slice(1).includes(Number(r?.right)), category: '계산', feedback: '빌려 준 자리는 1 줄었나요?' },
+      { match: (r) => Number(r?.left) === wrongs[0] || Number(r?.right) === wrongs[0], category: '개념', kind: 'check', feedback: '작은 숫자에서 큰 숫자를 뺄 수 있나요?' },
+      { match: (r) => wrongs.slice(1).includes(Number(r?.left)) || wrongs.slice(1).includes(Number(r?.right)), category: '계산', kind: 'nudge', feedbackCheck: '빌려 준 자리를 다시 볼까요?', feedback: '빌려 준 자리는 1 줄었나요?' },
     ],
     hints: [
       `${a} − ${b}의 답과, 그 답이 맞는지 확인하는 덧셈식을 물어요.`,
@@ -206,7 +206,7 @@ function t22Level1(a, b) {
     figure: { kind: 'train', cars: 8 },
     input: { kind: 'number', unit: '명' },
     answer: d,
-    discriminators: uniq([{ value: a + b, category: '식', feedback: '남은 사람이 처음보다 많을까요?' }], d),
+    discriminators: uniq([{ value: a + b, category: '식', kind: 'check', feedback: '남은 사람이 처음보다 많을까요?' }], d),
     hints: [`열차에 ${a}명이 타 있었고, 다대포항역에서 ${b}명이 내렸어요. 열차에 남은 사람 수를 물어요.`, '내린 사람은 열차에서 빠져요. 자리를 맞춰 세로로 써 봐요.', firstStep(a, b), `${a} − ${b} = ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
@@ -227,9 +227,9 @@ function t22Level2(am, pm) {
     input: { kind: 'compound', fields: [{ key: 'when', label: '언제', options: ['오전', '오후'] }, { key: 'diff', label: '몇 명 더' }] },
     answer: { when, diff: d },
     discriminators: [
-      { key: 'when', value: other, category: '읽기', feedback: `${wa(am)} ${pm} 중 어느 쪽이 커요?` },
-      { key: 'diff', value: absDigits(big, small), category: '개념', feedback: '작은 숫자에서 큰 숫자를 뺄 수 있나요?' },
-      { key: 'diff', value: am + pm, category: '식', feedback: '몇 명 더 많은지 물었어요. 모두 몇 명일까요?' },
+      { key: 'when', value: other, category: '읽기', kind: 'check', feedback: `${wa(am)} ${pm} 중 어느 쪽이 커요?` },
+      { key: 'diff', value: absDigits(big, small), category: '개념', kind: 'check', feedback: '작은 숫자에서 큰 숫자를 뺄 수 있나요?' },
+      { key: 'diff', value: am + pm, category: '식', kind: 'check', feedback: '몇 명 더 많은지 물었어요. 모두 몇 명일까요?' },
     ].filter((x) => x.value !== d),
     hints: [`오전에 ${am}명, 오후에 ${pm}명이 탔어요. 어느 때가 몇 명 더 많은지 물어요.`, '먼저 어느 쪽이 큰지 봐요. 큰 수에서 작은 수를 빼면 차이가 나와요.', firstStep(big, small), `${big} − ${small} = ${bl.blank}`],
     blank: bl.blank,
@@ -251,10 +251,10 @@ function t22Level3(all, empty) {
     answer: d,
     discriminators: uniq(
       [
-        { value: all + empty, category: '식', feedback: '앉은 사람이 좌석보다 많을까요?' },
-        { value: empty, category: '읽기', feedback: `${eun(empty)} 빈 좌석이에요. 무엇을 물었죠?` },
-        { value: absDigits(all, empty), category: '개념', feedback: `일의 자리 ${all % 10}에서 ${eul(empty % 10)} 뺄 수 있나요?` },
-        { value: d + 10, category: '계산', feedback: '빌려 준 자리는 1 줄었나요?' },
+        { value: all + empty, category: '식', kind: 'check', feedback: '앉은 사람이 좌석보다 많을까요?' },
+        { value: empty, category: '읽기', kind: 'check', feedback: `${eun(empty)} 빈 좌석이에요. 무엇을 물었죠?` },
+        { value: absDigits(all, empty), category: '개념', kind: 'check', feedback: `일의 자리 ${all % 10}에서 ${eul(empty % 10)} 뺄 수 있나요?` },
+        { value: d + 10, category: '계산', kind: 'nudge', feedbackCheck: '빌려 준 자리를 다시 볼까요?', feedback: '빌려 준 자리는 1 줄었나요?' },
       ],
       d,
     ),
@@ -284,9 +284,9 @@ function t22Level4(off, left) {
     answer: s,
     discriminators: uniq(
       [
-        { value: minus, category: '식', feedback: '처음에는 지금보다 많았을까요, 적었을까요?' },
-        { value: s - 10, category: '계산', feedback: '받아올린 1을 더했나요?' },
-        { value: s - 100, category: '계산', feedback: '받아올린 1을 더했나요?' },
+        { value: minus, category: '식', kind: 'nudge', feedbackCheck: '구한 수로 문제를 다시 따라가 볼까요?', feedback: '처음에는 지금보다 많았을까요, 적었을까요?' },
+        { value: s - 10, category: '계산', kind: 'nudge', feedbackCheck: '십의 자리를 다시 계산해 볼까요?', feedback: '받아올린 1을 더했나요?' },
+        { value: s - 100, category: '계산', kind: 'nudge', feedbackCheck: '백의 자리를 다시 계산해 볼까요?', feedback: '받아올린 1을 더했나요?' },
       ],
       s,
     ),
@@ -308,8 +308,8 @@ function t22Level4(off, left) {
 function t22Level5(h, k, u, b, T) {
   const answer = Array.from({ length: k + 1 }, (_, i) => i);
   const discs = [
-    { value: answer.slice(0, -1), category: '개념', feedback: `${h}${k}${u} − ${b}도 계산해 봤나요?` },
-    { value: [...answer, k + 1], category: '개념', feedback: `${h}${k + 1}${u} − ${b}도 계산해 봤나요?` },
+    { value: answer.slice(0, -1), category: '개념', kind: 'nudge', feedbackCheck: '빠진 것이 없나요?', feedback: `${h}${k}${u} − ${b}도 계산해 봤나요?` },
+    { value: [...answer, k + 1], category: '개념', kind: 'check', feedback: `${h}${k + 1}${u} − ${b}도 계산해 봤나요?` },
   ];
   return {
     text: [unknown(`${h}□${u}`), ' − ', n(b), jo(b, '이', '가'), ' ', n(T), '보다 작아요. □에 들어갈 수 있는 수를 모두 골라요.'],
@@ -387,7 +387,7 @@ function t22Level6(cards) {
     challenge: true,
     input: { kind: 'number' },
     answer: best,
-    discriminators: uniq([{ value: wrong, category: '개념', feedback: '큰 수 뒤에는 어떤 숫자를 둘까요?' }], best),
+    discriminators: uniq([{ value: wrong, category: '개념', kind: 'nudge', feedbackCheck: '다른 수도 만들어 견주어 볼까요?', feedback: '큰 수 뒤에는 어떤 숫자를 둘까요?' }], best),
     hints: [
       '카드 여섯 장으로 세 자리 수 두 개를 만들어요. 두 수의 차이가 가장 작을 때를 물어요.',
       '백의 자리 숫자의 차이를 가장 작게 해 볼까요? 그다음 큰 수는 작게, 작은 수는 크게 만들어요.',
@@ -548,10 +548,10 @@ function t24(a, b, level) {
   ];
   const discs = uniq(
     [
-      { key: 'changed', value: from, category: '개념', feedback: '빌려 준 자리는 1 줄었나요?' },
-      { key: 'answer', value: tensBorrow ? d + 100 : d + 10, category: '계산', feedback: '빌려 준 자리는 1 줄었나요?' },
-      { key: 'answer', value: absDigits(a, b), category: '개념', feedback: `${toName} ${tensBorrow ? at : au}에서 ${eul(sub)} 뺄 수 있나요?` },
-      { key: 'answer', value: a + b, category: '식', feedback: '남은 사람이 처음보다 많을까요?' },
+      { key: 'changed', value: from, category: '개념', kind: 'nudge', feedbackCheck: '빌려 준 자리를 다시 볼까요?', feedback: '빌려 준 자리는 1 줄었나요?' },
+      { key: 'answer', value: tensBorrow ? d + 100 : d + 10, category: '계산', kind: 'nudge', feedbackCheck: '빌려 준 자리를 다시 볼까요?', feedback: '빌려 준 자리는 1 줄었나요?' },
+      { key: 'answer', value: absDigits(a, b), category: '개념', kind: 'check', feedback: `${toName} ${tensBorrow ? at : au}에서 ${eul(sub)} 뺄 수 있나요?` },
+      { key: 'answer', value: a + b, category: '식', kind: 'check', feedback: '남은 사람이 처음보다 많을까요?' },
     ],
     null,
   ).filter((x) => x.value !== (x.key === 'changed' ? from - 1 : d));

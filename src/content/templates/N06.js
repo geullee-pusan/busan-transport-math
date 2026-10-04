@@ -83,11 +83,11 @@ function multiGrade(answer, discs) {
   const key = (arr) => [...new Set((Array.isArray(arr) ? arr : []).map(Number))].sort((x, y) => x - y).join(',');
   const want = key(answer);
   return (r) => {
-    if (!Array.isArray(r) || r.length === 0) return { correct: false, flags: { careless: true }, feedback: '답을 먼저 골라 볼까요?' };
+    if (!Array.isArray(r) || r.length === 0) return { correct: false, flags: { careless: true }, kind: 'check', feedback: '답을 먼저 골라 볼까요?' };
     const got = key(r);
     if (got === want) return { correct: true };
     const d = discs.find((x) => key(x.value) === got);
-    return d ? { correct: false, category: d.category, feedback: d.feedback } : { correct: false, category: null, feedback: null };
+    return d ? { correct: false, category: d.category, kind: d.kind ?? 'check', feedbackCheck: d.feedbackCheck, feedback: d.feedback } : { correct: false, category: null, kind: 'check', feedback: null };
   };
 }
 
@@ -100,17 +100,17 @@ const SITUATION = '이 식은 어떤 상황이에요?';
 /** 상황과 다른 식(값은 맞음). 0.7절: N06에서는 정답이 아니다. */
 function mismatch(N, d, q) {
   return [
-    { match: (r) => r?.op === '÷' && num(r.left) === N && num(r.right) === q && num(r.result) === d, category: '식', feedback: SITUATION },
-    { match: (r) => r?.op === '×' && num(r.result) === N && ((num(r.left) === d && num(r.right) === q) || (num(r.left) === q && num(r.right) === d)), category: '식', feedback: SITUATION },
+    { match: (r) => r?.op === '÷' && num(r.left) === N && num(r.right) === q && num(r.result) === d, category: '식', kind: 'check', feedback: SITUATION },
+    { match: (r) => r?.op === '×' && num(r.result) === N && ((num(r.left) === d && num(r.right) === q) || (num(r.left) === q && num(r.right) === d)), category: '식', kind: 'check', feedback: SITUATION },
   ];
 }
 /** 칸이 여럿인 답을 직접 채점(규칙이 특수한 compound) */
 function compoundGrade(keys, isRight, discs, fallback = '다시 볼까요?') {
   return (r) => {
-    if (keys.every((k) => isBlank(r?.[k]))) return { correct: false, flags: { careless: true }, feedback: '답을 먼저 써 볼까요?' };
+    if (keys.every((k) => isBlank(r?.[k]))) return { correct: false, flags: { careless: true }, kind: 'check', feedback: '답을 먼저 써 볼까요?' };
     if (isRight(r)) return { correct: true };
-    for (const d of discs) if (d.key && !isBlank(r?.[d.key]) && String(r[d.key]).trim() === String(d.value)) return { correct: false, category: d.category, feedback: d.feedback };
-    return { correct: false, category: null, feedback: fallback };
+    for (const d of discs) if (d.key && !isBlank(r?.[d.key]) && String(r[d.key]).trim() === String(d.value)) return { correct: false, category: d.category, kind: d.kind ?? 'check', feedbackCheck: d.feedbackCheck, feedback: d.feedback };
+    return { correct: false, category: null, kind: 'check', feedback: fallback };
   };
 }
 /** 문자열 보기 여럿 고르기 */
@@ -118,11 +118,11 @@ function multiGradeS(answer, discs) {
   const key = (arr) => [...new Set((Array.isArray(arr) ? arr : []).map(String))].sort().join('|');
   const want = key(answer);
   return (r) => {
-    if (!Array.isArray(r) || r.length === 0) return { correct: false, flags: { careless: true }, feedback: '답을 먼저 골라 볼까요?' };
+    if (!Array.isArray(r) || r.length === 0) return { correct: false, flags: { careless: true }, kind: 'check', feedback: '답을 먼저 골라 볼까요?' };
     const got = key(r);
     if (got === want) return { correct: true };
     const d = discs.find((x) => key(x.value) === got);
-    return d ? { correct: false, category: d.category, feedback: d.feedback } : { correct: false, category: null, feedback: null };
+    return d ? { correct: false, category: d.category, kind: d.kind ?? 'check', feedbackCheck: d.feedbackCheck, feedback: d.feedback } : { correct: false, category: null, kind: 'check', feedback: null };
   };
 }
 
@@ -139,8 +139,8 @@ function t61Level1(x, byEight) {
     answer: ans,
     discriminators: uniq(
       [
-        { value: P * d, category: '식', feedback: `${eun(P)} ${d}로 나누면 커질까요?`.replace(`${d}로`, `${d}${roOnly(d)}`) },
-        { value: P - d, category: '식', feedback: '나눗셈식이에요. 곱셈식에서 찾아볼까요?' },
+        { value: P * d, category: '식', kind: 'check', feedback: `${eun(P)} ${d}로 나누면 커질까요?`.replace(`${d}로`, `${d}${roOnly(d)}`) },
+        { value: P - d, category: '식', kind: 'nudge', feedbackCheck: '몫을 곱해서 확인해 볼까요?', feedback: '나눗셈식이에요. 곱셈식에서 찾아볼까요?' },
       ],
       ans,
     ),
@@ -169,13 +169,13 @@ function t61Level2(x) {
       const a = r?.eq1;
       const b = r?.eq2;
       const empty = (e) => !e || ['left', 'op', 'right', 'result'].every((k) => isBlank(e[k]));
-      if (empty(a) && empty(b)) return { correct: false, flags: { careless: true }, feedback: '답을 먼저 써 볼까요?' };
+      if (empty(a) && empty(b)) return { correct: false, flags: { careless: true }, kind: 'check', feedback: '답을 먼저 써 볼까요?' };
       if ((isA(a) && isB(b)) || (isA(b) && isB(a))) return { correct: true };
-      if ((isA(a) && isA(b)) || (isB(a) && isB(b))) return { correct: false, category: '식', feedback: '두 식이 같아요. 다른 식은요?' };
-      if (a?.op === '×' || b?.op === '×') return { correct: false, category: '식', feedback: '나눗셈식으로 써 볼까요?' };
+      if ((isA(a) && isA(b)) || (isB(a) && isB(b))) return { correct: false, category: '식', kind: 'check', feedback: '두 식이 같아요. 다른 식은요?' };
+      if (a?.op === '×' || b?.op === '×') return { correct: false, category: '식', kind: 'nudge', feedbackCheck: '두 식을 다시 볼까요?', feedback: '나눗셈식으로 써 볼까요?' };
       const leftOk = (e) => e?.op === '÷' && num(e?.left) === P && [8, x].includes(num(e?.right));
-      if (leftOk(a) && leftOk(b)) return { correct: false, category: '계산', feedback: '몫을 다시 볼까요?' };
-      return { correct: false, category: '식', feedback: `${P}에서 시작하는 식일까요?` };
+      if (leftOk(a) && leftOk(b)) return { correct: false, category: '계산', kind: 'check', feedback: '몫을 다시 볼까요?' };
+      return { correct: false, category: '식', kind: 'check', feedback: `${P}에서 시작하는 식일까요?` };
     },
     hints: [`8 × ${x} = ${eul(P)} 보고 만들 수 있는 나눗셈식 두 개를 물어요.`, `${eun(P)} 8이 ${x}묶음이기도 하고, ${x}${jo(x, '이', '가')} 8묶음이기도 해요.`, `나눗셈식 하나는 ${P} ÷ 8 = ${ieyo(x)}.`, `${P} ÷ ${x} = ☐`],
     blank: `${P} ÷ ${x} = ☐`,
@@ -190,12 +190,18 @@ function t61Level2(x) {
 /** T6-1 3단계: 몫과 곱셈구구 몇 단 */
 function t61Level3(d, q) {
   const P = d * q;
-  const discs = [
-    { key: 'q', value: d, category: '개념', feedback: `${d}단에서 ${eun(P)} 몇 번째에 있나요?` },
-    { key: 'q', value: P * d, category: '식', feedback: `${eul(P)} 나누면 커질까요?` },
-    { key: 'q', value: q - 1, category: '계산', feedback: `${d}단을 차례로 외워 볼까요?` },
-    { key: 'q', value: q + 1, category: '계산', feedback: `${d}단을 차례로 외워 볼까요?` },
-  ].filter((x) => x.value !== q);
+  // 나누는 수가 몫 ± 1이면(56 ÷ 8 → 8) 개념 오답(몫 = 나누는 수)과 ±1 계산 실수가 같은 값이 된다.
+  // 더 구체적인 개념 오답을 앞에 두고 겹치는 ±1은 뺀다(uniq). "차례로 외워"는 핵심 전략을 알려 주므로 nudge(10 문서 2.5절),
+  // 첫 오답 점검은 아이가 낸 답으로 되돌려 계산하게 한다(문제의 수와 아이의 답만 넣음).
+  const discs = uniq(
+    [
+      { key: 'q', value: d, category: '개념', kind: 'nudge', feedbackCheck: '곱해서 확인해 볼까요?', feedback: `${d}단에서 ${eun(P)} 몇 번째에 있나요?` },
+      { key: 'q', value: P * d, category: '식', kind: 'check', feedback: `${eul(P)} 나누면 커질까요?` },
+      { key: 'q', value: q - 1, category: '계산', kind: 'nudge', feedbackCheck: `${d} × ${q - 1}, 다시 계산해 볼까요?`, feedback: `${d}단을 차례로 외워 볼까요?` },
+      { key: 'q', value: q + 1, category: '계산', kind: 'nudge', feedbackCheck: `${d} × ${q + 1}, 다시 계산해 볼까요?`, feedback: `${d}단을 차례로 외워 볼까요?` },
+    ],
+    q,
+  );
   return {
     text: [n(P), ' ÷ ', n(d), ' = ', unknown('□'), '. 곱셈구구 몇 단을 보면 되는지도 써요.'],
     figure: null,
@@ -225,7 +231,7 @@ function t61Level4(d, q) {
     challenge: true,
     input: { kind: 'number' },
     answer: P,
-    discriminators: uniq([{ value: d + q, category: '식', feedback: null }], P),
+    discriminators: uniq([{ value: d + q, category: '식', kind: 'check', feedback: null }], P),
     hints: [`어떤 수를 ${d}${roOnly(d)} 나눈 몫이 ${ieyo(q)}. 그 어떤 수를 물어요.`, `□는 ${d}씩 ${q}묶음이에요. 곱셈식으로 바꿔 볼까요?`, `${d} × ${q - 1} = ${ieyo(d * (q - 1))}.`, `${d} × ${q} = ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
@@ -258,8 +264,8 @@ function t61Level5(N, rng) {
   const answer = valid.map(([a, b]) => label(a, b));
   const discs = [];
   const half = valid.filter(([a, b]) => a <= b).map(([a, b]) => label(a, b));
-  if (half.length !== answer.length) discs.push({ value: half, category: '개념', feedback: '칸과 사람 수를 바꿔도 될까요?' });
-  if (N / 2 >= 10) discs.push({ value: [...answer, label(2, N / 2)], category: '개념', feedback: '모두 한 자리 수인지 볼까요?' });
+  if (half.length !== answer.length) discs.push({ value: half, category: '개념', kind: 'nudge', feedbackCheck: '빠진 것이 없나요?', feedback: '칸과 사람 수를 바꿔도 될까요?' });
+  if (N / 2 >= 10) discs.push({ value: [...answer, label(2, N / 2)], category: '개념', kind: 'check', feedback: '모두 한 자리 수인지 볼까요?' });
   const [a0, b0] = valid[0];
   return {
     text: [V(N), '명이 □칸에 △명씩 똑같이 앉아요. □와 △가 모두 한 자리 수인 경우를 모두 골라요.'],
@@ -289,8 +295,8 @@ function t61Level6(s, r) {
     input: { kind: 'compound', fields: [{ key: 'big', label: '큰 수' }, { key: 'small', label: '작은 수' }] },
     answer: { big, small: s },
     discriminators: [
-      { key: 'big', value: P, category: '개념', feedback: '큰 수를 작은 수로 나누면 몇이에요?' },
-      { key: 'small', value: r, category: '개념', feedback: '나눈 몫과 작은 수를 헷갈렸나요?' },
+      { key: 'big', value: P, category: '개념', kind: 'nudge', feedbackCheck: '두 수를 다시 볼까요?', feedback: '큰 수를 작은 수로 나누면 몇이에요?' },
+      { key: 'small', value: r, category: '개념', kind: 'check', feedback: '나눈 몫과 작은 수를 헷갈렸나요?' },
     ].filter((d) => d.value !== (d.key === 'big' ? big : s)),
     hints: [`두 수의 곱은 ${ieyo(P)}. 큰 수를 작은 수로 나눈 몫은 ${ieyo(r)}. 두 수를 물어요.`, `큰 수는 작은 수의 ${r}배예요. 작은 수를 1, 2, 3, …으로 넣어 볼까요?`, `작은 수가 1이면 큰 수는 ${r}, 곱은 ${ro(r)} ${P}${jo(P, '이', '가')} 아니에요.`, `작은 수 ☐, 큰 수 ${big}`],
     blank: `작은 수 ☐, 큰 수 ${big}`,
@@ -334,9 +340,9 @@ function t62Level1(q) {
     answer: q,
     discriminators: uniq(
       [
-        { value: N * 8, category: '식', feedback: '한 칸 사람 수가 전체보다 많을까요?' },
-        { value: N - 8, category: '식', feedback: '칸마다 똑같이 탔나요?' },
-        { value: 8, category: '읽기', feedback: '8은 칸 수예요. 무엇을 물었죠?' },
+        { value: N * 8, category: '식', kind: 'check', feedback: '한 칸 사람 수가 전체보다 많을까요?' },
+        { value: N - 8, category: '식', kind: 'check', feedback: '칸마다 똑같이 탔나요?' },
+        { value: 8, category: '읽기', kind: 'check', feedback: '8은 칸 수예요. 무엇을 물었죠?' },
       ],
       q,
     ),
@@ -358,7 +364,7 @@ function t62Level2(q) {
     figure: { kind: 'train', cars: 8 },
     input: { kind: 'equation' },
     answer: { left: N, op: '÷', right: 8, result: q },
-    discriminators: [...mismatch(N, 8, q), { match: (r) => r?.op === '×' && num(r.left) === N, category: '식', feedback: '한 칸 사람 수가 전체보다 많을까요?' }],
+    discriminators: [...mismatch(N, 8, q), { match: (r) => r?.op === '×' && num(r.left) === N, category: '식', kind: 'check', feedback: '한 칸 사람 수가 전체보다 많을까요?' }],
     hints: [`${N}명이 8칸에 같은 수만큼 탔어요. 한 칸에 몇 명인지 식과 답을 물어요.`, '전체를 칸 수만큼 똑같이 나누는 식이에요. 8단에서 몫을 찾아요.', `8 × ${q} = ${ieyo(N)}.`, `${N} ÷ 8 = ☐`],
     blank: `${N} ÷ 8 = ☐`,
     blankAnswer: String(q),
@@ -381,8 +387,8 @@ function t62Level3(a, b) {
     input: { kind: 'compound', fields: [{ key: 'which', label: '열차', options: ['앞', '뒤'] }, { key: 'diff', label: '몇 명 더' }] },
     answer: { which, diff },
     discriminators: [
-      { key: 'diff', value: Math.abs(A - B), category: '읽기', feedback: '한 칸의 차이를 물었어요. 다시 볼까요?' },
-      { key: 'which', value: which === '앞' ? '뒤' : '앞', category: '읽기', feedback: '한 칸에 몇 명씩인지 견주어 볼까요?' },
+      { key: 'diff', value: Math.abs(A - B), category: '읽기', kind: 'check', feedback: '한 칸의 차이를 물었어요. 다시 볼까요?' },
+      { key: 'which', value: which === '앞' ? '뒤' : '앞', category: '읽기', kind: 'nudge', feedbackCheck: '두 열차를 다시 견주어 볼까요?', feedback: '한 칸에 몇 명씩인지 견주어 볼까요?' },
     ],
     hints: [`앞 열차 8량에 ${A}명, 뒤 열차 8량에 ${B}명이 탔어요. 한 칸에 탄 사람이 더 많은 열차와 그 차이를 물어요.`, '두 열차의 한 칸 사람 수를 각각 구해 볼까요? 그다음 견주어요.', `앞 열차는 한 칸에 ${A} ÷ 8 = ${a}명이에요.`, `뒤 열차는 한 칸에 ${B} ÷ 8 = ☐명`],
     blank: `${B} ÷ 8 = ☐`,
@@ -427,8 +433,8 @@ const D1 = {
       input: { kind: 'number' },
       answer: 7,
       discriminators: [
-        { value: 8, category: '개념', feedback: '8단에서 56은 몇 번째에 있나요?' },
-        { value: 448, category: '식', feedback: '56을 나누면 커질까요?' },
+        { value: 8, category: '개념', kind: 'nudge', feedbackCheck: '곱해서 확인해 볼까요?', feedback: '8단에서 56은 몇 번째에 있나요?' },
+        { value: 448, category: '식', kind: 'check', feedback: '56을 나누면 커질까요?' },
       ],
       hints: [],
       blank: null,
@@ -475,8 +481,8 @@ function t63Level1(r, c) {
     input: { kind: 'equation' },
     answer: { left: r, op: '×', right: c, result: P, commutative: true },
     discriminators: [
-      { match: (x) => x?.op === '+', category: '식', feedback: '같은 수씩 여러 줄이에요. 곱셈식으로 써 볼까요?' },
-      { match: (x) => x?.op === '÷' || x?.op === '-', category: '식', feedback: '의자가 모두 몇 개인지 물었어요' },
+      { match: (x) => x?.op === '+', category: '식', kind: 'nudge', feedbackCheck: '이 식은 어떤 상황이에요?', feedback: '같은 수씩 여러 줄이에요. 곱셈식으로 써 볼까요?' },
+      { match: (x) => x?.op === '÷' || x?.op === '-', category: '식', kind: 'check', feedback: '의자가 모두 몇 개인지 물었어요' },
     ],
     hints: ['대합실 의자가 줄마다 같은 수로 놓여 있어요. 의자가 모두 몇 개인지 곱셈식을 물어요.', '한 줄에 몇 개인지, 몇 줄인지 세어 볼까요? 같은 수씩 여러 줄이면 곱셈식으로 써요.', `한 줄에 ${c}개씩 ${r}줄이에요.`, `${r} × ${c} = ${bl.blank}`],
     blank: bl.blank,
@@ -499,8 +505,8 @@ function t63Level2(r, c) {
     answer: { left: N, op: '÷', right: c, result: r },
     discriminators: [
       ...mismatch(N, c, r),
-      { match: (x) => x?.op === '×' && num(x.left) === N, category: '식', feedback: '줄 수가 의자 수보다 많을까요?' },
-      { match: (x) => x?.op === '-' || x?.op === '+', category: '식', feedback: '한 줄에 같은 수씩이에요. 몇 묶음일까요?' },
+      { match: (x) => x?.op === '×' && num(x.left) === N, category: '식', kind: 'check', feedback: '줄 수가 의자 수보다 많을까요?' },
+      { match: (x) => x?.op === '-' || x?.op === '+', category: '식', kind: 'nudge', feedbackCheck: '이 식은 어떤 상황이에요?', feedback: '한 줄에 같은 수씩이에요. 몇 묶음일까요?' },
     ],
     hints: [`의자는 모두 ${N}개이고, 한 줄에 ${c}개예요. 줄이 몇 줄인지 물어요.`, `${c}개씩 묶으면 몇 묶음일까요? 곱셈구구 ${c}단을 떠올려 봐요.`, `${c} × ${r - 1} = ${c * (r - 1)}, ${c} × ${r + 1} = ${ieyo(c * (r + 1))}.`, `${c} × ☐ = ${N}`],
     blank: `${c} × ☐ = ${N}`,
@@ -522,10 +528,10 @@ function t63Level3(r, c, rng) {
   const plus = `${c} + ${r} = ${c + r}`;
   const answer = [mul, byCols, byRows];
   const discs = [
-    { value: [...answer, minus], category: '개념', feedback: '줄 하나를 뺀 식이에요. 배열 전체일까요?' },
-    { value: [...answer, plus], category: '개념', feedback: `${c} + ${eun(r)} 의자 수일까요?` },
-    { value: [mul, byCols], category: '개념', feedback: '줄로 나누기와 칸으로 나누기 둘 다?' },
-    { value: [mul, byRows], category: '개념', feedback: '줄로 나누기와 칸으로 나누기 둘 다?' },
+    { value: [...answer, minus], category: '개념', kind: 'check', feedback: '줄 하나를 뺀 식이에요. 배열 전체일까요?' },
+    { value: [...answer, plus], category: '개념', kind: 'check', feedback: `${c} + ${eun(r)} 의자 수일까요?` },
+    { value: [mul, byCols], category: '개념', kind: 'nudge', feedbackCheck: '빠진 것이 없나요?', feedback: '줄로 나누기와 칸으로 나누기 둘 다?' },
+    { value: [mul, byRows], category: '개념', kind: 'nudge', feedbackCheck: '빠진 것이 없나요?', feedback: '줄로 나누기와 칸으로 나누기 둘 다?' },
   ];
   return {
     text: [`${CHAIRS} 이 그림으로 만들 수 있는 식을 모두 골라요.`],

@@ -22,7 +22,7 @@ export function emptyNode() {
  * @returns {{ node: object, gained: number, lit: boolean, pending: string|null }}
  */
 export function applyAttempt(ns, a, day) {
-  const node = { ...ns, attempts: [...ns.attempts, { c: a.correct, h: a.hint, l: a.level, r: a.repr }].slice(-20), reprs: ns.reprs.slice() };
+  const node = { ...ns, attempts: [...ns.attempts, { c: a.correct, h: a.hint, l: a.level, r: a.repr, d: day }].slice(-20), reprs: ns.reprs.slice() };
   node.rating = nextRating(ns.rating, a);
   let gained = 0;
   let lit = false;

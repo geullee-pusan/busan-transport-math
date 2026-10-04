@@ -79,3 +79,6 @@ export function countRun(state, day) {
   const backwards = typeof state.lastRunDay === 'number' && day < state.lastRunDay;
   return { ...state, lastRunDay: Math.max(day, state.lastRunDay ?? day), dateWentBack: state.dateWentBack || backwards, runDays: { ...days, [day]: (days[day] ?? 0) + 1 } };
 }
+
+/** 부모 번호: 숫자 4자리 */
+export const isPin = (v) => /^\d{4}$/.test(String(v ?? '').trim());

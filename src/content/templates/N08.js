@@ -83,11 +83,11 @@ function multiGrade(answer, discs) {
   const key = (arr) => [...new Set((Array.isArray(arr) ? arr : []).map(Number))].sort((x, y) => x - y).join(',');
   const want = key(answer);
   return (r) => {
-    if (!Array.isArray(r) || r.length === 0) return { correct: false, flags: { careless: true }, feedback: '답을 먼저 골라 볼까요?' };
+    if (!Array.isArray(r) || r.length === 0) return { correct: false, flags: { careless: true }, kind: 'check', feedback: '답을 먼저 골라 볼까요?' };
     const got = key(r);
     if (got === want) return { correct: true };
     const d = discs.find((x) => key(x.value) === got);
-    return d ? { correct: false, category: d.category, feedback: d.feedback } : { correct: false, category: null, feedback: null };
+    return d ? { correct: false, category: d.category, kind: d.kind ?? 'check', feedbackCheck: d.feedbackCheck, feedback: d.feedback } : { correct: false, category: null, kind: 'check', feedback: null };
   };
 }
 
@@ -107,19 +107,19 @@ function parseFrac(r) {
  */
 function fracGrade(nu, de, discs, reask) {
   return (r) => {
-    if (isBlank(r)) return { correct: false, flags: { careless: true }, feedback: '답을 먼저 써 볼까요?' };
+    if (isBlank(r)) return { correct: false, flags: { careless: true }, kind: 'check', feedback: '답을 먼저 써 볼까요?' };
     const f = parseFrac(r);
-    if (!f) return { correct: false, flags: { careless: true }, feedback: '분수로 써 볼까요?' };
+    if (!f) return { correct: false, flags: { careless: true }, kind: 'check', feedback: '분수로 써 볼까요?' };
     if (f[0] === nu && f[1] === de) return { correct: true };
     const exact = discs.find((d) => String(d.value) === `${f[0]}/${f[1]}`);
-    if (exact) return { correct: false, category: exact.category, feedback: exact.feedback };
-    if (f[0] * de === nu * f[1]) return { correct: false, flags: { careless: true, reask: true }, feedback: reask };
+    if (exact) return { correct: false, category: exact.category, kind: exact.kind ?? 'check', feedbackCheck: exact.feedbackCheck, feedback: exact.feedback };
+    if (f[0] * de === nu * f[1]) return { correct: false, flags: { careless: true, reask: true }, kind: 'check', feedback: reask };
     const same = discs.find((d) => {
       const g = parseFrac(d.value);
       return g && g[0] * f[1] === f[0] * g[1];
     });
-    if (same) return { correct: false, category: same.category, feedback: same.feedback };
-    return { correct: false, category: null, feedback: null };
+    if (same) return { correct: false, category: same.category, kind: same.kind ?? 'check', feedbackCheck: same.feedbackCheck, feedback: same.feedback };
+    return { correct: false, category: null, kind: 'check', feedback: null };
   };
 }
 const REASK8 = '8칸으로 나눈 그림이에요. 분모를 8로 쓸까요?';
@@ -128,8 +128,8 @@ const REASK8 = '8칸으로 나눈 그림이에요. 분모를 8로 쓸까요?';
 function t81Level1(k) {
   const ans = fr(k, 8);
   const discs = [
-    { value: fr(k, 8 - k), category: '개념', feedback: '분모는 전체 칸 수예요. 모두 몇 칸이에요?' },
-    { value: fr(8, k), category: '개념', feedback: '전체 칸 수는 위에 쓸까요, 아래에 쓸까요?' },
+    { value: fr(k, 8 - k), category: '개념', kind: 'nudge', feedbackCheck: '분모가 무엇을 나타내는지 볼까요?', feedback: '분모는 전체 칸 수예요. 모두 몇 칸이에요?' },
+    { value: fr(8, k), category: '개념', kind: 'nudge', feedbackCheck: '분모와 분자를 다시 볼까요?', feedback: '전체 칸 수는 위에 쓸까요, 아래에 쓸까요?' },
   ].filter((d) => d.value !== ans);
   return {
     text: [L1(), '호선 ', CARS(), '량 열차 그림이에요. ', V(k), '량이 꽉 찼어요. 꽉 찬 칸은 전체의 얼마인지 분수로 나타내요.'],
@@ -158,8 +158,8 @@ function t81Level2(p) {
     answer: p,
     discriminators: uniq(
       [
-        { value: 8 - p, category: '개념', feedback: '분자는 색칠할 칸 수예요. 몇 칸일까요?' },
-        { value: 8, category: '개념', feedback: '분모는 전체 칸 수예요. 분자는요?' },
+        { value: 8 - p, category: '개념', kind: 'nudge', feedbackCheck: '분자가 무엇을 나타내는지 볼까요?', feedback: '분자는 색칠할 칸 수예요. 몇 칸일까요?' },
+        { value: 8, category: '개념', kind: 'nudge', feedbackCheck: '분자가 무엇을 나타내는지 볼까요?', feedback: '분모는 전체 칸 수예요. 분자는요?' },
       ],
       p,
     ),
@@ -187,8 +187,8 @@ function t81Level3(widths) {
     input: { kind: 'compound', fields: [{ key: 'yn', label: '할 수 있어요?', options: ['예', '아니요'] }, { key: 'why', label: '이유', options: [R_EQ, R_NEQ, rCount] }] },
     answer: { yn, why: equal ? R_EQ : R_NEQ },
     discriminators: equal
-      ? [{ key: 'yn', value: '아니요', category: '개념', feedback: '조각의 크기를 견주어 볼까요?' }, { key: 'why', value: rCount, category: '개념', feedback: '조각 수만 세면 될까요?' }]
-      : [{ key: 'yn', value: '예', category: '개념', feedback: '조각의 크기가 모두 같나요?' }, { key: 'why', value: rCount, category: '개념', feedback: '조각 수만 세면 될까요?' }],
+      ? [{ key: 'yn', value: '아니요', category: '개념', kind: 'nudge', feedbackCheck: '그림을 다시 볼까요?', feedback: '조각의 크기를 견주어 볼까요?' }, { key: 'why', value: rCount, category: '개념', kind: 'check', feedback: '조각 수만 세면 될까요?' }]
+      : [{ key: 'yn', value: '예', category: '개념', kind: 'check', feedback: '조각의 크기가 모두 같나요?' }, { key: 'why', value: rCount, category: '개념', kind: 'check', feedback: '조각 수만 세면 될까요?' }],
     hints: [`띠는 ${p}조각이고 그중 한 조각을 색칠했어요. 그 조각을 1/${p}이라고 할 수 있는지, 그 까닭을 물어요.`, '조각들의 길이를 견주어 볼까요? 분수는 똑같이 나눈 것으로 나타내요.', equal ? '조각의 길이가 모두 같아요.' : '조각의 길이가 서로 달라요.', `1/${p}이 되려면 띠를 ☐조각으로 똑같이 나눠야 해요.`],
     blank: `띠를 ☐조각으로 똑같이`,
     blankAnswer: String(p),
@@ -205,10 +205,10 @@ function t81Level4(k) {
   const r = 8 - k;
   const ans = fr(r, 8);
   const discs = [
-    { value: fr(k, 8), category: '읽기', feedback: '색칠하지 않은 칸을 물었어요. 몇 칸이에요?' },
-    { value: fr(k, r), category: '개념', feedback: '분모는 전체 칸 수예요. 모두 몇 칸이에요?' },
-    { value: fr(r, k), category: '개념', feedback: '분모는 전체 칸 수예요. 모두 몇 칸이에요?' },
-    { value: fr(8, r), category: '개념', feedback: '전체 칸 수는 위에 쓸까요, 아래에 쓸까요?' },
+    { value: fr(k, 8), category: '읽기', kind: 'check', feedback: '색칠하지 않은 칸을 물었어요. 몇 칸이에요?' },
+    { value: fr(k, r), category: '개념', kind: 'nudge', feedbackCheck: '분모가 무엇을 나타내는지 볼까요?', feedback: '분모는 전체 칸 수예요. 모두 몇 칸이에요?' },
+    { value: fr(r, k), category: '개념', kind: 'nudge', feedbackCheck: '분모가 무엇을 나타내는지 볼까요?', feedback: '분모는 전체 칸 수예요. 모두 몇 칸이에요?' },
+    { value: fr(8, r), category: '개념', kind: 'nudge', feedbackCheck: '분모와 분자를 다시 볼까요?', feedback: '전체 칸 수는 위에 쓸까요, 아래에 쓸까요?' },
   ].filter((d) => d.value !== ans);
   return {
     text: [L1(), '호선 ', CARS(), '량 그림에서 ', V(k), '량을 색칠했어요. 색칠하지 않은 칸은 전체의 얼마예요?'],
@@ -239,7 +239,7 @@ function t81Level5(d, k) {
     input: { kind: 'number', unit: '칸' },
     answer: ans,
     discriminators: uniq(
-      [k, d, d + k].map((v) => ({ value: v, category: '개념', feedback: `${d}/${d}${jo(d, '은', '는')} 몇 칸일까요?` })),
+      [k, d, d + k].map((v) => ({ value: v, category: '개념', kind: 'check', feedback: `${d}/${d}${jo(d, '은', '는')} 몇 칸일까요?` })),
       ans,
     ),
     hints: [`띠의 ${u}이 ${k}칸이에요. 띠 전체가 몇 칸인지 물어요.`, `${u}이 몇 개 모이면 띠 전체가 될까요? 그림에 이어 그려 봐요.`, `${u}이 ${d}개면 전체예요.`, `${k} × ${d} = ${bl.blank}`],
@@ -268,16 +268,16 @@ function t81Level6(items) {
   const answer = labeled.filter((x) => x.ok).map((x) => x.label);
   const discs = [];
   const un = labeled.find((x) => x.id === 'uneven');
-  if (un) discs.push({ value: [...answer, un.label], category: '개념', feedback: '조각 크기가 모두 같나요?' });
+  if (un) discs.push({ value: [...answer, un.label], category: '개념', kind: 'check', feedback: '조각 크기가 모두 같나요?' });
   const two = labeled.find((x) => x.id === 'two');
-  if (two) discs.push({ value: [...answer, two.label], category: '개념', feedback: '색칠한 조각이 몇 개예요?' });
+  if (two) discs.push({ value: [...answer, two.label], category: '개념', kind: 'check', feedback: '색칠한 조각이 몇 개예요?' });
   const eq4 = labeled.filter((x) => x.equal4).map((x) => x.label);
   const key = (arr) => [...arr].sort().join('|');
   const grade = (r) => {
-    if (!Array.isArray(r) || r.length === 0) return { correct: false, flags: { careless: true }, feedback: '답을 먼저 골라 볼까요?' };
+    if (!Array.isArray(r) || r.length === 0) return { correct: false, flags: { careless: true }, kind: 'check', feedback: '답을 먼저 골라 볼까요?' };
     if (key(r) === key(answer)) return { correct: true };
     const d = discs.find((x) => key(x.value) === key(r));
-    return d ? { correct: false, category: d.category, feedback: d.feedback } : { correct: false, category: null, feedback: null };
+    return d ? { correct: false, category: d.category, kind: d.kind ?? 'check', feedbackCheck: d.feedbackCheck, feedback: d.feedback } : { correct: false, category: null, kind: 'check', feedback: null };
   };
   const list = answer.join(', ');
   return {
@@ -389,8 +389,8 @@ function t82Level1(k, d, rng) {
     input: { kind: 'choice', options: rng.shuffle([right, swapped, plain]) },
     answer: right,
     discriminators: [
-      { value: swapped, category: '개념', feedback: '분모부터 읽어요' },
-      { value: plain, category: '개념', feedback: '분모를 먼저 읽고 "분의"를 붙여요' },
+      { value: swapped, category: '개념', kind: 'nudge', feedbackCheck: '읽는 차례를 다시 볼까요?', feedback: '분모부터 읽어요' },
+      { value: plain, category: '개념', kind: 'nudge', feedbackCheck: '읽는 차례를 다시 볼까요?', feedback: '분모를 먼저 읽고 "분의"를 붙여요' },
     ],
     hints: [`분수 ${f}${jo(f, '을', '를')} 읽는 말을 물어요. 보기는 세 개예요.`, '분모는 아래, 분자는 위에 있는 수예요. 어느 수를 먼저 읽을까요?', `${f}의 분모는 ${ieyo(d)}.`, '분모: ☐'],
     blank: '분모: ☐',
@@ -407,7 +407,7 @@ function t82Level1(k, d, rng) {
 function t82Level2(k, d) {
   const ans = fr(k, d);
   const r = readFr(k, d);
-  const discs = [{ value: fr(d, k), category: '개념', feedback: `${r}에서 분모는 몇이에요?` }];
+  const discs = [{ value: fr(d, k), category: '개념', kind: 'check', feedback: `${r}에서 분모는 몇이에요?` }];
   return {
     text: ['"', r, '"', jo(k, '을', '를'), ' 분수로 써요.'],
     figure: null,
@@ -441,10 +441,10 @@ function t82Level3(k) {
     },
     answer: { frac: ans, den: 8, num: k },
     discriminators: [
-      { key: 'frac', value: fr(k, 8 - k), category: '개념', feedback: '분모는 전체 칸 수예요. 모두 몇 칸이에요?' },
-      { key: 'frac', value: fr(8, k), category: '개념', feedback: '전체 칸 수는 위에 쓸까요, 아래에 쓸까요?' },
-      { key: 'den', value: k, category: '개념', feedback: '분모는 전체 칸 수예요. 모두 몇 칸이에요?' },
-      { key: 'num', value: 8, category: '개념', feedback: '분자는 냉방이 강한 칸 수예요' },
+      { key: 'frac', value: fr(k, 8 - k), category: '개념', kind: 'nudge', feedbackCheck: '분모가 무엇을 나타내는지 볼까요?', feedback: '분모는 전체 칸 수예요. 모두 몇 칸이에요?' },
+      { key: 'frac', value: fr(8, k), category: '개념', kind: 'nudge', feedbackCheck: '분모와 분자를 다시 볼까요?', feedback: '전체 칸 수는 위에 쓸까요, 아래에 쓸까요?' },
+      { key: 'den', value: k, category: '개념', kind: 'nudge', feedbackCheck: '분모가 무엇을 나타내는지 볼까요?', feedback: '분모는 전체 칸 수예요. 모두 몇 칸이에요?' },
+      { key: 'num', value: 8, category: '개념', kind: 'nudge', feedbackCheck: '분자가 무엇을 나타내는지 볼까요?', feedback: '분자는 냉방이 강한 칸 수예요' },
     ],
     hints: [`열차는 8량이에요. 그중 ${k}량에 냉방이 강하게 나와요. 전체의 얼마인지 물어요.`, '열차를 똑같이 몇 칸으로 나눈 것인지 먼저 볼까요?', '전체는 8칸이라 분모는 8이에요.', '분자: ☐'],
     blank: '분자: ☐',
@@ -487,9 +487,9 @@ function t83(d, k, figure, opts = {}) {
   const fields = pick ? [{ key: 'pick', label: '말 틀을 쓸 수 있는 그림', options: ['가', '나'] }, ...FRAME_FIELDS] : FRAME_FIELDS;
   const answer = pick ? { pick, whole: d, part: k, frac: f } : { whole: d, part: k, frac: f };
   const discs = [
-    ...(pick ? [{ key: 'pick', value: pick === '가' ? '나' : '가', category: '개념', feedback: "'똑같이' 나눴나요?" }] : []),
-    { key: 'whole', value: k, category: '개념', feedback: '처음 칸은 전체 칸 수예요' },
-    { key: 'frac', value: fr(d, k), category: '개념', feedback: '전체 칸 수는 위에 쓸까요, 아래에 쓸까요?' },
+    ...(pick ? [{ key: 'pick', value: pick === '가' ? '나' : '가', category: '개념', kind: 'check', feedback: "'똑같이' 나눴나요?" }] : []),
+    { key: 'whole', value: k, category: '개념', kind: 'nudge', feedbackCheck: '처음 칸이 무엇을 나타내는지 볼까요?', feedback: '처음 칸은 전체 칸 수예요' },
+    { key: 'frac', value: fr(d, k), category: '개념', kind: 'nudge', feedbackCheck: '분모와 분자를 다시 볼까요?', feedback: '전체 칸 수는 위에 쓸까요, 아래에 쓸까요?' },
   ];
   return {
     text: [pick ? `두 그림 중 이 말 틀을 쓸 수 있는 그림을 고르고, 말 틀을 채워요. ${FRAME}` : `${opts.lead ?? ''}그림을 보고 말 틀을 채워요. ${FRAME}`],

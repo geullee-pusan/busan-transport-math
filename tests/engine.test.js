@@ -231,3 +231,38 @@ test('틀린 뒤 앱을 껐다 켜도 시도 기록이 이어진다(이어 타�
   const out = submit(st2, third, c3.problem.answer);
   assert.equal(out.state.goldTotal, before, '세 번째에 맞히면 금 도장 없음');
 });
+
+test('2호선은 서면(N25)이 켜지면 열리고, 운행마다 1호선 : 2호선 = 2 : 1', async () => {
+  const { chooseLine, line2Open, playableNodes } = await import('../src/engine/run.js');
+  const { emptyNode } = await import('../src/engine/mastery.js');
+  let state = createState();
+  assert.equal(line2Open(state), false);
+  assert.equal(chooseLine(state), 'L1');
+  if (playableNodes('L2').length === 0) return; // 2호선 템플릿이 아직 없으면 여기까지
+  state = { ...state, nodes: { ...state.nodes, N25: { ...emptyNode(), status: 'lit' } } };
+  assert.equal(line2Open(state), true);
+  const seq = [0, 1, 2, 3, 4, 5].map((runs) => chooseLine({ ...state, runs }));
+  assert.deepEqual(seq, ['L1', 'L1', 'L2', 'L1', 'L1', 'L2']);
+});
+
+test('부모 번호 검사: 숫자 4자리만', async () => {
+  const { isPin } = await import('../src/engine/state.js');
+  assert.equal(isPin('1234'), true);
+  assert.equal(isPin('0000'), true);
+  assert.equal(isPin('123'), false);
+  assert.equal(isPin('12a4'), false);
+  assert.equal(isPin('dddd'), false);
+});
+
+test('출제 조건(requires): 필요한 역을 켜지 않았으면 그 문제를 내지 않는다', async () => {
+  const { allTemplates } = await import('../src/content/index.js');
+  const t = allTemplates().find((x) => x.generate && (() => { try { return x.generate(createRngLocal(1), x.minLevel).requires; } catch { return false; } })());
+  if (!t) return; // 조건이 있는 템플릿이 없으면 건너뜀
+  const state = createState();
+  for (let s = 0; s < 20; s++) {
+    const run = { slots: [{ kind: 'hard', node: t.node, level: t.minLevel, templateId: t.id }], index: 0, current: null, recentReprs: [], seed: s, stateRef: state };
+    const cur = currentProblem(run);
+    if (cur?.problem?.requires) assert.fail(`조건이 안 맞는 문제가 나옴: ${t.id} ${cur.problem.requires}`);
+  }
+});
+import { createRng as createRngLocal } from '../src/engine/rng.js';

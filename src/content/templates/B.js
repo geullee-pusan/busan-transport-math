@@ -83,11 +83,11 @@ function multiGrade(answer, discs) {
   const key = (arr) => [...new Set((Array.isArray(arr) ? arr : []).map(Number))].sort((x, y) => x - y).join(',');
   const want = key(answer);
   return (r) => {
-    if (!Array.isArray(r) || r.length === 0) return { correct: false, flags: { careless: true }, feedback: '답을 먼저 골라 볼까요?' };
+    if (!Array.isArray(r) || r.length === 0) return { correct: false, flags: { careless: true }, kind: 'check', feedback: '답을 먼저 골라 볼까요?' };
     const got = key(r);
     if (got === want) return { correct: true };
     const d = discs.find((x) => key(x.value) === got);
-    return d ? { correct: false, category: d.category, feedback: d.feedback } : { correct: false, category: null, feedback: null };
+    return d ? { correct: false, category: d.category, kind: d.kind ?? 'check', feedbackCheck: d.feedbackCheck, feedback: d.feedback } : { correct: false, category: null, kind: 'check', feedback: null };
   };
 }
 
@@ -122,9 +122,9 @@ function placeValue(a, b, c) {
   const v = a * 100 + b * 10 + c;
   const bl = blankAt(v, 1);
   const discs = [];
-  if (b === 0) discs.push({ value: a * 10 + c, category: '개념', feedback: '0인 자리도 자리를 지켜요. 몇 자리 수예요?' });
-  if (c === 0) discs.push({ value: a * 10 + b, category: '개념', feedback: '0인 자리도 자리를 지켜요. 몇 자리 수예요?' });
-  discs.push({ value: a + b + c, category: '개념', feedback: `100이 ${a}개면 얼마일까요?` });
+  if (b === 0) discs.push({ value: a * 10 + c, category: '개념', kind: 'nudge', feedbackCheck: '0인 자리를 다시 볼까요?', feedback: '0인 자리도 자리를 지켜요. 몇 자리 수예요?' });
+  if (c === 0) discs.push({ value: a * 10 + b, category: '개념', kind: 'nudge', feedbackCheck: '0인 자리를 다시 볼까요?', feedback: '0인 자리도 자리를 지켜요. 몇 자리 수예요?' });
+  discs.push({ value: a + b + c, category: '개념', kind: 'check', feedback: `100이 ${a}개면 얼마일까요?` });
   return {
     text: [n(100), '이 ', n(a), '개, ', n(10), '이 ', n(b), '개, ', n(1), '이 ', n(c), '개인 수는 얼마예요?'],
     figure: { kind: 'placeValue', hundreds: a, tens: b, ones: c },
@@ -147,14 +147,14 @@ function cardNumber(cards, big) {
   const h = Math.floor(v / 100);
   const discs = big
     ? [
-        { value: nz[1] * 100 + nz[0], category: '개념', feedback: '0은 어느 자리에 둘까요?' },
-        { value: nz[0] * 100 + nz[1] * 10, category: '개념', feedback: '가장 큰 숫자는 어느 자리에 둘까요?' },
-        { value: nz[0] * 100 + nz[1], category: '읽기', feedback: '가장 큰 수를 물었어요. 다시 볼까요?' },
+        { value: nz[1] * 100 + nz[0], category: '개념', kind: 'nudge', feedbackCheck: '다른 수도 만들어 견주어 볼까요?', feedback: '0은 어느 자리에 둘까요?' },
+        { value: nz[0] * 100 + nz[1] * 10, category: '개념', kind: 'nudge', feedbackCheck: '다른 수도 만들어 견주어 볼까요?', feedback: '가장 큰 숫자는 어느 자리에 둘까요?' },
+        { value: nz[0] * 100 + nz[1], category: '읽기', kind: 'check', feedback: '가장 큰 수를 물었어요. 다시 볼까요?' },
       ]
     : [
-        { value: nz[0] * 10 + nz[1], category: '개념', feedback: '0이 맨 앞이면 세 자리 수일까요?' },
-        { value: nz[0] * 100 + nz[1] * 10, category: '개념', feedback: '0은 어느 자리에 둘까요?' },
-        { value: nz[1] * 100 + nz[0] * 10, category: '읽기', feedback: '가장 작은 수를 물었어요. 다시 볼까요?' },
+        { value: nz[0] * 10 + nz[1], category: '개념', kind: 'check', feedback: '0이 맨 앞이면 세 자리 수일까요?' },
+        { value: nz[0] * 100 + nz[1] * 10, category: '개념', kind: 'nudge', feedbackCheck: '다른 수도 만들어 견주어 볼까요?', feedback: '0은 어느 자리에 둘까요?' },
+        { value: nz[1] * 100 + nz[0] * 10, category: '읽기', kind: 'check', feedback: '가장 작은 수를 물었어요. 다시 볼까요?' },
       ];
   const bl = blankAt(v, 1);
   const word = big ? '큰' : '작은';
@@ -194,12 +194,12 @@ function addSub(a, b, op) {
   const discs =
     op === '+'
       ? [
-          { value: noCarry(a, b), category: '개념', feedback: '일의 자리 10은 어디로 갔을까요?' },
-          { value: ans - 10, category: '계산', feedback: '받아올린 1을 더했나요?' },
+          { value: noCarry(a, b), category: '개념', kind: 'check', feedback: '일의 자리 10은 어디로 갔을까요?' },
+          { value: ans - 10, category: '계산', kind: 'nudge', feedbackCheck: '십의 자리를 다시 계산해 볼까요?', feedback: '받아올린 1을 더했나요?' },
         ]
       : [
-          { value: absDigits(a, b), category: '개념', feedback: `일의 자리 ${au}에서 ${eul(bu)} 뺄 수 있나요?` },
-          { value: ans + 10, category: '계산', feedback: '빌려 준 자리는 1 줄었나요?' },
+          { value: absDigits(a, b), category: '개념', kind: 'check', feedback: `일의 자리 ${au}에서 ${eul(bu)} 뺄 수 있나요?` },
+          { value: ans + 10, category: '계산', kind: 'nudge', feedbackCheck: '빌려 준 자리를 다시 볼까요?', feedback: '빌려 준 자리는 1 줄었나요?' },
         ];
   const carry = op === '+' ? au + bu >= 10 : au < bu;
   return {
@@ -267,11 +267,11 @@ function times(a, b) {
     answer: P,
     discriminators: uniq(
       [
-        { value: a * (b - 1), category: '계산', feedback: `${a}단을 차례로 외워 볼까요?` },
-        { value: a * (b + 1), category: '계산', feedback: `${a}단을 차례로 외워 볼까요?` },
-        { value: (a - 1) * b, category: '계산', feedback: `${b}단과 헷갈렸나요?` },
-        { value: (a + 1) * b, category: '계산', feedback: `${b}단과 헷갈렸나요?` },
-        { value: a + b, category: '식', feedback: '곱셈이에요. 몇 번 더하는 셈일까요?' },
+        { value: a * (b - 1), category: '계산', kind: 'nudge', feedbackCheck: `${a} × ${b}, 다시 계산해 볼까요?`, feedback: `${a}단을 차례로 외워 볼까요?` },
+        { value: a * (b + 1), category: '계산', kind: 'nudge', feedbackCheck: `${a} × ${b}, 다시 계산해 볼까요?`, feedback: `${a}단을 차례로 외워 볼까요?` },
+        { value: (a - 1) * b, category: '계산', kind: 'check', feedback: `${b}단과 헷갈렸나요?` },
+        { value: (a + 1) * b, category: '계산', kind: 'check', feedback: `${b}단과 헷갈렸나요?` },
+        { value: a + b, category: '식', kind: 'nudge', feedbackCheck: '문제를 다시 읽어 볼까요?', feedback: '곱셈이에요. 몇 번 더하는 셈일까요?' },
       ].filter((d) => d.value > 0 && d.value !== a && d.value !== b),
       P,
     ),
@@ -306,20 +306,20 @@ const diag = (id, node, title, make) => ({ id, node, title, repr: '식', minLeve
 
 const B02_D1 = diag('B02-D1', 'B02', '정비창 진단: 0이 있는 자릿값', () => {
   const p = placeValue(3, 0, 7);
-  return { ...p, discriminators: [{ value: 37, category: '개념', feedback: '0인 자리도 자리를 지켜요. 몇 자리 수예요?' }] };
+  return { ...p, discriminators: [{ value: 37, category: '개념', kind: 'nudge', feedbackCheck: '0인 자리를 다시 볼까요?', feedback: '0인 자리도 자리를 지켜요. 몇 자리 수예요?' }] };
 });
 const B02_D2 = diag('B02-D2', 'B02', '정비창 진단: 가장 큰 세 자리 수', () => cardNumber([4, 0, 9], true));
 const B06_D1 = diag('B06-D1', 'B06', '정비창 진단: 두 자리 덧셈', () => {
   const p = addSub(47, 38, '+');
-  return { ...p, discriminators: [{ value: 75, category: '개념', feedback: '일의 자리 10은 어디로 갔을까요?' }, { value: 715, category: '개념', feedback: '한 자리에 숫자가 둘 들어갔나요?' }] };
+  return { ...p, discriminators: [{ value: 75, category: '개념', kind: 'check', feedback: '일의 자리 10은 어디로 갔을까요?' }, { value: 715, category: '개념', kind: 'check', feedback: '한 자리에 숫자가 둘 들어갔나요?' }] };
 });
 const B06_D2 = diag('B06-D2', 'B06', '정비창 진단: 두 자리 뺄셈', () => {
   const p = addSub(62, 27, '-');
-  return { ...p, discriminators: [{ value: 45, category: '개념', feedback: '일의 자리 2에서 7을 뺄 수 있나요?' }, { value: 89, category: '식', feedback: '빼기 문제예요. 답이 커질까요?' }] };
+  return { ...p, discriminators: [{ value: 45, category: '개념', kind: 'check', feedback: '일의 자리 2에서 7을 뺄 수 있나요?' }, { value: 89, category: '식', kind: 'nudge', feedbackCheck: '답을 처음 수와 견주어 볼까요?', feedback: '빼기 문제예요. 답이 커질까요?' }] };
 });
 const B11_D1 = diag('B11-D1', 'B11', '정비창 진단: 곱셈구구', () => {
   const p = times(7, 8);
-  return { ...p, discriminators: [{ value: 54, category: '계산', feedback: '7단을 차례로 외워 볼까요?' }, { value: 48, category: '계산', feedback: '7단을 차례로 외워 볼까요?' }, { value: 15, category: '식', feedback: '곱셈이에요. 몇 번 더하는 셈일까요?' }] };
+  return { ...p, discriminators: [{ value: 54, category: '계산', kind: 'nudge', feedbackCheck: '곱하는 두 수를 다시 볼까요?', feedback: '7단을 차례로 외워 볼까요?' }, { value: 48, category: '계산', kind: 'nudge', feedbackCheck: '곱하는 두 수를 다시 볼까요?', feedback: '7단을 차례로 외워 볼까요?' }, { value: 15, category: '식', kind: 'nudge', feedbackCheck: '문제를 다시 읽어 볼까요?', feedback: '곱셈이에요. 몇 번 더하는 셈일까요?' }] };
 });
 const B11_D2 = diag('B11-D2', 'B11', '정비창 진단: 그림으로 곱셈', () => ({
   text: ['그림처럼 한 줄에 ', V(6), '명씩 ', V(4), '줄로 섰어요. 모두 몇 명이에요?'],
@@ -327,11 +327,114 @@ const B11_D2 = diag('B11-D2', 'B11', '정비창 진단: 그림으로 곱셈', ()
   input: { kind: 'number', unit: '명' },
   answer: 24,
   discriminators: [
-    { value: 18, category: '계산', feedback: '6씩 몇 줄인지 다시 세어 볼까요?' },
-    { value: 30, category: '계산', feedback: '6씩 몇 줄인지 다시 세어 볼까요?' },
-    { value: 10, category: '식', feedback: '줄마다 같은 수예요. 몇 번 더할까요?' },
+    { value: 18, category: '계산', kind: 'check', feedback: '6씩 몇 줄인지 다시 세어 볼까요?' },
+    { value: 30, category: '계산', kind: 'check', feedback: '6씩 몇 줄인지 다시 세어 볼까요?' },
+    { value: 10, category: '식', kind: 'nudge', feedbackCheck: '문제를 다시 읽어 볼까요?', feedback: '줄마다 같은 수예요. 몇 번 더할까요?' },
   ],
   explain: { why: ['6명씩 4줄이니 6 × 4를 해요.', '그래서 모두 24명이에요.'], alt: [] },
 }));
 
-export default [B02_P, B06_P, B11_P, B02_D1, B02_D2, B06_D1, B06_D2, B11_D1, B11_D2];
+// ── 2학년 시각·길이 기초 진단(10-line2-pilot.md 3.0절, 2호선 첫 운행 전 정비창 곁가지) ──
+// 노드는 concept-graph.json v2026-10-04.3의 정비창 기초 노드를 쓴다:
+//   B12 시각 읽기(몇 시 몇 분), 1시간 = 60분(2수03-07~09) → G13의 선수
+//   B13 길이 1cm·1m, 1m = 100cm(2수03-10~13) → G16의 선수
+// G13·G16 자신의 급행 통과 진단과 섞이지 않는다. 엔진 연결은 나중에.
+const isBlankB = (r) => r === undefined || r === null || (typeof r === 'string' && r.trim() === '');
+function hmGrade(answer, discs) {
+  const eq = (a, b) => !isBlankB(a) && Number(String(a).trim()) === b;
+  return (r) => {
+    if (isBlankB(r?.h) && isBlankB(r?.m)) return { correct: false, flags: { careless: true }, kind: 'check', feedback: '답을 먼저 써 볼까요?' };
+    if (eq(r?.h, answer.h) && eq(r?.m, answer.m)) return { correct: true };
+    const d = discs.find((x) => eq(r?.h, x.value.h) && eq(r?.m, x.value.m));
+    if (d) return { correct: false, category: d.category, kind: d.kind, feedbackCheck: d.feedbackCheck, feedback: d.feedback };
+    return { correct: false, category: null, kind: 'check', feedback: '시와 분을 다시 볼까요?' };
+  };
+}
+const BT_D1 = {
+  id: 'B12-D1',
+  node: 'B12',
+  title: '정비창 진단: 몇 시 몇 분 읽기',
+  repr: '그림',
+  minLevel: 2,
+  maxLevel: 2,
+  diagnostic: true,
+  generate() {
+    const answer = { h: 3, m: 25 };
+    const discs = [{ value: { h: 3, m: 5 }, category: '개념', kind: 'check', feedback: '긴바늘이 5를 가리키면 몇 분일까요?' }];
+    return {
+      text: ['시계가 가리키는 시각은 몇 시 몇 분이에요?'],
+      // 그림: { kind: 'clock', h, m } 바늘 시계(초침 없음)
+      figure: { kind: 'clock', h: 3, m: 25 },
+      input: { kind: 'compound', fields: [{ key: 'h', label: '시' }, { key: 'm', label: '분' }] },
+      answer,
+      discriminators: discs,
+      grade: hmGrade(answer, discs),
+      hints: [],
+      blank: null,
+      explain: { why: ['짧은바늘이 3과 4 사이라서 3시예요.', '긴바늘이 5를 가리키면 5 × 5 = 25분이에요.', '그래서 3시 25분이에요.'], alt: [] },
+    };
+  },
+};
+const BT_D2 = {
+  id: 'B12-D2',
+  node: 'B12',
+  title: '정비창 진단: 1시간 20분은 몇 분',
+  repr: '빈칸',
+  minLevel: 2,
+  maxLevel: 2,
+  diagnostic: true,
+  generate: () => ({
+    text: [n(1), '시간 ', n(20), '분은 몇 분이에요?'],
+    figure: null,
+    input: { kind: 'number', unit: '분' },
+    answer: 80,
+    discriminators: [{ value: 120, category: '개념', kind: 'check', feedback: '1시간은 몇 분이에요?' }],
+    hints: [],
+    blank: null,
+    explain: { why: ['1시간은 60분이에요.', '60분과 20분을 합치면 80분이에요.', '그래서 80분이에요.'], alt: [] },
+  }),
+};
+const BL_D1 = {
+  id: 'B13-D1',
+  node: 'B13',
+  title: '정비창 진단: 자로 몇 cm',
+  repr: '그림',
+  minLevel: 2,
+  maxLevel: 2,
+  diagnostic: true,
+  generate: () => ({
+    text: ['자로 연필의 길이를 재었어요. 연필의 한쪽 끝은 눈금 ', n(0), '에 맞췄어요. 연필의 길이는 몇 cm예요?'],
+    // 그림: { kind: 'ruler', cm, mm?, mark: { from, to, label } } — from·to는 mm
+    figure: { kind: 'ruler', cm: 10, mark: { from: 0, to: 70, label: '연필' } },
+    input: { kind: 'number', unit: 'cm' },
+    answer: 7,
+    discriminators: [],
+    hints: [],
+    blank: null,
+    explain: { why: ['연필의 한쪽 끝이 0에 있어요.', '다른 쪽 끝이 7을 가리켜요.', '그래서 7cm예요.'], alt: [] },
+  }),
+};
+const BL_D2 = {
+  id: 'B13-D2',
+  node: 'B13',
+  title: '정비창 진단: 1m 30cm는 몇 cm',
+  repr: '빈칸',
+  minLevel: 2,
+  maxLevel: 2,
+  diagnostic: true,
+  generate: () => ({
+    text: [n(1), 'm ', n(30), 'cm는 몇 cm예요?'],
+    figure: null,
+    input: { kind: 'number', unit: 'cm' },
+    answer: 130,
+    discriminators: [
+      { value: 13, category: '개념', kind: 'check', feedback: '1m는 몇 cm예요?' },
+      { value: 1030, category: '개념', kind: 'check', feedback: '1m는 몇 cm예요?' },
+    ],
+    hints: [],
+    blank: null,
+    explain: { why: ['1m는 100cm예요.', '100cm와 30cm를 합치면 130cm예요.', '그래서 130cm예요.'], alt: [] },
+  }),
+};
+
+export default [B02_P, B06_P, B11_P, B02_D1, B02_D2, B06_D1, B06_D2, B11_D1, B11_D2, BT_D1, BT_D2, BL_D1, BL_D2];

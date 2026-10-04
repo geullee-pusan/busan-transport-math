@@ -1,5 +1,13 @@
 // 답 입력. 시스템 키보드 대신 전화기 배열 키패드를 쓴다(SPEC 9.4). 채점은 "답 내기"를 눌러야만 한다.
 import { h, clear } from './dom.js';
+import { icon } from './icons.js';
+
+/** "답 내기" + 비활성 이유 한 줄. 아직 못 내면 점선(= 아직) 모양으로 바뀌고 이유를 보인다(opacity로 흐리지 않음). */
+function submitButton(onSubmit, why) {
+  const btn = h('button.submit', { type: 'button', onclick: () => onSubmit() }, '답 내기');
+  const note = h('p.why-off', why);
+  return { btn, note, set: (ok) => { btn.disabled = !ok; note.hidden = ok; } };
+}
 
 /**
  * @returns {{ el: HTMLElement, value: () => any, reset: () => void, setBlank: (pattern) => void, lock: (on) => void }}
@@ -17,13 +25,14 @@ export function makeInput(input, { onSubmit }) {
 
 function keypad(onKey, extra = []) {
   const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', ...extra, '0', '⌫'];
-  return h('div.keypad', keys.map((k) => h('button.key', { type: 'button', onclick: () => onKey(k), 'aria-label': k === '⌫' ? '지우기' : k }, k)));
+  // 전화기 배열: 덧붙는 키가 없으면 0은 가운데 열, ⌫는 오른쪽(빈 자리는 그리지 않는다)
+  return h('div.keypad', keys.map((k) => h('button.key', { type: 'button', onclick: () => onKey(k), 'aria-label': k === '⌫' ? '하나 지우기' : k, style: k === '0' && !extra.length ? { gridColumn: '2' } : undefined }, k === '⌫' ? icon('backspace') : k)));
 }
 
 function numberInput(input, onSubmit) {
   let text = '';
   let blank = null; // 힌트 ④의 빈칸 틀: { pattern: '7☐2', filled: '' }
-  const box = h('div.answer-box', { 'aria-live': 'polite' });
+  const box = h('div.answer-box.active', { 'aria-live': 'polite' }); // 키패드가 채우는 칸(대상)
   const unit = input?.unit ? h('span.unit', input.unit) : null;
   const allowDot = input?.kind === 'decimal';
   const allowSlash = input?.kind === 'fraction';
@@ -42,10 +51,15 @@ function numberInput(input, onSubmit) {
     render();
     syncBtn();
   };
-  const submitBtn = h('button.submit', { type: 'button', onclick: () => onSubmit() }, '답 내기');
-  const syncBtn = () => (submitBtn.textContent = text && !blank ? `${text}${input?.unit ?? ''} — 답 내기` : '답 내기');
-  const el = h('div.input', h('div.answer-row', box, unit), keypad(onKey, [allowDot ? '.' : null, allowSlash ? '/' : null].filter(Boolean)), submitBtn);
+  const sub = submitButton(onSubmit, '답을 먼저 써요');
+  const submitBtn = sub.btn;
+  const syncBtn = () => {
+    submitBtn.textContent = text && !blank ? `${text}${input?.unit ?? ''} — 답 내기` : '답 내기';
+    sub.set(blank ? Boolean(blank.filled) : Boolean(text));
+  };
+  const el = h('div.input', h('div.answer-row', box, unit), keypad(onKey, [allowDot ? '.' : null, allowSlash ? '/' : null].filter(Boolean)), submitBtn, sub.note);
   render();
+  syncBtn();
   return {
     el,
     value: () => (blank ? { blank: blank.filled } : text),
@@ -57,10 +71,17 @@ function numberInput(input, onSubmit) {
     setBlank: (pattern) => {
       blank = { pattern, filled: '' };
       render();
+      syncBtn();
     },
     clearBlank: () => {
       blank = null;
       render();
+      syncBtn();
+    },
+    fill: (v) => {
+      text = v;
+      render();
+      syncBtn();
     },
     lock: (on) => el.classList.toggle('locked', on),
   };
@@ -74,11 +95,14 @@ function choiceInput(input, onSubmit) {
       onclick: () => {
         chosen = o;
         btns.forEach((b) => b.classList.toggle('chosen', b.textContent === o));
+        sub.set(true);
       },
     }, o),
   );
-  const el = h('div.input', h('div.choices', btns), h('button.submit', { type: 'button', onclick: () => onSubmit() }, '답 내기'));
-  return { el, value: () => chosen, reset: () => { chosen = null; btns.forEach((b) => b.classList.remove('chosen')); }, setBlank() {}, clearBlank() {}, lock: (on) => el.classList.toggle('locked', on) };
+  const sub = submitButton(onSubmit, '하나를 먼저 골라요');
+  sub.set(false);
+  const el = h('div.input', h('div.choices', btns), sub.btn, sub.note);
+  return { el, value: () => chosen, reset: () => { chosen = null; btns.forEach((b) => b.classList.remove('chosen')); sub.set(false); }, setBlank() {}, clearBlank() {}, lock: (on) => el.classList.toggle('locked', on) };
 }
 
 function compoundInput(input, onSubmit) {
@@ -128,6 +152,7 @@ function equationInput(onSubmit) {
   const ops = ['+', '-', '×', '÷'].map((o) => h('button.op', { type: 'button', onclick: () => { v.op = o; paint(); } }, o === '-' ? '−' : o));
   const opShow = h('span.eq-op');
   const paint = () => {
+    ops.forEach((b, i) => b.classList.toggle('chosen', ['+', '-', '×', '÷'][i] === v.op));
     for (const b of [left, right, result]) {
       b.textContent = v[b.dataset.key] || ' ';
       b.classList.toggle('active', b.dataset.key === active);
@@ -150,20 +175,27 @@ const api = (el, value, reset) => ({ el, value, reset, setBlank: noop, clearBlan
 function multiInput(input, onSubmit) {
   const chosen = new Set();
   const btns = input.options.map((o) => {
-    const b = h('button.choice.small', { type: 'button', onclick: () => { chosen.has(o) ? chosen.delete(o) : chosen.add(o); b.classList.toggle('chosen', chosen.has(o)); } }, String(o));
+    const b = h('button.choice.small', { type: 'button', onclick: () => { chosen.has(o) ? chosen.delete(o) : chosen.add(o); b.classList.toggle('chosen', chosen.has(o)); sub.set(chosen.size > 0); } }, String(o));
     return b;
   });
-  const el = h('div.input', h('div.small', '맞는 것을 모두 골라요.'), h('div.choices', btns), h('button.submit', { type: 'button', onclick: () => onSubmit() }, '답 내기'));
-  return api(el, () => input.options.filter((o) => chosen.has(o)), () => { chosen.clear(); btns.forEach((b) => b.classList.remove('chosen')); });
+  const sub = submitButton(onSubmit, '맞는 것을 먼저 골라요');
+  sub.set(false);
+  const el = h('div.input', h('div.small', '맞는 것을 모두 골라요.'), h('div.choices', btns), sub.btn, sub.note);
+  return api(el, () => input.options.filter((o) => chosen.has(o)), () => { chosen.clear(); btns.forEach((b) => b.classList.remove('chosen')); sub.set(false); });
 }
 
 /** 순서 정하기: 누른 차례대로 배열 */
 function orderInput(input, onSubmit) {
   let seq = [];
   const shown = h('div.answer-box.order-box');
-  const paint = () => { shown.textContent = seq.length ? seq.join('  →  ') : ' '; btns.forEach((b, i) => b.classList.toggle('chosen', seq.includes(input.items[i]))); };
+  const paint = () => { shown.textContent = seq.length ? seq.join('  →  ') : ' '; 
+    // 고른 것 = 굵은 테두리 + 배지 안에 누른 차례
+    btns.forEach((b, i) => { const k = seq.indexOf(input.items[i]); b.classList.toggle('chosen', k >= 0); if (k >= 0) b.dataset.order = String(k + 1); else delete b.dataset.order; });
+    sub.set(seq.length > 0);
+  };
+  const sub = submitButton(onSubmit, '차례대로 먼저 눌러요');
   const btns = input.items.map((o) => h('button.choice.small', { type: 'button', onclick: () => { if (!seq.includes(o)) seq.push(o); paint(); } }, String(o)));
-  const el = h('div.input', h('div.small', '차례대로 눌러요.'), shown, h('div.choices', btns), h('div.choices', h('button.secondary', { type: 'button', onclick: () => { seq.pop(); paint(); } }, '하나 지우기')), h('button.submit', { type: 'button', onclick: () => onSubmit() }, '답 내기'));
+  const el = h('div.input', h('div.small', '차례대로 눌러요.'), shown, h('div.choices', btns), h('div.choices', h('button.secondary', { type: 'button', onclick: () => { seq.pop(); paint(); } }, icon('backspace'), '하나 지우기')), sub.btn, sub.note);
   paint();
   return api(el, () => seq.slice(), () => { seq = []; paint(); });
 }
@@ -183,7 +215,7 @@ function paintInput(input, onSubmit) {
 function withHow(inner, labelText) {
   let how = '';
   const box = h('div.answer-box.how-box', ' ');
-  const keys = h('div.keypad.mini', ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '+', '−', '⌫'].map((k) => h('button.key', { type: 'button', onclick: () => { how = k === '⌫' ? how.slice(0, -1) : (how + k).slice(0, 16); box.textContent = how || ' '; inner.el.querySelector('.choices')?.classList.toggle('locked', !how); } }, k)));
+  const keys = h('div.keypad.mini', ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '+', '−', '⌫'].map((k) => h('button.key', { type: 'button', 'aria-label': k === '⌫' ? '하나 지우기' : k, onclick: () => { how = k === '⌫' ? how.slice(0, -1) : (how + k).slice(0, 16); box.textContent = how || ' '; inner.el.querySelector('.choices')?.classList.toggle('locked', !how); } }, k === '⌫' ? icon('backspace') : k)));
   inner.el.querySelector('.choices')?.classList.add('locked');
   inner.el.prepend(h('div.how', h('div.small', labelText), box, keys));
   return { ...inner, value: () => (how ? inner.value() : null) };

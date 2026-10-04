@@ -33,6 +33,23 @@ for (const t of allTemplates()) {
           assert.equal(grade(p, d.value).correct, false, `판별 오답이 정답 처리됨 ${where} (${d.value})`);
         }
 
+        // 한 문제 안의 판별 오답 값끼리 겹치면 안 된다(같은 답에 피드백이 둘이면 앞의 것만 나간다).
+        // 숫자는 값으로, 배열·객체·문자열은 JSON으로 비교한다. key(칸)가 다르면 별개다. match(식 판별)만 있는 것은 뺀다.
+        const seen = new Map();
+        for (const d of p.discriminators ?? []) {
+          if (d.value === undefined) continue;
+          const v = typeof d.value === 'number' ? `n:${Math.round(d.value * 1e9) / 1e9}` : `j:${JSON.stringify(d.value)}`;
+          const k = `${d.key ?? ''}|${v}`;
+          assert.ok(!seen.has(k), `판별 오답 값이 겹침 ${where} (${d.key ? `${d.key}: ` : ''}${JSON.stringify(d.value)} — "${seen.get(k)}" / "${d.feedback}")`);
+          seen.set(k, d.feedback);
+        }
+
+        // nudge(도움) 판별 오답에는 첫 오답용 점검 문구(feedbackCheck)가 있어야 한다(10 문서 2절).
+        for (const d of p.discriminators ?? []) {
+          if (d.kind !== 'nudge') continue;
+          assert.ok(typeof d.feedbackCheck === 'string' && d.feedbackCheck.trim() !== '', `nudge에 feedbackCheck 없음 ${where} ("${d.feedback}")`);
+        }
+
         // 우연 겹침: 숫자 답이 문제 속 숫자와 같으면 안 된다(07 문서 0.4-4).
         if (typeof p.answer === 'number' && !p.allowAnswerInText) {
           assert.ok(!numbersIn(p.text).includes(p.answer), `답이 문제 속 숫자와 같음 ${where}`);

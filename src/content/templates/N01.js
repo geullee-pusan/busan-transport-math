@@ -83,11 +83,11 @@ function multiGrade(answer, discs) {
   const key = (arr) => [...new Set((Array.isArray(arr) ? arr : []).map(Number))].sort((x, y) => x - y).join(',');
   const want = key(answer);
   return (r) => {
-    if (!Array.isArray(r) || r.length === 0) return { correct: false, flags: { careless: true }, feedback: '답을 먼저 골라 볼까요?' };
+    if (!Array.isArray(r) || r.length === 0) return { correct: false, flags: { careless: true }, kind: 'check', feedback: '답을 먼저 골라 볼까요?' };
     const got = key(r);
     if (got === want) return { correct: true };
     const d = discs.find((x) => key(x.value) === got);
-    return d ? { correct: false, category: d.category, feedback: d.feedback } : { correct: false, category: null, feedback: null };
+    return d ? { correct: false, category: d.category, kind: d.kind ?? 'check', feedbackCheck: d.feedbackCheck, feedback: d.feedback } : { correct: false, category: null, kind: 'check', feedback: null };
   };
 }
 
@@ -108,10 +108,10 @@ function addDiscs(a, b) {
   const sum = a + b;
   return uniq(
     [
-      { value: noCarry(a, b), category: '계산', feedback: '일의 자리 10은 어디로 갔을까요?' },
-      { value: sum - 10, category: '계산', feedback: '받아올린 1을 더했나요?' },
-      { value: sum - 100, category: '계산', feedback: '받아올린 1을 더했나요?' },
-      { value: concatSums(a, b), category: '개념', feedback: '한 자리에 숫자가 둘 들어갔나요?' },
+      { value: noCarry(a, b), category: '계산', kind: 'check', feedback: '일의 자리 10은 어디로 갔을까요?' },
+      { value: sum - 10, category: '계산', kind: 'nudge', feedbackCheck: '십의 자리를 다시 계산해 볼까요?', feedback: '받아올린 1을 더했나요?' },
+      { value: sum - 100, category: '계산', kind: 'nudge', feedbackCheck: '백의 자리를 다시 계산해 볼까요?', feedback: '받아올린 1을 더했나요?' },
+      { value: concatSums(a, b), category: '개념', kind: 'check', feedback: '한 자리에 숫자가 둘 들어갔나요?' },
     ].filter((d) => d.value !== sum && (carries(a, b) > 0 || d.value === concatSums(a, b))),
     sum,
   );
@@ -189,11 +189,15 @@ function t12Level2(a, b, T) {
     figure: { kind: 'train', cars: 8 },
     input: { kind: 'compound', fields: [{ key: 'sum', label: '모두 몇 명' }, { key: 'more', label: `${T}명보다`, options: ['많아요', '적어요'] }] },
     answer: { sum, more },
-    discriminators: [
-      { key: 'sum', value: noCarry(a, b), category: '계산', feedback: '일의 자리 10은 어디로 갔을까요?' },
-      { key: 'sum', value: sum - 10, category: '계산', feedback: '받아올린 1을 더했나요?' },
-      { key: 'more', value: more === '많아요' ? '적어요' : '많아요', category: '개념', feedback: `${wa(sum)} ${T}의 백의 자리를 볼까요?` },
-    ].filter((d) => d.value !== sum),
+    // 받아올림이 한 번뿐이면 noCarry와 sum − 10이 같은 값이 된다 → 앞의 것만 남긴다(uniq).
+    discriminators: uniq(
+      [
+        { key: 'sum', value: noCarry(a, b), category: '계산', kind: 'check', feedback: '일의 자리 10은 어디로 갔을까요?' },
+        { key: 'sum', value: sum - 10, category: '계산', kind: 'nudge', feedbackCheck: '십의 자리를 다시 계산해 볼까요?', feedback: '받아올린 1을 더했나요?' },
+        { key: 'more', value: more === '많아요' ? '적어요' : '많아요', category: '개념', kind: 'check', feedback: `${wa(sum)} ${T}의 백의 자리를 볼까요?` },
+      ].filter((d) => d.value !== sum),
+      sum,
+    ),
     hints: [`두 역에서 ${a}명과 ${b}명이 탔어요. 모두 몇 명인지, 그 수가 ${T}명보다 많은지 물어요.`, '먼저 모두 몇 명인지 구해요. 그다음 백의 자리부터 견주어 봐요.', `일의 자리는 ${a % 10} + ${b % 10} = ${ieyo((a % 10) + (b % 10))}.`, `${a} + ${b} = ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
@@ -211,16 +215,16 @@ function t12Level3(p, m) {
   const total = p + back;
   const bl = blankAt(total, 1);
   return {
-    text: [L1(), '호선 열차는 ', CARS(), '량이에요. 앞 ', n(4), '량에 ', V(p), '명이 탔고, 뒤 ', n(4), '량에는 앞보다 ', V(m), '명 더 많이 탔어요. 열차에 탄 사람은 모두 몇 명이에요?'],
+    text: [L1(), '호선 열차는 ', CARS(), '량이에요. 앞 ', V(4), '량에 ', V(p), '명이 탔고, 뒤 ', V(4), '량에는 앞보다 ', V(m), '명 더 많이 탔어요. 열차에 탄 사람은 모두 몇 명이에요?'],
     figure: { kind: 'train', cars: 8, split: 4 },
     input: { kind: 'number', unit: '명' },
     answer: total,
     discriminators: uniq(
       [
-        { value: back, category: '식', feedback: '뒤 4량만 구했어요. 앞 4량은요?' },
-        { value: 2 * p, category: '읽기', feedback: '뒤 4량은 앞과 똑같이 탔나요?' },
-        { value: p + m, category: '식', feedback: '뒤 4량만 구했어요. 앞 4량은요?' },
-        { value: total - 10, category: '계산', feedback: '받아올린 1을 더했나요?' },
+        { value: back, category: '식', kind: 'nudge', feedbackCheck: '열차에 탄 사람을 모두 셌나요?', feedback: '뒤 4량만 구했어요. 앞 4량은요?' },
+        { value: 2 * p, category: '읽기', kind: 'check', feedback: '뒤 4량은 앞과 똑같이 탔나요?' },
+        { value: p + m, category: '식', kind: 'nudge', feedbackCheck: '열차에 탄 사람을 모두 셌나요?', feedback: '뒤 4량만 구했어요. 앞 4량은요?' },
+        { value: total - 10, category: '계산', kind: 'nudge', feedbackCheck: '십의 자리를 다시 계산해 볼까요?', feedback: '받아올린 1을 더했나요?' },
       ],
       total,
     ),
@@ -254,7 +258,7 @@ function t12Level4(cards) {
     challenge: true,
     input: { kind: 'number' },
     answer: best,
-    discriminators: uniq([{ value: wrong, category: '개념', feedback: '큰 숫자를 어느 자리에 둬야 할까요?' }], best),
+    discriminators: uniq([{ value: wrong, category: '개념', kind: 'nudge', feedbackCheck: '다른 수도 만들어 견주어 볼까요?', feedback: '큰 숫자를 어느 자리에 둬야 할까요?' }], best),
     hints: ['카드 여섯 장으로 세 자리 수 두 개를 만들어요. 그 합이 가장 클 때를 물어요.', '가장 큰 숫자 두 개를 어느 자리에 두면 좋을까요?', `백의 자리에 ${wa(d[0])} ${d[1]}, 십의 자리에 ${wa(d[2])} ${eul(d[3])} 둬요.`, `합은 ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
@@ -275,7 +279,7 @@ function t12Level5(h, k, u, B) {
     challenge: true,
     input: { kind: 'number' },
     answer: k,
-    discriminators: [{ value: k - 1, category: '개념', feedback: `${lo} + ${eun(B)} 1000보다 클까요?` }],
+    discriminators: [{ value: k - 1, category: '개념', kind: 'check', feedback: `${lo} + ${eun(B)} 1000보다 클까요?` }],
     hints: [`${h}□${u}${jo(u, '과', '와')} ${B}의 합이 1000보다 크게 되는 □ 중 가장 작은 수를 찾아요.`, '□에 0부터 차례로 넣어 볼까요?', `1000 − ${B} = ${ieyo(1000 - B)}. ${h}□${u}${jo(u, '은', '는')} 이보다 커야 해요.`, `□ = ☐ 이면 ${h}□${u} + ${B}${jo(B, '이', '가')} 처음으로 1000보다 커요.`],
     blank: '☐',
     blankAnswer: String(k),
@@ -295,7 +299,7 @@ function t12Level6(X) {
   const y1 = 9 - x1;
   const y2 = 9 - x2;
   const Y = y2 * 100 + y1 * 10 + y0;
-  const discs = x1 >= 1 ? [{ value: y2 * 100 + (10 - x1) * 10 + y0, category: '개념', feedback: '십의 자리에도 올라온 1이 있나요?' }] : [];
+  const discs = x1 >= 1 ? [{ value: y2 * 100 + (10 - x1) * 10 + y0, category: '개념', kind: 'nudge', feedbackCheck: '자리마다 더해서 확인해 볼까요?', feedback: '십의 자리에도 올라온 1이 있나요?' }] : [];
   const bl = blankAt(Y, 1);
   return {
     text: [n(X), '에 어떤 세 자리 수를 더했더니 일의 자리, 십의 자리, 백의 자리에서 모두 받아올림이 있었어요. 어떤 수가 될 수 있는 가장 작은 세 자리 수는?'],
@@ -419,12 +423,12 @@ function t14(a, b, level) {
       ? []
       : uniq(
           [
-            { value: concat, category: '개념', feedback: `일 모형 ${O}개는 그대로 둘까요?` },
-            { value: sum - 10, category: '계산', feedback: '바꾼 십 모형도 세었나요?' },
+            { value: concat, category: '개념', kind: 'nudge', feedbackCheck: '일 모형을 다시 세어 볼까요?', feedback: `일 모형 ${O}개는 그대로 둘까요?` },
+            { value: sum - 10, category: '계산', kind: 'nudge', feedbackCheck: '십 모형을 다시 세어 볼까요?', feedback: '바꾼 십 모형도 세었나요?' },
             ...(level === 3
               ? [
-                  { value: sum - 100, category: '계산', feedback: '바꾼 백 모형도 세었나요?' },
-                  { value: sum - 110, category: '계산', feedback: '바꾼 모형도 세었나요?' },
+                  { value: sum - 100, category: '계산', kind: 'nudge', feedbackCheck: '백 모형을 다시 세어 볼까요?', feedback: '바꾼 백 모형도 세었나요?' },
+                  { value: sum - 110, category: '계산', kind: 'nudge', feedbackCheck: '모형을 하나씩 다시 세어 볼까요?', feedback: '바꾼 모형도 세었나요?' },
                 ]
               : []),
           ],

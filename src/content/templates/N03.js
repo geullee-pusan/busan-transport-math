@@ -83,11 +83,11 @@ function multiGrade(answer, discs) {
   const key = (arr) => [...new Set((Array.isArray(arr) ? arr : []).map(Number))].sort((x, y) => x - y).join(',');
   const want = key(answer);
   return (r) => {
-    if (!Array.isArray(r) || r.length === 0) return { correct: false, flags: { careless: true }, feedback: '답을 먼저 골라 볼까요?' };
+    if (!Array.isArray(r) || r.length === 0) return { correct: false, flags: { careless: true }, kind: 'check', feedback: '답을 먼저 골라 볼까요?' };
     const got = key(r);
     if (got === want) return { correct: true };
     const d = discs.find((x) => key(x.value) === got);
-    return d ? { correct: false, category: d.category, feedback: d.feedback } : { correct: false, category: null, feedback: null };
+    return d ? { correct: false, category: d.category, kind: d.kind ?? 'check', feedbackCheck: d.feedbackCheck, feedback: d.feedback } : { correct: false, category: null, kind: 'check', feedback: null };
   };
 }
 
@@ -101,10 +101,10 @@ function subDiscs(a, b) {
   const ad = absDigits(a, b);
   const zeroTens = tens(a) === 0;
   const list = [
-    { value: d + 100, category: zeroTens ? '개념' : '계산', feedback: zeroTens ? `백의 자리 ${eun(hund(a))} 몇이 됐을까요?` : '빌려 준 자리는 1 줄었나요?' },
-    { value: d + 10, category: zeroTens ? '개념' : '계산', feedback: zeroTens ? '십의 자리도 빌려 줬어요. 몇이 남았나요?' : '빌려 준 자리는 1 줄었나요?' },
-    { value: ad, category: '개념', feedback: ad === b ? '답이 빼는 수와 같아요. 더해서 확인해 볼까요?' : `일의 자리 ${a % 10}에서 ${eul(b % 10)} 뺄 수 있나요?` },
-    { value: d + 110, category: '계산', feedback: '빌려 준 자리는 1 줄었나요?' },
+    { value: d + 100, category: zeroTens ? '개념' : '계산', kind: zeroTens ? 'check' : 'nudge', ...(zeroTens ? {} : { feedbackCheck: '빌려 준 자리를 다시 볼까요?' }), feedback: zeroTens ? `백의 자리 ${eun(hund(a))} 몇이 됐을까요?` : '빌려 준 자리는 1 줄었나요?' },
+    { value: d + 10, category: zeroTens ? '개념' : '계산', kind: 'nudge', feedbackCheck: zeroTens ? '십의 자리를 다시 볼까요?' : '빌려 준 자리를 다시 볼까요?', feedback: zeroTens ? '십의 자리도 빌려 줬어요. 몇이 남았나요?' : '빌려 준 자리는 1 줄었나요?' },
+    { value: ad, category: '개념', kind: 'check', feedback: ad === b ? '답이 빼는 수와 같아요. 더해서 확인해 볼까요?' : `일의 자리 ${a % 10}에서 ${eul(b % 10)} 뺄 수 있나요?` },
+    { value: d + 110, category: '계산', kind: 'nudge', feedbackCheck: '빌려 준 자리를 다시 볼까요?', feedback: '빌려 준 자리는 1 줄었나요?' },
   ];
   return uniq(list, d);
 }
@@ -191,7 +191,7 @@ function t32Level12(a, b) {
     figure: { kind: 'train', cars: 8 },
     input: { kind: 'number', unit: '명' },
     answer: d,
-    discriminators: uniq([...subDiscs(a, b), { value: a + b, category: '식', feedback: '남은 사람이 처음보다 많을까요?' }], d),
+    discriminators: uniq([...subDiscs(a, b), { value: a + b, category: '식', kind: 'check', feedback: '남은 사람이 처음보다 많을까요?' }], d),
     hints: [`열차에 ${a}명이 타 있었고, 낫개역에서 ${b}명이 내렸어요. 열차에 남은 사람 수를 물어요.`, '내린 사람은 열차에서 빠져요. 자리를 맞춰 세로로 써 봐요.', steps(a, b), `${a} − ${b} = ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
@@ -208,15 +208,15 @@ function t32Level3(total, front) {
   const more = front > back ? '앞' : '뒤';
   const bl = blankAt(back, 1);
   return {
-    text: [L1(), '호선 ', CARS(), '량 열차에 ', V(total), '명이 타 있어요. 그중 앞 ', n(4), '량에 ', V(front), '명이 탔어요. 뒤 ', n(4), '량에는 몇 명이 탔고, 앞과 뒤 중 어느 쪽에 더 많이 탔어요?'],
+    text: [L1(), '호선 ', CARS(), '량 열차에 ', V(total), '명이 타 있어요. 그중 앞 ', V(4), '량에 ', V(front), '명이 탔어요. 뒤 ', V(4), '량에는 몇 명이 탔고, 앞과 뒤 중 어느 쪽에 더 많이 탔어요?'],
     figure: { kind: 'train', cars: 8, split: 4 },
     input: { kind: 'compound', fields: [{ key: 'back', label: '뒤 4량' }, { key: 'more', label: '더 많은 쪽', options: ['앞', '뒤'] }] },
     answer: { back, more },
     discriminators: [
-      { key: 'back', value: front, category: '읽기', feedback: `${front}명은 앞 4량이에요. 뒤 4량은요?` },
-      { key: 'back', value: back + 100, category: '계산', feedback: `백의 자리 ${eun(hund(total))} 몇이 됐을까요?` },
-      { key: 'back', value: back + 10, category: '계산', feedback: '십의 자리는 몇이 남았나요?' },
-      { key: 'more', value: more === '앞' ? '뒤' : '앞', category: '읽기', feedback: `${wa(back)} ${front} 중 어느 쪽이 커요?` },
+      { key: 'back', value: front, category: '읽기', kind: 'check', feedback: `${front}명은 앞 4량이에요. 뒤 4량은요?` },
+      { key: 'back', value: back + 100, category: '계산', kind: 'check', feedback: `백의 자리 ${eun(hund(total))} 몇이 됐을까요?` },
+      { key: 'back', value: back + 10, category: '계산', kind: 'check', feedback: '십의 자리는 몇이 남았나요?' },
+      { key: 'more', value: more === '앞' ? '뒤' : '앞', category: '읽기', kind: 'check', feedback: `${wa(back)} ${front} 중 어느 쪽이 커요?` },
     ],
     hints: [
       `열차 전체에 ${total}명, 앞 4량에 ${front}명이 탔어요. 뒤 4량에 탄 사람 수와 어느 쪽이 더 많은지 물어요.`,
@@ -248,9 +248,9 @@ function t32Level4(s, w) {
     answer: ans,
     discriminators: uniq(
       [
-        { value: w - s, category: '식', feedback: `${eun(w)} 잘못 뺀 결과예요. 처음 금액은 얼마였을까요?` },
-        { value: o, category: '식', feedback: '처음 금액을 찾았어요. 다음엔 무엇을 하죠?' },
-        { value: w - gap, category: '개념', feedback: '더 많이 뺐으면 답은 커질까요, 작아질까요?' },
+        { value: w - s, category: '식', kind: 'nudge', feedbackCheck: `${eun(w)} 처음 금액일까요?`, feedback: `${eun(w)} 잘못 뺀 결과예요. 처음 금액은 얼마였을까요?` },
+        { value: o, category: '식', kind: 'nudge', feedbackCheck: '무엇을 물었는지 다시 볼까요?', feedback: '처음 금액을 찾았어요. 다음엔 무엇을 하죠?' },
+        { value: w - gap, category: '개념', kind: 'nudge', feedbackCheck: `${eun(w)} 무엇을 뺀 결과예요?`, feedback: '더 많이 뺐으면 답은 커질까요, 작아질까요?' },
       ],
       ans,
     ),
@@ -276,8 +276,8 @@ function t32Level5(B) {
   while (!ok(X)) X += 1;
   let onlyOnes = B + 100;
   while (!(onlyOnes - B >= 100 && onlyOnes % 10 < B % 10)) onlyOnes += 1;
-  const discs = [{ key: 'small', value: B + 100, category: '개념', feedback: `${B + 100} − ${B}에서 받아내림이 있나요?` }];
-  if (onlyOnes !== X) discs.push({ key: 'small', value: onlyOnes, category: '개념', feedback: '십의 자리에서도 받아내림이 있나요?' });
+  const discs = [{ key: 'small', value: B + 100, category: '개념', kind: 'check', feedback: `${B + 100} − ${B}에서 받아내림이 있나요?` }];
+  if (onlyOnes !== X) discs.push({ key: 'small', value: onlyOnes, category: '개념', kind: 'check', feedback: '십의 자리에서도 받아내림이 있나요?' });
   const ans = X - B;
   const bl = { blank: '☐' + String(X).slice(1), blankAnswer: String(X)[0] };
   return {
@@ -319,7 +319,7 @@ function t32Level6(a, b, where) {
     challenge: true,
     input: { kind: 'choice', options },
     answer: where,
-    discriminators: options.filter((o) => o !== where).map((o) => ({ value: o, category: '개념', feedback: `${o} 숫자는 바른 답과 같아요. 다른 자리는 어떨까요?` })),
+    discriminators: options.filter((o) => o !== where).map((o) => ({ value: o, category: '개념', kind: 'check', feedback: `${o} 숫자는 바른 답과 같아요. 다른 자리는 어떨까요?` })),
     hints: [
       `풀이의 답은 ${ieyo(wrong)}. 어느 자리가 틀렸는지 물어요.`,
       '바른 답을 먼저 구해 볼까요? 두 답을 자리마다 견주어 봐요.',
@@ -466,21 +466,21 @@ function t34(a, b, level) {
   if (level === 1) {
     fields = [{ key: 'count', label: '모형을 바꾼 횟수' }, { key: 'left', label: '남은 사람' }];
     answer = { count: 2, left: d };
-    extra = [{ key: 'count', value: 1, category: '개념', feedback: '십 모형도 모자라지 않나요?' }];
+    extra = [{ key: 'count', value: 1, category: '개념', kind: 'nudge', feedbackCheck: '모형을 다시 세어 볼까요?', feedback: '십 모형도 모자라지 않나요?' }];
     ask = ' 모형을 몇 번 바꿨는지도 써요.';
     lastWhy = '십 모형 1개, 백 모형 1개를 바꿔서 모두 두 번 바꿨어요.';
   } else if (level === 2) {
     fields = [{ key: 'first', label: '먼저 바꿀 모형', options: [B_H, B_T] }, { key: 'left', label: '남은 사람' }];
     answer = { first: B_H, left: d };
-    extra = [{ key: 'first', value: B_T, category: '개념', feedback: '십 모형이 하나도 없지 않나요?' }];
+    extra = [{ key: 'first', value: B_T, category: '개념', kind: 'nudge', feedbackCheck: '모형을 다시 세어 볼까요?', feedback: '십 모형이 하나도 없지 않나요?' }];
     ask = ' 일 모형이 모자랄 때 먼저 바꿀 모형도 골라요.';
     lastWhy = '십 모형이 없어서 백 모형부터 바꿨어요.';
   } else {
     fields = [{ key: 'h2t', label: '백 모형 1개 → 십 모형 몇 개' }, { key: 't2o', label: '십 모형 1개 → 일 모형 몇 개' }, { key: 'left', label: '남은 사람' }];
     answer = { h2t: 10, t2o: 10, left: d };
     extra = [
-      { key: 'h2t', value: 100, category: '개념', feedback: '백 모형 1개에 십 모형은 몇 개 들어가요?' },
-      { key: 't2o', value: 1, category: '개념', feedback: '십 모형 1개에 일 모형은 몇 개 들어가요?' },
+      { key: 'h2t', value: 100, category: '개념', kind: 'check', feedback: '백 모형 1개에 십 모형은 몇 개 들어가요?' },
+      { key: 't2o', value: 1, category: '개념', kind: 'check', feedback: '십 모형 1개에 일 모형은 몇 개 들어가요?' },
     ];
     ask = ' 모형을 바꿀 때 몇 개가 되는지도 써요.';
     lastWhy = '백 모형 1개는 십 모형 10개, 십 모형 1개는 일 모형 10개예요.';

@@ -5,6 +5,8 @@ import { h, s } from './dom.js';
 
 const INK = '#1F3342';
 const SHADE = '#9FB3C1';
+// 시각 자문 1차 그림 규칙(docs/visual/assets/figure-kit.mjs). 새 그림(clock·ruler·timeband)부터 이 값을 쓴다.
+const FIG = { fill: '#7F93A3', mute: '#7A8691', outline: 2, divider: 1.5, grid: 1, mark: 4 };
 
 export function drawFigure(fig) {
   if (!fig) return null;
@@ -24,6 +26,10 @@ const DRAW = {
   stations: (fig) => stations(fig),
   table: (fig) => table(fig),
   base10: (fig) => base10(fig),
+  placeValue: (fig) => base10(fig),
+  clock: (fig) => clock(fig),
+  ruler: (fig) => ruler(fig),
+  timeband: (fig) => timeband(fig),
   array: (fig) => arrayFig(fig),
   areaModel: (fig) => areaModel(fig),
 };
@@ -54,7 +60,8 @@ function trains({ trains: list, coupled }) {
     if (t.name) svg.append(s('text', { x: 10, y: y - 6, class: 'fig-label' }, t.name));
     for (let i = 0; i < t.cars; i++) {
       const extraGap = t.split && i >= t.split ? 10 : 0; // 앞 몇 량과 뒤 몇 량 나눠 보이기
-      const shaded = (Array.isArray(t.full) && t.full.includes(i)) || (typeof t.crowded === 'number' && i < t.crowded) || (Array.isArray(t.crowded) && t.crowded.includes(i));
+      const filled = (v) => (Array.isArray(v) ? v.includes(i) : typeof v === 'number' && i < v);
+      const shaded = filled(t.full) || filled(t.crowded);
       const mark = Array.isArray(t.highlight) && t.highlight.includes(i);
       svg.append(car(10 + i * (carW + gap) + extraGap, y, carW, i === 0 || i === t.cars - 1, { shaded, mark }));
     }
@@ -129,27 +136,135 @@ function squarePieces(split, S) {
   }
 }
 
-function numberline({ from, to, ticks, shaded, mark, origin }) {
+function numberline({ from, to, ticks, shaded, mark, marks, origin, unit }) {
   const W = 340;
-  const svg = s('svg', { viewBox: `0 0 ${W + 40} 64`, class: 'figure' });
+  // unit이 있으면 끝 눈금 글자에 단위를 붙이므로(예: "2000 m") 양옆 여백을 넓힌다
+  const svg = s('svg', { viewBox: unit ? `-14 0 ${W + 68} 64` : `0 0 ${W + 40} 64`, class: 'figure' });
+  const u = (v) => (unit ? `${v} ${unit}` : String(v));
   const x = (i) => 20 + (i / ticks) * W;
   svg.append(s('line', { x1: 20, y1: 30, x2: 20 + W, y2: 30, stroke: INK, 'stroke-width': 2 }));
   if (typeof shaded === 'number' && shaded > 0) svg.append(s('line', { x1: x(0), y1: 30, x2: x(shaded), y2: 30, stroke: SHADE, 'stroke-width': 8 }));
   for (let i = 0; i <= ticks; i++) svg.append(s('line', { x1: x(i), y1: i === 0 || i === ticks ? 20 : 25, x2: x(i), y2: i === 0 || i === ticks ? 40 : 35, stroke: INK, 'stroke-width': 1.5 }));
-  svg.append(s('text', { x: x(0), y: 56, 'text-anchor': 'middle', class: 'fig-label' }, origin ?? String(from)), s('text', { x: x(ticks), y: 56, 'text-anchor': 'middle', class: 'fig-label' }, String(to)));
-  if (typeof mark === 'number') {
-    const t = ((mark - from) / (to - from)) * ticks;
-    svg.append(s('path', { d: `M ${x(t)} 10 l -6 -8 h 12 z`, fill: INK }));
+  svg.append(s('text', { x: x(0), y: 56, 'text-anchor': 'middle', class: 'fig-label' }, origin ?? u(from)), s('text', { x: x(ticks), y: 56, 'text-anchor': 'middle', class: 'fig-label' }, u(to)));
+  // 점 표시: mark 하나 또는 marks 여러 개(진한 삼각, 위). 점이 가리키는 수는 쓰지 않는다
+  for (const v of [mark, ...(Array.isArray(marks) ? marks : [])]) {
+    if (typeof v !== 'number') continue;
+    const t = ((v - from) / (to - from)) * ticks;
+    svg.append(s('path', { d: `M ${x(t)} 22 l -6 -10 h 12 z`, fill: INK }));
   }
   return wrap(svg);
 }
 
-function stations({ stations: names }) {
-  const W = Math.max(220, names.length * 90);
-  const svg = s('svg', { viewBox: `0 0 ${W} 56`, class: 'figure' });
+/** 노선 그림. times: 역 사이마다 걸리는 시간 글자(선 위), stop: { at, time } 그 역에서 멈추는 시간(⏸ 표시 + 글자) */
+function stations({ stations: names, times, stop }) {
+  const hasTimes = Array.isArray(times) && times.length > 0;
+  const stopIdx = stop ? names.indexOf(stop.at) : -1;
+  const W = Math.max(220, names.length * (hasTimes ? 110 : 90));
+  const top = hasTimes ? 16 : 0; // 시간 글자 자리
+  const ly = 22 + top;
+  const H = 56 + top + (stopIdx >= 0 ? 28 : 0);
+  const svg = s('svg', { viewBox: `0 0 ${W} ${H}`, class: 'figure' });
   const step = (W - 40) / Math.max(1, names.length - 1);
-  svg.append(s('line', { x1: 20, y1: 22, x2: 20 + step * (names.length - 1), y2: 22, stroke: INK, 'stroke-width': 8, 'stroke-linecap': 'round' }), s('line', { x1: 20, y1: 22, x2: 20 + step * (names.length - 1), y2: 22, stroke: '#F7941D', 'stroke-width': 4, 'stroke-linecap': 'round' }));
-  names.forEach((nm, i) => svg.append(s('circle', { cx: 20 + step * i, cy: 22, r: 6, fill: '#fff', stroke: INK, 'stroke-width': 2.5 }), s('text', { x: 20 + step * i, y: 48, 'text-anchor': 'middle', class: 'fig-label' }, nm)));
+  const sx = (i) => 20 + step * i;
+  svg.append(s('line', { x1: 20, y1: ly, x2: sx(names.length - 1), y2: ly, stroke: INK, 'stroke-width': 8, 'stroke-linecap': 'round' }), s('line', { x1: 20, y1: ly, x2: sx(names.length - 1), y2: ly, stroke: '#F7941D', 'stroke-width': 4, 'stroke-linecap': 'round' }));
+  if (hasTimes) times.forEach((tx, i) => { if (tx != null && i < names.length - 1) svg.append(s('text', { x: (sx(i) + sx(i + 1)) / 2, y: ly - 10, 'text-anchor': 'middle', class: 'fig-label fig-strong' }, String(tx))); });
+  names.forEach((nm, i) => svg.append(s('circle', { cx: sx(i), cy: ly, r: 6, fill: '#fff', stroke: INK, 'stroke-width': 2.5 }), s('text', { x: sx(i), y: ly + 26, 'text-anchor': 'middle', class: 'fig-label' }, nm)));
+  if (stopIdx >= 0) {
+    // 멈춤 표시 = 피드백의 ⏸와 같은 모양(원 + 두 막대) + 멈추는 시간
+    const cx = sx(stopIdx) - 26;
+    const cy = ly + 46;
+    svg.append(
+      s('circle', { cx, cy, r: 8, fill: '#fff', stroke: INK, 'stroke-width': FIG.outline }),
+      s('path', { d: `M ${cx - 2.5} ${cy - 4} v 8 M ${cx + 2.5} ${cy - 4} v 8`, stroke: INK, 'stroke-width': FIG.outline, 'stroke-linecap': 'round' }),
+      s('text', { x: cx + 14, y: cy + 5, class: 'fig-label fig-strong' }, `${stop.time} 멈춤`),
+    );
+  }
+  return wrap(svg);
+}
+
+/** 바늘 시계: 시침(짧고 굵게)·분침(길게)·초침(s가 있을 때만, 가늘게 + 꼬리). 숫자 1~12, 분 눈금 60개(5분마다 길게). 시각을 글자로 쓰지 않는다 */
+function clock({ h = 12, m = 0, s: sec }) {
+  const C = 110;
+  const R = 96;
+  const svg = s('svg', { viewBox: '0 0 220 220', class: 'figure clock-fig', role: 'img', 'aria-label': '바늘 시계' });
+  svg.append(s('circle', { cx: C, cy: C, r: R, fill: '#fff', stroke: INK, 'stroke-width': 3 }));
+  const at = (deg, r) => [C + r * Math.sin((deg * Math.PI) / 180), C - r * Math.cos((deg * Math.PI) / 180)];
+  for (let i = 0; i < 60; i++) {
+    const big = i % 5 === 0;
+    const [x1, y1] = at(i * 6, R - (big ? 12 : 6));
+    const [x2, y2] = at(i * 6, R - 1.5);
+    svg.append(s('line', { x1, y1, x2, y2, stroke: big ? INK : FIG.mute, 'stroke-width': big ? FIG.outline : FIG.divider, 'stroke-linecap': 'round' }));
+  }
+  for (let n = 1; n <= 12; n++) {
+    const [x, y] = at(n * 30, R - 28);
+    svg.append(s('text', { x, y: y + 7, 'text-anchor': 'middle', class: 'clock-num' }, String(n)));
+  }
+  const hasSec = typeof sec === 'number';
+  const sv = hasSec ? sec : 0;
+  const hand = (deg, len, width, tail = 0) => {
+    const [x2, y2] = at(deg, len);
+    const [x1, y1] = at(deg + 180, tail);
+    return s('line', { x1, y1, x2, y2, stroke: INK, 'stroke-width': width, 'stroke-linecap': 'round' });
+  };
+  svg.append(hand(((h % 12) + m / 60 + sv / 3600) * 30, 50, 7));
+  svg.append(hand((m + sv / 60) * 6, 78, 4));
+  if (hasSec) svg.append(hand(sv * 6, 86, 1.5, 18), s('circle', { cx: C, cy: C, r: 4, fill: '#fff', stroke: INK, 'stroke-width': 1.5 }));
+  svg.append(s('circle', { cx: C, cy: C, r: hasSec ? 2 : 5, fill: INK }));
+  return wrap(svg);
+}
+
+/** 자: cm 큰 눈금과 숫자 0~cm, mm: true면 작은 눈금(5 mm 눈금은 중간 길이). mark.from·to는 mm 위치, 그 구간에 물건 띠 + 이름. 길이는 쓰지 않는다 */
+function ruler({ cm = 10, mm = false, mark }) {
+  const U = 30; // 1 cm = 30
+  const X0 = 20;
+  const W = cm * U;
+  const x = (v) => X0 + (v / 10) * U; // v: mm
+  const RY = 52; // 자 윗변
+  const svg = s('svg', { viewBox: `0 0 ${W + 40} 124`, class: 'figure ruler-fig' });
+  if (mark && typeof mark.from === 'number' && typeof mark.to === 'number') {
+    const a = x(mark.from);
+    const b = x(mark.to);
+    svg.append(s('rect', { x: a, y: 10, width: Math.max(0, b - a), height: 30, rx: 6, fill: '#fff', stroke: INK, 'stroke-width': FIG.outline }));
+    if (mark.label) svg.append(s('text', { x: (a + b) / 2, y: 31, 'text-anchor': 'middle', class: 'fig-label fig-strong' }, mark.label));
+    // 물건 끝에서 자 눈금까지 가는 맞춤선(보조선)
+    for (const xx of [a, b]) svg.append(s('line', { x1: xx, y1: 40, x2: xx, y2: RY, stroke: FIG.mute, 'stroke-width': FIG.grid }));
+  }
+  svg.append(s('rect', { x: X0 - 12, y: RY, width: W + 24, height: 62, rx: 6, fill: '#fff', stroke: INK, 'stroke-width': FIG.outline }));
+  const step = mm ? 1 : 10;
+  for (let v = 0; v <= cm * 10; v += step) {
+    const isCm = v % 10 === 0;
+    const len = isCm ? 22 : v % 5 === 0 ? 15 : 9;
+    svg.append(s('line', { x1: x(v), y1: RY, x2: x(v), y2: RY + len, stroke: INK, 'stroke-width': isCm ? FIG.outline : FIG.divider }));
+    if (isCm) svg.append(s('text', { x: x(v), y: RY + 42, 'text-anchor': 'middle', class: 'fig-label fig-strong' }, String(v / 10)));
+  }
+  svg.append(s('text', { x: X0 + W + 6, y: RY + 56, 'text-anchor': 'end', class: 'fig-label' }, 'cm'));
+  return wrap(svg);
+}
+
+/** 시간 띠(초 단위): 축과 눈금(marks초마다, 1분마다 길게 + "N분" 글자), 그 위에 막대.
+ *  unknown: true인 막대는 점선(= 아직, 선 문법)으로 길이를 묻는 칸. 막대 길이는 글자로 쓰지 않는다 */
+function timeband({ from = 0, to = 360, marks = 10, bars = [] }) {
+  const W = 360;
+  const X0 = 24;
+  const span = Math.max(1, to - from);
+  const x = (t) => X0 + ((t - from) / span) * W;
+  const AY = 52; // 축
+  const svg = s('svg', { viewBox: `0 0 ${W + 48} 84`, class: 'figure timeband-fig' });
+  for (const b of bars) {
+    const a = x(b.from);
+    const w = Math.max(0, x(b.to) - a);
+    svg.append(s('rect', b.unknown
+      ? { x: a, y: 14, width: w, height: 28, rx: 4, fill: '#fff', stroke: INK, 'stroke-width': FIG.outline, 'stroke-dasharray': '6 4' }
+      : { x: a, y: 14, width: w, height: 28, rx: 4, fill: FIG.fill, stroke: INK, 'stroke-width': FIG.outline }));
+    if (b.unknown) svg.append(s('text', { x: a + w / 2, y: 34, 'text-anchor': 'middle', class: 'fig-label fig-strong' }, '?'));
+  }
+  svg.append(s('line', { x1: x(from), y1: AY, x2: x(to), y2: AY, stroke: INK, 'stroke-width': FIG.outline }));
+  const step = Math.max(1, marks);
+  for (let t = from; t <= to; t += step) {
+    const minute = t % 60 === 0;
+    svg.append(s('line', { x1: x(t), y1: AY, x2: x(t), y2: AY + (minute ? 12 : 6), stroke: minute ? INK : FIG.mute, 'stroke-width': minute ? FIG.outline : FIG.divider }));
+    if (minute) svg.append(s('text', { x: x(t), y: AY + 28, 'text-anchor': 'middle', class: 'fig-label' }, t === 0 ? '0' : `${t / 60}분`));
+  }
   return wrap(svg);
 }
 

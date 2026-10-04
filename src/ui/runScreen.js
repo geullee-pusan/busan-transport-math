@@ -7,10 +7,15 @@ import { brake, correctTone, speak } from './sound.js';
 import { plainText } from '../content/num.js';
 import { currentProblem, submit, giveUp, openHint, park } from '../engine/run.js';
 import { submitExpress, submitPlacement, UNKNOWN } from '../engine/express.js';
-import { stationOf, LINE1_NODES } from '../engine/world.js';
+import { stationOf, LINE1_NODES, NODES } from '../engine/world.js';
 import { nodeState } from '../engine/state.js';
 import { FULL, pendingText } from '../engine/mastery.js';
 import { tierOf } from '../content/vehicles.js';
+import { askPin } from './pin.js';
+import { icon } from './icons.js';
+
+/** 피드백 한 줄: [상태 아이콘][글자]. ✓ ⏸ ⓘ ≫를 이모지·글자 대신 SVG로(기기마다 모양이 같게) */
+const fbLine = (cls, name, ...text) => h(`div.${cls}.fb-line`, icon(name), h('span', ...text));
 
 const MODE_LABEL = { placement: '시승 운행', express: '급행', challenge: '도전 운행', normal: null };
 
@@ -38,14 +43,16 @@ export function renderRun(root, app, run, { onFinish }) {
     const ticks = [];
     for (let i = 0; i < 4; i++) {
       const filled = ns.halves >= (i + 1) * 2 ? 'full' : ns.halves === i * 2 + 1 ? 'half' : 'empty';
-      ticks.push(h(`span.tick.${filled}`));
+      // 지금 채우는 칸(대상) = 굵은 테두리 4px(선 문법). 채운 칸은 --fig-fill이라 대상과 구분된다
+      const target = filled !== 'full' && Math.floor(ns.halves / 2) === i;
+      ticks.push(h(`span.tick.${filled}${target ? '.target' : ''}`));
     }
     const tag = MODE_LABEL[run.mode] ?? (cur?.slot.kind === 'review' || cur?.slot.kind === 'redo' ? `임시 정차 · ${st?.name ?? ''}역` : run.lastRun && run.index === 0 ? '오늘의 막차예요' : null);
     return h(
       'header.band',
-      h('button.icon-btn', { type: 'button', onclick: exit, 'aria-label': '운행 멈추기' }, '✕'),
-      h('div.band-main', h('div.band-line', h('span.badge-1', '1'), h('span.band-dest', `${st?.name ?? ''}역 가는 길`), tag ? h('span.band-tag', tag) : null), run.mode === 'normal' || run.mode === 'challenge' ? h('div.ticks', { 'aria-label': `${Math.floor((FULL - ns.halves) / 2)}칸 남음` }, ticks) : null),
-      h('div.band-side', h('div.license-chip', tierOf(state.license).short), h('div.band-progress', `40역 중 ${litCount}역 켜짐`), run.restAfter ? h('div.band-tag', '이번 운행이 끝나면 쉬어요') : h('button.parent-btn.small-btn', { type: 'button', onclick: () => restAfterRun() }, '부모')),
+      h('button.icon-btn', { type: 'button', onclick: exit, 'aria-label': '운행 멈추기' }, icon('close')),
+      h('div.band-main', h('div.band-line', h(`span.badge-1${NODES.get(node)?.line === 'L2' ? '.badge-2' : ''}`, NODES.get(node)?.line === 'L2' ? '2' : '1'), h('span.band-dest', `${st?.name ?? ''}역 가는 길`), tag ? h('span.band-tag', tag) : null), run.mode === 'normal' || run.mode === 'challenge' ? h('div.ticks', { 'aria-label': `${Math.floor((FULL - ns.halves) / 2)}칸 남음` }, ticks) : null),
+      h('div.band-side', h('div.license-chip', tierOf(state.license).short), h('div.band-progress', `40역 중 ${litCount}역 켜짐`), run.restAfter ? h('div.band-tag', '이번 운행이 끝나면 쉬어요') : h('button.parent-btn.small-btn', { type: 'button', onclick: () => restAfterRun() }, icon('parent'), '부모')),
     );
   }
 
@@ -56,10 +63,11 @@ export function renderRun(root, app, run, { onFinish }) {
     if (piece.label !== undefined) return piece.label;
     if (piece.unknown) return h('span.unknown-num', [...piece.unknown].map((ch) => (ch === '□' ? h('span.unknown-box', ' ') : ch)));
     const virtual = piece.tag === 'virtual';
+    if (piece.tag !== 'real' && !virtual) return h('span.num.plain', String(piece.num)); // 맨 계산 수: 표시·말풍선 없음
     const shown = state.settings.virtualShown ?? 0;
     const el = h(`button.num${virtual ? '.virtual' : ''}`, { type: 'button' }, String(piece.num));
     el.addEventListener('click', () => {
-      const tip = h('span.num-tip', virtual ? '이 문제를 위해 만든 숫자예요' : `출처: ${piece.source ?? '확인된 값'}`);
+      const tip = h('span.num-tip', virtual ? '이 문제를 위해 만든 숫자예요' : `출처: ${piece.source}`);
       el.append(tip);
       setTimeout(() => tip.remove(), 2600);
     });
@@ -93,7 +101,7 @@ export function renderRun(root, app, run, { onFinish }) {
       ? (() => {
           let val = '';
           const box = h('span.answer-box.small', ' ');
-          const keys = h('div.keypad.mini', ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '⌫'].map((k) => h('button.key', { type: 'button', onclick: () => { val = k === '⌫' ? val.slice(0, -1) : (val + k).slice(0, 5); box.textContent = val || ' '; } }, k)));
+          const keys = h('div.keypad.mini', ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '⌫'].map((k) => h('button.key', { type: 'button', 'aria-label': k === '⌫' ? '하나 지우기' : k, onclick: () => { val = k === '⌫' ? val.slice(0, -1) : (val + k).slice(0, 5); box.textContent = val || ' '; } }, k === '⌫' ? icon('backspace') : k)));
           const btn = h('button.secondary', { type: 'button', onclick: () => { if (!val) return; estimateOk = true; input.lock(false); wrap.classList.add('done'); wrap.querySelector('.est-note').textContent = `내 어림: 약 ${val}`; } }, '어림 확인');
           const wrap = h('div.estimate', h('div', '대충 몇백쯤일까요? 약 ', box), keys, btn, h('div.est-note', '어림을 먼저 써요'));
           return wrap;
@@ -107,7 +115,7 @@ export function renderRun(root, app, run, { onFinish }) {
     let hintLevel = 0;
     function renderDrawer() {
       clear(drawer);
-      drawer.append(h('div.drawer-head', h('strong', '힌트'), h('button.icon-btn', { type: 'button', onclick: () => drawer.classList.remove('open') }, '✕')));
+      drawer.append(h('div.drawer-head', h('strong', icon('hint'), '힌트'), h('button.secondary', { type: 'button', onclick: () => drawer.classList.remove('open') }, '입력으로 돌아가기')));
       const names = ['① 노선 확인', '② 경로 안내', '③ 중간 정류장', '④ 종착역 직전'];
       for (let i = 0; i < hintLevel; i++) drawer.append(h('div.hint-card', h('div.hint-name', names[i]), h('p', p.hints[i])));
       if (hintLevel < 4 && p.hints.length) {
@@ -120,30 +128,38 @@ export function renderRun(root, app, run, { onFinish }) {
     function nextHint() {
       hintLevel = Math.min(4, hintLevel + 1);
       openHint(run, hintLevel);
-      if (hintLevel === 4 && p.blank) input.setBlank(p.blank);
       renderDrawer();
+      if (hintLevel === 4 && p.blank) {
+        input.setBlank(p.blank);
+        drawer.classList.remove('open'); // 빈칸 틀이 보이게 서랍을 닫는다
+        clear(feedback).append(fbLine('info', 'info', '빈칸에 들어갈 숫자를 써요.'));
+      }
     }
     renderDrawer();
 
     const tools = h(
       'nav.tools',
-      h('button.tool', { type: 'button', onclick: () => speak(plainText(p.text)) }, '🔊 읽어 주기'),
-      h('button.tool', { type: 'button', onclick: () => pad.classList.toggle('open') }, '✎ 연습장'),
-      !isDiag && p.hints?.length ? h('button.tool', { type: 'button', onclick: () => { drawer.classList.add('open'); drawer.setAttribute('aria-hidden', 'false'); } }, '💡 힌트') : null,
+      h('button.tool', { type: 'button', onclick: () => speak(plainText(p.text)) }, icon('read'), '읽어 주기'),
+      h('button.tool', { type: 'button', onclick: () => pad.classList.toggle('open') }, icon('pad'), '연습장'),
+      !isDiag && p.hints?.length ? h('button.tool.tool-hint', { type: 'button', onclick: () => { drawer.classList.add('open'); drawer.setAttribute('aria-hidden', 'false'); } }, icon('hint'), '힌트') : null,
       isDiag ? h('button.tool', { type: 'button', onclick: () => onAnswer(UNKNOWN) }, '아직 몰라요') : null,
-      h('button.tool.quiet', { type: 'button', onclick: () => report() }, '🚩 이 문제 이상해요'),
+      h('button.tool.quiet', { type: 'button', onclick: () => report() }, icon('report'), '이 문제 이상해요'),
     );
 
     const pad = scratchpad();
     // 오래 멈춰 있으면 도움 안내를 한 번(기준 시간은 화면에 없고, 저장하지 않으며, 금 도장을 말하지 않는다)
     clearTimeout(stallTimer);
-    if (!isDiag && p.hints?.length) stallTimer = setTimeout(() => { if (!run.current || run.current.problem !== p) return; feedback.append(h('div.info', run.hint >= 1 ? 'ⓘ ② 길 안내를 봐도 끝까지 푼 문제로 남아요.' : 'ⓘ ① 노선 확인은 언제 봐도 괜찮아요. 잃는 건 없어요.')); }, 120000);
+    if (!isDiag && p.hints?.length) stallTimer = setTimeout(() => { if (!run.current || run.current.problem !== p) return; feedback.append(fbLine('info', 'info', run.hint >= 1 ? '② 길 안내를 봐도 끝까지 푼 문제로 남아요.' : '① 노선 확인은 언제 봐도 괜찮아요. 잃는 건 없어요.'));
+      // 힌트를 권할 때: 색이 아니라 굵은 테두리 + 채운 전구(깜박임 없음)
+      const hintBtn = tools.querySelector('.tool-hint');
+      if (hintBtn) { hintBtn.classList.add('wanted'); hintBtn.replaceChildren(icon('hintOn'), '힌트'); }
+    }, 120000);
     clear(screen).append(band(cur), h('div.run-body', h('div.col-b', problemEl, estimate), h('div.col-c', input.el, feedback, after)), tools, drawer, pad);
     if (state.settings.readAloud === true || (state.settings.readAloud === null && cur.level <= 3 && !isDiag)) speak(plainText(p.text));
 
     function report() {
-      const reasons = ['숫자가 이상해요', '문장이 헷갈려요', '답이 틀린 것 같아요', '그림이 이상해요'];
-      clear(after).append(h('div.report', h('div', '무엇이 이상해요?'), h('div.chips', reasons.map((r) => h('button.chip', { type: 'button', onclick: () => { setState({ ...state, reports: [...state.reports, { at: new Date().toISOString(), node: cur.slot.node, template: cur.template.id, level: cur.level, seed: cur.seed, text: plainText(p.text), reason: r }] }); clear(after).append(h('div.info', '고마워요. 부모님 화면에 남겨 둘게요.')); } }, r)))));
+      const reasons = ['부산 이야기가 틀린 것 같아요', '숫자가 이상해요', '문장이 헷갈려요', '답이 틀린 것 같아요', '그림이 이상해요'];
+      clear(after).append(h('div.report', h('div', '무엇이 이상해요?'), h('div.chips', reasons.map((r) => h('button.chip', { type: 'button', onclick: () => { setState({ ...state, reports: [...state.reports, { at: new Date().toISOString(), node: cur.slot.node, template: cur.template.id, level: cur.level, seed: cur.seed, text: plainText(p.text), reason: r }] }); clear(after).append(fbLine('info', 'info', '고마워요. 부모님 화면에 남겨 둘게요.')); } }, r)))));
     }
 
     function onAnswer(forced) {
@@ -152,12 +168,13 @@ export function renderRun(root, app, run, { onFinish }) {
       if (response && typeof response === 'object' && 'blank' in response) {
         // 힌트 ④ 빈칸: 맞게 채워야 판단 질문(또는 답)이 열린다.
         if (String(response.blank) !== String(p.blankAnswer)) {
-          clear(feedback).append(h('div.wrong', '⏸ 빈칸을 다시 볼까요?'));
+          clear(feedback).append(fbLine('wrong', 'pause', '빈칸을 다시 볼까요?'));
           return;
         }
         blankDone = true;
         input.clearBlank();
-        clear(feedback).append(h('div.info', p.blankThen ? `ⓘ ${p.blankThen}` : 'ⓘ 이제 답을 써요.'));
+        if (typeof p.answer === 'number' && input.fill) input.fill(String(p.answer));
+        clear(feedback).append(fbLine('info', 'info', p.blankThen || '이제 답을 써요.'));
         return;
       }
       const fn = run.mode === 'express' ? submitExpress : run.mode === 'placement' ? submitPlacement : submit;
@@ -167,15 +184,18 @@ export function renderRun(root, app, run, { onFinish }) {
       const r = out.result;
       clear(feedback);
       if (out.outcome === 'careless') {
-        feedback.append(h('div.info', `ⓘ ${r.feedback}`));
+        feedback.append(fbLine('info', 'info', r.feedback));
         return;
       }
       if (out.outcome === 'correct') {
         correctTone(state.settings);
         input.lock(true);
         const ev = run.events?.at(-1);
-        const msg = out.passed ? `≫ ${stationOf(out.passed)?.name}역 통과!` : ev?.type === 'lit' ? `${stationOf(ev.node)?.name}역 개통!` : '✓ 맞았어요';
-        feedback.append(h('div.right', msg));
+        const tick = run.events?.filter((e) => e.type === 'tick').at(-1);
+        const step = tick && tick === ev ? (tick.gained >= 2 ? ' · 한 칸 앞으로' : ' · 반 칸 앞으로') : '';
+        if (out.passed) feedback.append(fbLine('right', 'pass', `${stationOf(out.passed)?.name}역 통과!`));
+        else if (ev?.type === 'lit') feedback.append(fbLine('right', 'check', `${stationOf(ev.node)?.name}역 개통!`));
+        else feedback.append(fbLine('right', 'check', `맞았어요${step}`));
         const pend = run.events?.filter((e) => e.type === 'pending').at(-1);
         if (pend && pend === ev) feedback.append(h('div.info', pendingText(pend.code)));
         nextButtons(true, out);
@@ -183,7 +203,7 @@ export function renderRun(root, app, run, { onFinish }) {
       }
       // 오답(같은 문제에서 두 번째 오답이면 소리를 생략한다)
       if (run.tries !== 2) brake(state.settings);
-      if (response !== UNKNOWN) feedback.append(h('div.wrong', h('s.my-answer', typeof response === 'object' ? Object.values(response).join(', ') : String(response))), h('div.wrong', '⏸ 버스가 잠깐 멈췄어요.'));
+      if (response !== UNKNOWN) feedback.append(h('div.wrong', h('s.my-answer', typeof response === 'object' ? Object.values(response).join(', ') : String(response))), fbLine('wrong', 'pause', '버스가 잠깐 멈췄어요.'));
       else feedback.append(h('div.info', '괜찮아요. 이 역에서 같이 배워요.'));
       if (r.feedback) feedback.append(h('div.wrong-detail', r.feedback));
       input.reset();
@@ -218,14 +238,15 @@ export function renderRun(root, app, run, { onFinish }) {
         after.append(h('div.info', arrived && run.givenUp !== 3 ? '목적지에 도착했어요! 여기서 마칠까요?' : '오늘은 어려운 구간이었어요. 여기서 쉬어 갈까요?'), h('button.secondary', { type: 'button', onclick: () => { run.finished = true; finish(); } }, '여기서 마칠래요'), h('button.secondary', { type: 'button', onclick: () => show() }, '계속 갈래요'));
         return;
       }
-      after.append(h('button.primary', { type: 'button', onclick: () => (run.finished ? finish() : show()) }, run.finished ? '운행 일지 보기' : '다음 문제 →'));
+      // 진한 채움은 "답 내기"·"출발"에만 → 다음 문제는 큰 기본 단추
+      after.append(h('button.secondary.big', { type: 'button', onclick: () => (run.finished ? finish() : show()) }, run.finished ? '운행 일지 보기' : '다음 문제', run.finished ? null : icon('more')));
     }
   }
 
   // 부모: "이번 운행 끝나면 쉬기" — 멈춤을 엄마의 명령이 아니라 운행 규칙으로(아동 심리 3차, 게이미피케이션 3차)
-  function restAfterRun() {
-    const pin = prompt('부모님 번호를 넣으면 이번 운행이 끝난 뒤 오늘 운행을 마쳐요.');
-    if (!pin || pin !== state.parentPin) return;
+  async function restAfterRun() {
+    if (!state.parentPin) return alert('부모 화면에서 먼저 부모님 번호를 정해 주세요.');
+    if (!(await askPin(state, '번호를 넣으면 이번 운행이 끝난 뒤 오늘 운행을 마쳐요.'))) return;
     run.restAfter = true;
     run.lastRun = true;
     // 이 운행이 오늘의 막차가 된다. 쉬운 문제를 더 끼우지 않는다.
@@ -251,10 +272,10 @@ function explainSheet(p, screen) {
     clear(sheet);
     const list = tabs[tab];
     sheet.append(
-      h('div.sheet-tabs', h(`button.tab${tab === 'why' ? '.on' : ''}`, { type: 'button', onclick: () => { tab = 'why'; i = 0; render(); } }, '왜 그런지'), tabs.alt.length ? h(`button.tab${tab === 'alt' ? '.on' : ''}`, { type: 'button', onclick: () => { tab = 'alt'; i = 0; render(); } }, '다른 풀이') : null, h('button.icon-btn', { type: 'button', onclick: () => sheet.remove() }, '✕')),
+      h('div.sheet-tabs', h(`button.tab${tab === 'why' ? '.on' : ''}`, { type: 'button', onclick: () => { tab = 'why'; i = 0; render(); } }, '왜 그런지'), tabs.alt.length ? h(`button.tab${tab === 'alt' ? '.on' : ''}`, { type: 'button', onclick: () => { tab = 'alt'; i = 0; render(); } }, '다른 풀이') : null, h('button.icon-btn', { type: 'button', onclick: () => sheet.remove(), 'aria-label': '닫기' }, icon('close'))),
       h('p.sheet-text', list[i] ?? ''),
       h('div.dots', list.map((_, k) => h(`span.dot${k === i ? '.on' : ''}`))),
-      h('div.sheet-nav', i > 0 ? h('button.secondary', { type: 'button', onclick: () => { i -= 1; render(); } }, '← 앞') : null, i < list.length - 1 ? h('button.primary', { type: 'button', onclick: () => { i += 1; render(); } }, '다음 →') : h('button.primary', { type: 'button', onclick: () => sheet.remove() }, '닫기')),
+      h('div.sheet-nav', i > 0 ? h('button.secondary', { type: 'button', onclick: () => { i -= 1; render(); } }, icon('back'), '앞') : null, i < list.length - 1 ? h('button.secondary', { type: 'button', onclick: () => { i += 1; render(); } }, '다음', icon('more')) : h('button.secondary', { type: 'button', onclick: () => sheet.remove() }, '닫기')),
     );
   };
   render();
@@ -264,7 +285,8 @@ function explainSheet(p, screen) {
 /** 연습장: 손가락·펜으로 그리기(펜이 감지되면 손가락 그리기를 꺼서 손바닥 오입력을 막음) */
 function scratchpad() {
   const canvas = h('canvas.pad-canvas');
-  const wrap = h('div.pad', h('div.pad-head', h('strong', '연습장'), h('button.secondary', { type: 'button', onclick: () => ctx.clearRect(0, 0, canvas.width, canvas.height) }, '지우기'), h('button.icon-btn', { type: 'button', onclick: () => wrap.classList.remove('open') }, '✕')), canvas);
+  const fingerBtn = h('button.secondary', { type: 'button', style: { display: 'none' }, onclick: () => { penSeen = false; fingerBtn.style.display = 'none'; } }, '손가락으로 그리기');
+  const wrap = h('div.pad', h('div.pad-head', h('strong', icon('pad'), '연습장'), fingerBtn, h('button.secondary', { type: 'button', onclick: () => ctx.clearRect(0, 0, canvas.width, canvas.height) }, '지우기'), h('button.icon-btn', { type: 'button', onclick: () => wrap.classList.remove('open'), 'aria-label': '연습장 닫기' }, icon('close'))), canvas);
   const ctx = canvas.getContext('2d');
   let drawing = false;
   let penSeen = false;
@@ -276,7 +298,7 @@ function scratchpad() {
     }
   };
   canvas.addEventListener('pointerdown', (e) => {
-    if (e.pointerType === 'pen') penSeen = true;
+    if (e.pointerType === 'pen' && !penSeen) { penSeen = true; fingerBtn.style.display = ''; }
     if (penSeen && e.pointerType === 'touch') return;
     fit();
     drawing = true;

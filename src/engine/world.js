@@ -8,11 +8,21 @@ export const LINE1 = busan.lines.find((l) => l.id === '1');
 /** 1호선 노드 N01~N40 (역 순서대로) */
 export const LINE1_NODES = graph.nodes.filter((n) => n.line === 'L1').sort((a, b) => a.order - b.order);
 
-/** 노드 → 1호선 역 정보(이름, 코드, 노선도 좌표) */
+/** 노선별 노드(추천 순서대로). 화면 노선 id: L1 → '1', L2 → '2' */
+export const LINE_NODES = {
+  L1: LINE1_NODES,
+  L2: graph.nodes.filter((n) => n.line === 'L2').sort((a, b) => a.order - b.order),
+};
+export const LINE_OF_GRAPH = { L1: '1', L2: '2' };
+
+/** 노드 → 역 정보(이름, 코드, 노선도 좌표). 1호선은 역 순서, 2호선은 개념 그래프의 역 이름으로 찾는다. */
 export function stationOf(nodeId) {
   const node = NODES.get(nodeId);
-  if (!node || node.line !== 'L1') return null;
-  return LINE1.stations[node.order - 1];
+  if (!node) return null;
+  if (node.line === 'L1') return LINE1.stations[node.order - 1];
+  const line = busan.lines.find((l) => l.id === LINE_OF_GRAPH[node.line]);
+  if (!line || !node.station) return null;
+  return line.stations.find((s) => s.name === node.station) ?? null;
 }
 
 const linkM = new Map(busan.links.filter((k) => k.line === '1').map((k) => [`${k.from}>${k.to}`, k.distanceM]));
@@ -24,7 +34,22 @@ const linkM = new Map(busan.links.filter((k) => k.line === '1').map((k) => [`${k
  */
 export function segmentMeters(nodeId) {
   const node = NODES.get(nodeId);
-  if (!node || node.line !== 'L1') return 0;
+  if (!node) return 0;
+  if (node.line === 'L2') {
+    // 2호선: 추천 순서상 앞 노드의 역에서 이 역까지(첫 역 서면은 다음 역까지)
+    const list = LINE_NODES.L2;
+    const i = list.findIndex((n) => n.id === nodeId);
+    const a = stationOf(list[Math.max(0, i - 1)].id);
+    const b = stationOf(list[Math.max(1, i)]?.id ?? nodeId);
+    if (!a || !b) return 0;
+    const all = busan.links.filter((k) => k.line === '2');
+    const line2 = busan.lines.find((l) => l.id === '2').stations.map((s) => s.id);
+    const [ia, ib] = [line2.indexOf(a.id), line2.indexOf(b.id)].sort((x, y) => x - y);
+    let m = 0;
+    for (let k = ia; k < ib; k++) m += all.find((x) => (x.from === line2[k] && x.to === line2[k + 1]) || (x.to === line2[k] && x.from === line2[k + 1]))?.distanceM ?? 0;
+    return m;
+  }
+  if (node.line !== 'L1') return 0;
   const i = Math.max(1, node.order - 1);
   const from = LINE1.stations[i - 1].id;
   const to = LINE1.stations[i].id;

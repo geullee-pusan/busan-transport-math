@@ -2,7 +2,8 @@
 // 역 상태는 모양으로 구분한다(SPEC 9.5b): 연한 빈 원(아직 못 감) / 진한 빈 원(갈 수 있음) / 이중 고리(목적지)
 //   / 굵은 고리 + 흰 속(개통) / 고리 + ≫(통과역) / 꽉 찬 원(확정). 노선 선은 진한 테두리 + 속 노선 색(SPEC 9.6).
 import { s } from './dom.js';
-import { LINES, LINE1_NODES } from '../engine/world.js';
+import { LINES, LINE1_NODES, stationOf } from '../engine/world.js';
+import { line2Open, playableNodes } from '../engine/run.js';
 import { nodeState } from '../engine/state.js';
 import { FULL } from '../engine/mastery.js';
 
@@ -24,77 +25,49 @@ export function drawMap(state, { destId, onStation, onAnyStation } = {}) {
 
   const svg = s('svg', { viewBox: `0 0 ${w * S} ${hgt * S}`, class: 'map', role: 'img', 'aria-label': '부산 도시철도 노선도' });
 
-  // 다른 노선: 개통 예정(가는 회색 점선, 번호 배지만 노선 색)
+  // 다른 노선: 개통 예정(#5E6B76 3px 점선 = 아직, 바다 3.55·육지 4.79:1. 번호 배지만 노선 색 — 시각 자문 1차 4.2)
   for (const line of LINES) {
     if (line.id === '1') continue;
     const pts = line.stations.map(P).map(([x, y]) => `${x},${y}`).join(' ');
-    svg.append(s('polyline', { points: pts, fill: 'none', stroke: '#9AA5AD', 'stroke-width': 3, 'stroke-dasharray': '6 6', 'stroke-linecap': 'round' }));
+    svg.append(s('polyline', { points: pts, fill: 'none', stroke: '#5E6B76', 'stroke-width': 3, 'stroke-dasharray': '6 4', 'stroke-linecap': 'round' }));
     const [bx, by] = P(line.stations.at(-1));
     svg.append(badge(bx, by - 26, line.label, line.color));
     if (onAnyStation) for (const st of line.stations) {
       const [x, y] = P(st);
-      const dot = s('circle', { cx: x, cy: y, r: 6, fill: 'transparent', stroke: 'none', class: 'tap-dot', role: 'button', 'aria-label': `${st.name}역` });
-      dot.addEventListener('click', () => onAnyStation(st.id));
-      svg.append(dot);
+      (svg.__targets ??= []).push({ x, y, id: st.id, node: null, other: true });
     }
   }
 
-  // 1호선
+  // 1호선, 그리고 열렸으면 2호선 시범 구간(서면에서 갈아탐 — 지도 규칙, SPEC 3.1)
   const l1 = LINES.find((l) => l.id === '1');
-  const pos = l1.stations.map(P);
-  const status = LINE1_NODES.map((n) => nodeState(state, n.id).status);
-  // 바깥 테두리
-  svg.append(s('polyline', { points: pos.map((p) => p.join(',')).join(' '), fill: 'none', stroke: INK, 'stroke-width': 13, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
-  // 속: 빈 선로(흰색), 양 끝 역이 모두 켜진 구간만 노선 색
-  for (let i = 0; i < pos.length - 1; i++) {
-    const on = DONE.has(status[i]) && DONE.has(status[i + 1]);
-    svg.append(s('line', { x1: pos[i][0], y1: pos[i][1], x2: pos[i + 1][0], y2: pos[i + 1][1], stroke: on ? l1.color : '#FFFFFF', 'stroke-width': 8, 'stroke-linecap': 'round' }));
+  const tracks = [{ nodes: LINE1_NODES, stations: l1.stations, color: l1.color, label: '1' }];
+  if (line2Open(state)) {
+    const l2 = LINES.find((l) => l.id === '2');
+    const nodes = playableNodes('L2');
+    tracks.push({ nodes, stations: nodes.map((n) => stationOf(n.id)), color: l2.color, label: '2' });
   }
-  // 목적지로 가는 구간의 진행(칸)
-  const destIdx = LINE1_NODES.findIndex((n) => n.id === destId);
-  if (destIdx >= 0) {
-    const halves = nodeState(state, destId).halves;
-    const from = pos[Math.max(0, destIdx - 1)];
-    const to = pos[destIdx];
-    if (destIdx > 0 && halves > 0) {
-      const t = halves / FULL;
-      svg.append(s('line', { x1: from[0], y1: from[1], x2: from[0] + (to[0] - from[0]) * t, y2: from[1] + (to[1] - from[1]) * t, stroke: l1.color, 'stroke-width': 8, 'stroke-linecap': 'round' }));
+  let train = null;
+  for (const tr of tracks) {
+    const t = drawTrack(svg, tr, { state, destId, P, onStation, onAnyStation });
+    if (t) train = t;
+  }
+  // 내 차량: 목적지 앞(구간 진행만큼). 노선도 위 차량은 실제 차량 모양(고른 카드 차량은 출발 장면과 일지에).
+  if (train) svg.append(s('g', { class: 'my-train', transform: `translate(${train[0] + 14},${train[1] - 14})` }, s('rect', { x: -12, y: -8, width: 24, height: 16, rx: 5, fill: state.profile.color || l1.color, stroke: INK, 'stroke-width': 2 }), s('rect', { x: -7, y: -4, width: 6, height: 5, fill: '#fff' }), s('rect', { x: 2, y: -4, width: 6, height: 5, fill: '#fff' })));
+  // 누른 점에서 가장 가까운 역(화면에서 반경 24 CSS px 안). 원을 키우면 이웃 역과 겹치므로 거리로 고른다(UX 확인).
+  svg.addEventListener('click', (e) => {
+    const m = svg.getScreenCTM();
+    if (!m || !svg.__targets) return;
+    const pt = new DOMPoint(e.clientX, e.clientY).matrixTransform(m.inverse());
+    const scale = Math.hypot(m.a, m.b) || 1;
+    let best = null;
+    for (const t of svg.__targets) {
+      const d = Math.hypot(t.x - pt.x, t.y - pt.y) * scale - (t.other ? 0 : 6); // 켤 수 있는 노선의 역을 조금 우선
+      if (d <= 24 && (!best || d < best.d)) best = { ...t, d };
     }
-  }
-  svg.append(badge(pos.at(-1)[0] + 26, pos.at(-1)[1], '1', l1.color));
-
-  // 역
-  LINE1_NODES.forEach((n, i) => {
-    const [x, y] = pos[i];
-    const st = status[i];
-    const g = s('g', { class: 'station', tabindex: 0, role: 'button', 'aria-label': `${l1.stations[i].name}역` });
-    const isDest = n.id === destId;
-    if (st === 'confirmed') g.append(s('circle', { cx: x, cy: y, r: 7, fill: INK, stroke: INK, 'stroke-width': 3 }));
-    else if (st === 'lit') g.append(s('circle', { cx: x, cy: y, r: 7, fill: '#fff', stroke: INK, 'stroke-width': 4 }));
-    else if (st === 'passed') {
-      g.append(s('circle', { cx: x, cy: y, r: 7, fill: '#fff', stroke: INK, 'stroke-width': 3 }));
-      g.append(s('text', { x: x + 9, y: y - 8, class: 'pass-mark' }, '≫'));
-    } else if (isDest) {
-      g.append(s('circle', { cx: x, cy: y, r: 10, fill: '#fff', stroke: INK, 'stroke-width': 2.5 }));
-      g.append(s('circle', { cx: x, cy: y, r: 5, fill: '#fff', stroke: INK, 'stroke-width': 2.5 }));
-    } else g.append(s('circle', { cx: x, cy: y, r: 5, fill: '#fff', stroke: '#B8C2C9', 'stroke-width': 2 }));
-    const showName = isDest || DONE.has(st) || i === 0 || i === pos.length - 1;
-    if (showName) g.append(s('text', { x: x - 12, y: y + 4, class: `st-name${DONE.has(st) || isDest ? ' bold' : ''}`, 'text-anchor': 'end' }, l1.stations[i].name));
-    if (onStation) g.addEventListener('click', () => onStation(n.id));
-    if (onAnyStation) g.addEventListener('click', () => onAnyStation(l1.stations[i].id));
-    svg.append(g);
+    if (!best) return;
+    if (best.node && onStation) onStation(best.node);
+    if (onAnyStation) onAnyStation(best.id);
   });
-
-  // 내 차량: 목적지 앞(구간 진행만큼)
-  if (destIdx >= 0) {
-    const halves = nodeState(state, destId).halves;
-    const from = pos[Math.max(0, destIdx - 1)];
-    const to = pos[destIdx];
-    const t = destIdx === 0 ? 0 : halves / FULL;
-    const cx = from[0] + (to[0] - from[0]) * t;
-    const cy = from[1] + (to[1] - from[1]) * t;
-    svg.append(s('g', { class: 'my-train', transform: `translate(${cx + 14},${cy - 14})` }, s('rect', { x: -12, y: -8, width: 24, height: 16, rx: 5, fill: state.profile.color || l1.color, stroke: INK, 'stroke-width': 2 }), s('rect', { x: -7, y: -4, width: 6, height: 5, fill: '#fff' }), s('rect', { x: 2, y: -4, width: 6, height: 5, fill: '#fff' })));
-  }
   return svg;
 }
 
@@ -106,4 +79,50 @@ function badge(x, y, label, color) {
   const light = ['#895FA7', '#0065B3'].includes(color);
   g.append(s('text', { x, y: y + 5, 'text-anchor': 'middle', class: 'badge-text', fill: light ? '#fff' : INK }, label));
   return g;
+}
+
+/** 한 노선(또는 시범 구간)의 선로·역·진행을 그린다. 목적지가 이 노선에 있으면 차량 자리를 돌려준다. */
+function drawTrack(svg, { nodes, stations, color, label }, { state, destId, P, onStation, onAnyStation }) {
+  const pos = stations.map(P);
+  const status = nodes.map((n) => nodeState(state, n.id).status);
+  svg.append(s('polyline', { points: pos.map((p) => p.join(',')).join(' '), fill: 'none', stroke: INK, 'stroke-width': 13, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+  for (let i = 0; i < pos.length - 1; i++) {
+    const on = DONE.has(status[i]) && DONE.has(status[i + 1]);
+    svg.append(s('line', { x1: pos[i][0], y1: pos[i][1], x2: pos[i + 1][0], y2: pos[i + 1][1], stroke: on ? color : '#FFFFFF', 'stroke-width': 8, 'stroke-linecap': 'round' }));
+  }
+  const destIdx = nodes.findIndex((n) => n.id === destId);
+  if (destIdx > 0) {
+    const halves = nodeState(state, destId).halves;
+    const from = pos[destIdx - 1];
+    const to = pos[destIdx];
+    if (halves > 0) svg.append(s('line', { x1: from[0], y1: from[1], x2: from[0] + ((to[0] - from[0]) * halves) / FULL, y2: from[1] + ((to[1] - from[1]) * halves) / FULL, stroke: color, 'stroke-width': 8, 'stroke-linecap': 'round' }));
+  }
+  const end = label === '1' ? pos.at(-1) : pos[0];
+  svg.append(badge(end[0] + 26, end[1] + (label === '1' ? 0 : -24), label, color));
+  nodes.forEach((n, i) => {
+    const [x, y] = pos[i];
+    const st = status[i];
+    const g = s('g', { class: 'station', tabindex: 0, role: 'button', 'aria-label': `${stations[i].name}역` });
+    g.append(s('circle', { cx: x, cy: y, r: 14, fill: 'transparent' })); // 누르는 영역
+    const isDest = n.id === destId;
+    if (st === 'confirmed') g.append(s('circle', { cx: x, cy: y, r: 7, fill: INK, stroke: INK, 'stroke-width': 3 }));
+    else if (st === 'lit') g.append(s('circle', { cx: x, cy: y, r: 8, fill: '#fff', stroke: INK, 'stroke-width': 1.5 }), s('circle', { cx: x, cy: y, r: 6, fill: '#fff', stroke: color, 'stroke-width': 4 }));
+    else if (st === 'passed') {
+      g.append(s('circle', { cx: x, cy: y, r: 7, fill: '#fff', stroke: INK, 'stroke-width': 3 }));
+      g.append(s('text', { x: x + 9, y: y - 8, class: 'pass-mark' }, '≫'));
+    } else if (isDest) {
+      g.append(s('circle', { cx: x, cy: y, r: 10, fill: '#fff', stroke: INK, 'stroke-width': 2.5 }));
+      g.append(s('circle', { cx: x, cy: y, r: 5, fill: '#fff', stroke: INK, 'stroke-width': 2.5 }));
+    } else g.append(s('circle', { cx: x, cy: y, r: 5.5, fill: '#fff', stroke: '#7A8691', 'stroke-width': 2 })); // 아직 못 감: --line-mute(흰 3.72:1)
+    const showName = isDest || DONE.has(st) || (label === '1' && (i === 0 || i === pos.length - 1));
+    if (showName) g.append(s('text', { x: x - 12, y: y + 4, class: `st-name${DONE.has(st) || isDest ? ' bold' : ''}`, 'text-anchor': 'end' }, stations[i].name));
+    (svg.__targets ??= []).push({ x, y, id: stations[i].id, node: n.id });
+    svg.append(g);
+  });
+  if (destIdx < 0) return null;
+  const halves = nodeState(state, destId).halves;
+  const from = pos[Math.max(0, destIdx - 1)];
+  const to = pos[destIdx];
+  const t = destIdx === 0 ? 0 : halves / FULL;
+  return [from[0] + (to[0] - from[0]) * t, from[1] + (to[1] - from[1]) * t];
 }

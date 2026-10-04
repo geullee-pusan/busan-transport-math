@@ -42,5 +42,5 @@ export function clear(el) {
   return el;
 }
 
-/** 거리(m) → "6 km" 정수 표기 */
-export const kmText = (m) => `${Math.floor(m / 1000)} km`;
+/** 거리(m) → 1 km부터는 "6 km"(정수), 그 아래는 "900 m"(100 m 단위). 소수는 쓰지 않는다. */
+export const kmText = (m) => (m < 1000 ? `${Math.floor(m / 100) * 100} m` : `${Math.floor(m / 1000)} km`);

@@ -10,10 +10,10 @@ const grade = (p, r) => (r === UNKNOWN ? { correct: false, category: null, feedb
 import { FULL } from './mastery.js';
 import { nodeState } from './state.js';
 import { segmentMeters } from './world.js';
-import { currentProblem, destination, playableNodes, ceilingOf } from './run.js';
+import { currentProblem, destination, playableNodes, ceilingOf, chooseLine } from './run.js';
 
 function blankRun(state, { day, seed }, mode, dest) {
-  return { mode, day, seed, dest, slots: [], index: 0, current: null, finished: false, tries: 0, hint: 0, recentReprs: [], events: [], startMeters: state.meters, startDone: Object.entries(state.nodes).filter(([, ns]) => ['lit', 'passed', 'confirmed'].includes(ns.status)).map(([id]) => id) };
+  return { mode, day, seed, dest, stateRef: state, slots: [], index: 0, current: null, finished: false, tries: 0, hint: 0, recentReprs: [], events: [], startMeters: state.meters, startDone: Object.entries(state.nodes).filter(([, ns]) => ['lit', 'passed', 'confirmed'].includes(ns.status)).map(([id]) => id) };
 }
 
 const diagSlot = (node, diagIndex) => ({ kind: 'diag', node, level: 3, diagnostic: true, diagIndex });
@@ -32,9 +32,11 @@ function markPassed(state, node, day) {
 // ── 급행 통과 ──
 
 export function startExpress(state, opts) {
-  const dest = destination(state);
+  const line = chooseLine(state);
+  const dest = destination(state, line);
   if (!dest || diagnosticsFor(dest.id).length === 0) return null;
   const run = blankRun(state, opts, 'express', dest.id);
+  run.line = line;
   run.express = { node: dest.id, count: 0, right: 0, wrong: 0, reserveUsed: false };
   run.slots.push(diagSlot(dest.id, 0), diagSlot(dest.id, Math.min(1, diagnosticsFor(dest.id).length - 1)));
   return run;
@@ -85,7 +87,7 @@ export function submitExpress(state0, run, response) {
     markPassed(state, ex.node, run.day);
     const passed = ex.node;
     ex.count += 1;
-    const nd = destination(state);
+    const nd = destination(state, run.line ?? 'L1');
     if (!nd || diagnosticsFor(nd.id).length === 0 || ex.count >= 3) {
       run.finished = true;
       run.dest = nd?.id ?? null;

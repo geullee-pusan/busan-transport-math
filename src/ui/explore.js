@@ -1,6 +1,7 @@
 // 노선도 탐험. 문제를 풀지 않아도 아무 역이나 눌러 실제 사실을 본다. 막차 뒤에도 된다.
 // 둘러본 역 표시, 개수, 소리, 연출, 보상은 없다(SPEC 10장 ①).
 import { h } from './dom.js';
+import { icon } from './icons.js';
 import { LINES, TRANSFERS, segmentMeters, NODES } from '../engine/world.js';
 import busan from '../data/busan.json' with { type: 'json' };
 
@@ -15,7 +16,8 @@ export function stationSheet(stationId, onClose) {
   const link = (a, b) => busan.links.find((k) => (k.from === a && k.to === b) || (k.from === b && k.to === a));
   const next = line.stations[idx + 1];
   const prev = line.stations[idx - 1];
-  const km = (m) => `${(m / 1000).toFixed(1)} km`;
+  // 소수 대신 "1 km 200 m"(Subway game과 같은 표기, 3~4학년 길이 단위와도 맞음)
+  const km = (m) => (m >= 1000 ? `${Math.floor(m / 1000)} km${m % 1000 ? ` ${m % 1000} m` : ""}` : `${m} m`);
   const lines = [
     `${line.name} ${idx + 1}번째 역 (모두 ${line.stations.length}역)`,
     st.code && /^d+$/.test(st.code) ? `역 번호 ${st.code}` : null,
@@ -26,7 +28,7 @@ export function stationSheet(stationId, onClose) {
     line.carsPerTrain ? `열차 한 대는 ${line.carsPerTrain}량` : null,
   ].filter(Boolean);
   const sheet = h('div.sheet.explore',
-    h('div.sheet-tabs', h('strong', `${st.name}역`), h('button.icon-btn', { type: 'button', onclick: () => { sheet.remove(); onClose?.(); } }, '✕')),
+    h('div.sheet-tabs', h('strong', `${st.name}역`), h('button.icon-btn', { type: 'button', 'aria-label': '닫기', onclick: () => { sheet.remove(); onClose?.(); } }, icon('close'))),
     h('ul.explore-list', lines.map((l) => h('li', l))),
     h('p.small', '출처: 부산교통공사·공공데이터포털 자료(역 순서, 역 사이 거리, 역 번호)'),
   );

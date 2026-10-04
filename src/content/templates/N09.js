@@ -83,11 +83,11 @@ function multiGrade(answer, discs) {
   const key = (arr) => [...new Set((Array.isArray(arr) ? arr : []).map(Number))].sort((x, y) => x - y).join(',');
   const want = key(answer);
   return (r) => {
-    if (!Array.isArray(r) || r.length === 0) return { correct: false, flags: { careless: true }, feedback: '답을 먼저 골라 볼까요?' };
+    if (!Array.isArray(r) || r.length === 0) return { correct: false, flags: { careless: true }, kind: 'check', feedback: '답을 먼저 골라 볼까요?' };
     const got = key(r);
     if (got === want) return { correct: true };
     const d = discs.find((x) => key(x.value) === got);
-    return d ? { correct: false, category: d.category, feedback: d.feedback } : { correct: false, category: null, feedback: null };
+    return d ? { correct: false, category: d.category, kind: d.kind ?? 'check', feedbackCheck: d.feedbackCheck, feedback: d.feedback } : { correct: false, category: null, kind: 'check', feedback: null };
   };
 }
 
@@ -106,7 +106,7 @@ function t91Level1(a, b) {
     figure: { kind: 'trains', trains: [{ name: fa, cars: 8, shaded: a }, { name: fb, cars: 8, shaded: b }] },
     input: { kind: 'choice', options: [fa, fb] },
     answer: ans,
-    discriminators: [{ value: a > b ? fb : fa, category: '개념', feedback: '색칠한 칸 수를 세어 볼까요?' }],
+    discriminators: [{ value: a > b ? fb : fa, category: '개념', kind: 'check', feedback: '색칠한 칸 수를 세어 볼까요?' }],
     hints: [`두 열차 그림에 ${wa(fa)} ${fb}만큼 색칠했어요. 색칠한 칸이 더 많은 쪽을 물어요.`, '두 그림에서 색칠한 칸을 각각 세어 볼까요? 분모가 같으면 분자를 견주어 봐요.', `${fa}${jo(fa, '은', '는')} 1/8이 ${a}개예요.`, `${fb}${jo(fb, '은', '는')} 1/8이 ☐개`],
     blank: `1/8이 ☐개`,
     blankAnswer: String(b),
@@ -128,7 +128,7 @@ function t91Level2(a, b, d) {
     figure: null,
     input: { kind: 'choice', options: SIGNS },
     answer: ans,
-    discriminators: SIGNS.filter((s) => s !== ans).map((s) => ({ value: s, category: '개념', feedback: '같은 크기 조각이 몇 개씩이에요?' })),
+    discriminators: SIGNS.filter((s) => s !== ans).map((s) => ({ value: s, category: '개념', kind: 'check', feedback: '같은 크기 조각이 몇 개씩이에요?' })),
     hints: [`${wa(fa)} ${fb}의 크기를 견주는 기호를 물어요.`, '분모가 같으면 조각 하나의 크기가 같아요. 조각이 몇 개인지 견주어 봐요.', `${fa}${jo(fa, '은', '는')} 1/${d}이 ${a}개예요.`, `${fb}${jo(fb, '은', '는')} 1/${d}이 ☐개`],
     blank: `1/${d}이 ☐개`,
     blankAnswer: String(b),
@@ -146,7 +146,7 @@ function t91Level3(nums, d) {
   const sorted = [...nums].sort((x, y) => x - y).map((x) => fr(x, d));
   const rev = [...sorted].reverse();
   const key = (arr) => (Array.isArray(arr) ? arr.map(String).join('|') : '');
-  const discs = [{ value: rev, category: '읽기', feedback: '작은 것부터예요. 맨 앞은 어느 것일까요?' }];
+  const discs = [{ value: rev, category: '읽기', kind: 'check', feedback: '작은 것부터예요. 맨 앞은 어느 것일까요?' }];
   const text = [];
   items.forEach((f, i) => {
     text.push(n(f));
@@ -160,10 +160,10 @@ function t91Level3(nums, d) {
     answer: sorted,
     discriminators: discs,
     grade(r) {
-      if (!Array.isArray(r) || r.length === 0) return { correct: false, flags: { careless: true }, feedback: '답을 먼저 늘어놓아 볼까요?' };
+      if (!Array.isArray(r) || r.length === 0) return { correct: false, flags: { careless: true }, kind: 'check', feedback: '답을 먼저 늘어놓아 볼까요?' };
       if (key(r) === key(sorted)) return { correct: true };
-      if (key(r) === key(rev)) return { correct: false, category: '읽기', feedback: discs[0].feedback };
-      return { correct: false, category: null, feedback: null };
+      if (key(r) === key(rev)) return { correct: false, category: '읽기', kind: discs[0].kind ?? 'check', feedbackCheck: discs[0].feedbackCheck, feedback: discs[0].feedback };
+      return { correct: false, category: null, kind: 'check', feedback: null };
     },
     hints: [`${items.join(', ')}${jo(items[3], '을', '를')} 작은 것부터 차례로 늘어놓는 순서를 물어요.`, '분모가 같아요. 조각 하나의 크기가 같으면 무엇을 견주면 될까요?', `가장 작은 것은 ${ieyo(sorted[0])}.`, `${sorted[0]}, ${sorted[1]}, ☐/${d}, ${sorted[3]}`],
     blank: `☐/${d}`,
@@ -212,7 +212,7 @@ function t92Level1(a, b) {
     figure: { kind: 'strips', strips: [a, b] },
     input: { kind: 'choice', options: [fa, fb] },
     answer: ans,
-    discriminators: [{ value: fr(1, big), category: '개념', feedback: `${big}칸짜리 한 칸이 더 길까요?` }],
+    discriminators: [{ value: fr(1, big), category: '개념', kind: 'check', feedback: `${big}칸짜리 한 칸이 더 길까요?` }],
     hints: [`같은 길이의 띠 두 개가 각각 ${a}칸, ${b}칸이에요. 한 칸이 더 긴 쪽을 물어요.`, '그림에서 한 칸의 길이를 견주어 볼까요? 많이 나눌수록 한 칸은 어떻게 될까요?', `${small}칸 쪽이 더 적게 나눈 띠예요.`, '더 적게 나눈 띠는 ☐칸'],
     blank: '더 적게 나눈 띠는 ☐칸',
     blankAnswer: String(small),
@@ -236,8 +236,8 @@ function t92Level2(a, b) {
     input: { kind: 'choice', options: SIGNS },
     answer: ans,
     discriminators: [
-      { value: wrong, category: '개념', feedback: `${b}칸으로 나눈 한 칸이 더 클까요?`.replace(`${b}칸`, `${Math.max(a, b)}칸`) },
-      { value: '=', category: '개념', feedback: '한 칸의 크기가 같을까요?' },
+      { value: wrong, category: '개념', kind: 'check', feedback: `${b}칸으로 나눈 한 칸이 더 클까요?`.replace(`${b}칸`, `${Math.max(a, b)}칸`) },
+      { value: '=', category: '개념', kind: 'check', feedback: '한 칸의 크기가 같을까요?' },
     ].filter((d) => d.value !== ans),
     hints: [`${wa(fa)} ${fb}의 크기를 견주는 기호를 물어요.`, '같은 띠를 몇 칸으로 나눈 것인지 떠올려 볼까요? 그중 한 칸의 길이를 견주어 봐요.', `${fa}${jo(fa, '은', '는')} 띠를 ${a}칸으로 똑같이 나눈 한 칸이에요.`, `한 칸이 더 긴 쪽: 1/☐`],
     blank: '1/☐',
@@ -262,9 +262,9 @@ function t92Level3(grow) {
     input: { kind: 'compound', fields: [{ key: 'change', label: '한 조각의 크기', options: ['커져요', '작아져요'] }, { key: 'why', label: '이유', options: opts }] },
     answer: { change, why: R },
     discriminators: [
-      { key: 'change', value: grow ? '커져요' : '작아져요', category: '개념', feedback: '띠를 더 많이 나누면 한 칸은요?' },
-      { key: 'why', value: opts[1], category: '개념', feedback: '숫자가 커서일까요? 띠 그림을 떠올려 봐요.' },
-      { key: 'why', value: opts[2], category: '개념', feedback: '분모는 무엇을 나타낼까요?' },
+      { key: 'change', value: grow ? '커져요' : '작아져요', category: '개념', kind: 'nudge', feedbackCheck: '띠 그림을 다시 볼까요?', feedback: '띠를 더 많이 나누면 한 칸은요?' },
+      { key: 'why', value: opts[1], category: '개념', kind: 'nudge', feedbackCheck: '이유를 다시 읽어 볼까요?', feedback: '숫자가 커서일까요? 띠 그림을 떠올려 봐요.' },
+      { key: 'why', value: opts[2], category: '개념', kind: 'check', feedback: '분모는 무엇을 나타낼까요?' },
     ],
     hints: [`분모가 ${dir} 한 조각의 크기가 어떻게 되는지, 그 이유도 물어요.`, '같은 띠를 2칸, 4칸, 8칸으로 나눈 그림을 떠올려 볼까요?', '띠를 2칸으로 나누면 한 칸은 띠의 반이에요.', '1/2, 1/4, 1/8 중 한 칸이 가장 작은 것은 1/☐'],
     blank: '1/☐',
@@ -282,8 +282,8 @@ function t92Level4(k) {
   const answer = Array.from({ length: k - 2 }, (_, i) => i + 2);
   const opts = [2, 3, 4, 5, 6, 7, 8, 9, 10];
   const discs = [
-    { value: [...answer, k], category: '개념', feedback: `${fr(1, k)}${jo(1, '과', '와')} ${fr(1, k)}${jo(1, '은', '는')} 같아요. 더 커야 하죠?` },
-    { value: opts.filter((x) => x > k), category: '개념', feedback: `${fr(1, k + 1)}${jo(1, '은', '는')} ${fr(1, k)}보다 클까요?` },
+    { value: [...answer, k], category: '개념', kind: 'check', feedback: `${fr(1, k)}${jo(1, '과', '와')} ${fr(1, k)}${jo(1, '은', '는')} 같아요. 더 커야 하죠?` },
+    { value: opts.filter((x) => x > k), category: '개념', kind: 'check', feedback: `${fr(1, k + 1)}${jo(1, '은', '는')} ${fr(1, k)}보다 클까요?` },
   ];
   return {
     text: [unknown('1/□'), '이 ', n(fr(1, k)), '보다 커요. □에 들어갈 수 있는 수를 모두 골라요. (□는 ', n(2), '부터)'],
@@ -309,7 +309,7 @@ function t92Level5(D, A, U) {
   const loose = Math.max(A, U);
   const answer = Array.from({ length: lim - 2 }, (_, i) => i + 2);
   const opts = Array.from({ length: 9 }, (_, i) => i + 2);
-  const discs = [{ value: Array.from({ length: loose - 2 }, (_, i) => i + 2), category: '개념', feedback: '두 조건을 모두 맞춰 봤나요?' }];
+  const discs = [{ value: Array.from({ length: loose - 2 }, (_, i) => i + 2), category: '개념', kind: 'check', feedback: '두 조건을 모두 맞춰 봤나요?' }];
   return {
     text: [unknown(`□/${D}`), '가 ', n(fr(A, D)), '보다 작고, ', unknown('1/□'), '은 ', n(fr(1, U)), '보다 커요. □에 들어갈 수 있는 수를 모두 골라요. (□는 ', n(2), '부터)'],
     figure: null,
@@ -338,11 +338,11 @@ function t92Level6(a, m, b) {
   const byFrac = a < b ? A : a > b ? B : '같아요';
   const concl = more === '같아요' ? '두 쪽은 같아요' : `${more}${jo(1, '이', '이')} 더 많아요`;
   return {
-    text: [L1(), '호선 열차 ', CARS(), '량의 ', n(fr(1, a)), '과 그 열차 앞 ', n(m), '량의 ', n(fr(1, b)), '은 각각 몇 량이에요? 어느 쪽이 더 많아요?'],
+    text: [L1(), '호선 열차 ', CARS(), '량의 ', n(fr(1, a)), '과 그 열차 앞 ', V(m), '량의 ', n(fr(1, b)), '은 각각 몇 량이에요? 어느 쪽이 더 많아요?'],
     figure: { kind: 'train', cars: 8, front: m },
     input: { kind: 'compound', fields: [{ key: 'x', label: A }, { key: 'y', label: B }, { key: 'more', label: '더 많은 쪽', options: [A, B, '같아요'] }] },
     answer: { x, y, more },
-    discriminators: byFrac !== more ? [{ key: 'more', value: byFrac, category: '개념', feedback: '두 분수의 전체는 같은 크기예요?' }] : [],
+    discriminators: byFrac !== more ? [{ key: 'more', value: byFrac, category: '개념', kind: 'check', feedback: '두 분수의 전체는 같은 크기예요?' }] : [],
     hints: [`8량의 ${fr(1, a)}과 앞 ${m}량의 ${fr(1, b)}이 각각 몇 량인지, 어느 쪽이 더 많은지 물어요.`, '전체가 몇 량인지 먼저 보고, 그 전체를 똑같이 나눠 볼까요?', `8량의 ${fr(1, a)}은 ${x}량이에요.`, `앞 ${m}량의 ${fr(1, b)}은 ☐량`],
     blank: '☐량',
     blankAnswer: String(y),
@@ -435,11 +435,11 @@ function t93Level1(a, b, d) {
   const fb = fr(b, d);
   const ans = a > b ? '가' : '나';
   return {
-    text: [`${TEST_RUN} 구간을 똑같이 `, n(d), '칸으로 나누어 표시했어요. 가 열차는 구간의 ', n(fa), ', 나 열차는 ', n(fb), '만큼 달렸어요. 더 많이 달린 열차는 어느 쪽이에요?'],
+    text: [`${TEST_RUN} 구간을 똑같이 `, V(d), '칸으로 나누어 표시했어요. 가 열차는 구간의 ', V(fa), ', 나 열차는 ', V(fb), '만큼 달렸어요. 더 많이 달린 열차는 어느 쪽이에요?'],
     figure: { kind: 'strip', parts: Array(d).fill(1), shaded: [] },
     input: { kind: 'choice', options: TRAINS93 },
     answer: ans,
-    discriminators: [{ value: ans === '가' ? '나' : '가', category: '개념', feedback: '같은 크기 칸이 몇 개씩이에요?' }],
+    discriminators: [{ value: ans === '가' ? '나' : '가', category: '개념', kind: 'check', feedback: '같은 크기 칸이 몇 개씩이에요?' }],
     hints: [`같은 구간을 ${d}칸으로 똑같이 나눴어요. 가 열차는 ${fa}, 나 열차는 ${fb}만큼 달렸어요. 더 많이 달린 열차를 물어요.`, '그림에서 두 열차가 달린 칸을 각각 세어 볼까요? 분모가 같으면 분자를 견주어 봐요.', `가 열차는 1/${d}이 ${a}칸만큼 달렸어요.`, `나 열차는 1/${d}이 ☐칸`],
     blank: `1/${d}이 ☐칸`,
     blankAnswer: String(b),
@@ -460,26 +460,26 @@ function t93Level2(a, b, d) {
   const lo = Math.min(a, b);
   const diff = hi - lo;
   const discs = [
-    { key: 'which', value: ans === '가' ? '나' : '가', category: '개념', feedback: '분모가 같으면 무엇을 견줘요?' },
-    { key: 'cells', value: hi, category: '읽기', feedback: '그 열차가 달린 칸이에요. 몇 칸 더예요?' },
-    { key: 'cells', value: a + b, category: '식', feedback: '몇 칸 더 달렸는지 물었어요' },
+    { key: 'which', value: ans === '가' ? '나' : '가', category: '개념', kind: 'nudge', feedbackCheck: '두 분수를 다시 볼까요?', feedback: '분모가 같으면 무엇을 견줘요?' },
+    { key: 'cells', value: hi, category: '읽기', kind: 'check', feedback: '그 열차가 달린 칸이에요. 몇 칸 더예요?' },
+    { key: 'cells', value: a + b, category: '식', kind: 'check', feedback: '몇 칸 더 달렸는지 물었어요' },
   ];
   return {
-    text: [`${TEST_RUN} 구간을 똑같이 `, n(d), '칸으로 나누어 표시했어요. 가 열차는 구간의 ', n(fa), ', 나 열차는 ', n(fb), '만큼 달렸어요. 어느 열차가 구간의 몇 칸만큼 더 달렸어요?'],
+    text: [`${TEST_RUN} 구간을 똑같이 `, V(d), '칸으로 나누어 표시했어요. 가 열차는 구간의 ', V(fa), ', 나 열차는 ', V(fb), '만큼 달렸어요. 어느 열차가 구간의 몇 칸만큼 더 달렸어요?'],
     figure: null,
     input: { kind: 'compound', fields: [{ key: 'which', label: '열차', options: TRAINS93 }, { key: 'cells', label: '몇 칸 더' }] },
     answer: { which: ans, cells: diff },
     discriminators: discs,
     grade(r) {
-      if (blank93(r?.which) && blank93(r?.cells)) return { correct: false, flags: { careless: true }, feedback: '답을 먼저 써 볼까요?' };
+      if (blank93(r?.which) && blank93(r?.cells)) return { correct: false, flags: { careless: true }, kind: 'check', feedback: '답을 먼저 써 볼까요?' };
       const w = String(r?.which ?? '').trim();
       const c = String(r?.cells ?? '').trim();
       if (w === ans && Number(c) === diff && c !== '') return { correct: true };
-      if (w === ans && c.replace(/\s/g, '') === fr(diff, d)) return { correct: false, flags: { careless: true, reask: true }, feedback: '구간의 몇 칸만큼인지 물었어요' };
-      if (w !== ans && !blank93(r?.which)) return { correct: false, category: discs[0].category, feedback: discs[0].feedback };
+      if (w === ans && c.replace(/\s/g, '') === fr(diff, d)) return { correct: false, flags: { careless: true, reask: true }, kind: 'check', feedback: '구간의 몇 칸만큼인지 물었어요' };
+      if (w !== ans && !blank93(r?.which)) return { correct: false, category: discs[0].category, kind: discs[0].kind ?? 'check', feedbackCheck: discs[0].feedbackCheck, feedback: discs[0].feedback };
       const hit = discs.slice(1).find((x) => Number(c) === x.value && c !== '');
-      if (hit) return { correct: false, category: hit.category, feedback: hit.feedback };
-      return { correct: false, category: null, feedback: '몇 칸 더 칸을 다시 볼까요?' };
+      if (hit) return { correct: false, category: hit.category, kind: hit.kind ?? 'check', feedbackCheck: hit.feedbackCheck, feedback: hit.feedback };
+      return { correct: false, category: null, kind: 'check', feedback: '몇 칸 더 칸을 다시 볼까요?' };
     },
     hints: [`가 열차는 구간의 ${fa}, 나 열차는 ${fb}만큼 달렸어요. 어느 열차가 몇 칸만큼 더 달렸는지 물어요.`, '구간을 똑같이 나눈 칸을 연습장에 그려 볼까요? 두 열차가 달린 칸 수를 견주어 봐요.', `가 열차는 ${a}칸, 나 열차는 ${b}칸만큼 달렸어요.`, `${hi} − ${lo} = ☐`],
     blank: `${hi} − ${lo} = ☐`,
@@ -504,7 +504,7 @@ function t93Level3(a, b, rng) {
   const R_NU = '분자가 같아서';
   const L = (a * b) / gcd(a, b);
   return {
-    text: [`${TEST_RUN} 가 열차는 구간의 `, n(fa), ', 나 열차는 ', n(fb), '만큼 달렸어요. 더 많이 달린 열차와 그 이유를 골라요.'],
+    text: [`${TEST_RUN} 가 열차는 구간의 `, V(fa), ', 나 열차는 ', V(fb), '만큼 달렸어요. 더 많이 달린 열차와 그 이유를 골라요.'],
     figure: null,
     input: {
       kind: 'compound',
@@ -515,9 +515,9 @@ function t93Level3(a, b, rng) {
     },
     answer: { which: ans, why: R_OK },
     discriminators: [
-      { key: 'why', value: R_BIG, category: '개념', feedback: `${big}칸으로 나눈 한 칸이 더 길까요?` },
-      { key: 'which', value: ans === '가' ? '나' : '가', category: '개념', feedback: '많이 나눌수록 한 칸은 어떻게 돼요?' },
-      { key: 'why', value: R_NU, category: '개념', feedback: '분자가 같으면 무엇을 견줘요?' },
+      { key: 'why', value: R_BIG, category: '개념', kind: 'check', feedback: `${big}칸으로 나눈 한 칸이 더 길까요?` },
+      { key: 'which', value: ans === '가' ? '나' : '가', category: '개념', kind: 'nudge', feedbackCheck: '띠 그림을 다시 볼까요?', feedback: '많이 나눌수록 한 칸은 어떻게 돼요?' },
+      { key: 'why', value: R_NU, category: '개념', kind: 'nudge', feedbackCheck: '두 분수를 다시 볼까요?', feedback: '분자가 같으면 무엇을 견줘요?' },
     ],
     hints: [`같은 구간에서 가 열차는 ${fa}, 나 열차는 ${fb}만큼 달렸어요. 더 많이 달린 열차와 이유를 물어요.`, `같은 구간을 ${small}칸과 ${big}칸으로 나눈 그림을 연습장에 그려 볼까요?`, `${small}칸으로 나누면 한 칸이 더 길어요.`, '한 칸이 더 긴 쪽: ☐칸으로 나눈 구간'],
     blank: '☐칸으로 나눈 구간',

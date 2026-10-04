@@ -34,7 +34,7 @@ const isBlank = (r) => r === undefined || r === null || (typeof r === 'string' &
 export function grade(problem, response) {
   if (typeof problem.grade === 'function') {
     const r = problem.grade(response);
-    return { correct: Boolean(r.correct), category: r.category ?? null, feedback: r.feedback ?? null, flags: r.flags ?? {} };
+    return { correct: Boolean(r.correct), category: r.category ?? null, feedback: r.feedback ?? null, kind: r.kind ?? null, feedbackCheck: r.feedbackCheck ?? null, flags: r.flags ?? {} };
   }
 
   const kind = problem.input?.kind ?? 'number';
@@ -46,7 +46,7 @@ export function grade(problem, response) {
     if (wrong.length === 0) return ok();
     // 칸별 판별 오답
     for (const d of problem.discriminators ?? []) {
-      if (d.key && same(response?.[d.key], d.value)) return miss(d.category, d.feedback);
+      if (d.key && same(response?.[d.key], d.value)) return missD(d);
     }
     return miss(null, `${wrong.map((f) => f.label).join(', ')}을(를) 다시 볼까요?`);
   }
@@ -61,7 +61,7 @@ export function grade(problem, response) {
         (want.commutative && same(left, want.right) && same(right, want.left)));
     if (exprOk && same(result, want.result)) return ok();
     for (const d of problem.discriminators ?? []) {
-      if (d.match && d.match(response)) return miss(d.category, d.feedback);
+      if (d.match && d.match(response)) return missD(d);
     }
     if (!exprOk) return miss('식', null);
     return miss('계산', null);
@@ -71,7 +71,7 @@ export function grade(problem, response) {
     if (isBlank(response)) return careless();
     if (same(response, problem.answer)) return ok();
     const d = (problem.discriminators ?? []).find((x) => same(response, x.value));
-    return d ? miss(d.category, d.feedback) : miss(null, null);
+    return d ? missD(d) : miss(null, null);
   }
 
   // number / decimal / fraction
@@ -83,7 +83,7 @@ export function grade(problem, response) {
   if (Math.abs(value - answer) < 1e-9) return ok();
 
   const d = (problem.discriminators ?? []).find((x) => typeof x.value === 'number' && Math.abs(x.value - value) < 1e-9);
-  if (d) return miss(d.category, d.feedback);
+  if (d) return missD(d);
 
   const textNums = numbersIn(problem.text ?? []);
   if (textNums.some((x) => Math.abs(x - value) < 1e-9)) return careless('문제에 있는 수를 그대로 썼어요');
@@ -94,4 +94,6 @@ export function grade(problem, response) {
 
 const ok = () => ({ correct: true, category: null, feedback: null, flags: {} });
 const careless = (feedback = '답을 먼저 써 볼까요?') => ({ correct: false, category: null, feedback, flags: { careless: true } });
-const miss = (category, feedback) => ({ correct: false, category, feedback, flags: {} });
+const miss = (category, feedback) => ({ correct: false, category, feedback, kind: null, feedbackCheck: null, flags: {} });
+/** 판별 오답: 피드백 종류(check 점검 / nudge 도움)와 점검 문구를 함께 넘긴다(커리큘럼 자문 10 2절). */
+const missD = (d) => ({ correct: false, category: d.category ?? null, feedback: d.feedback ?? null, kind: d.kind ?? null, feedbackCheck: d.feedbackCheck ?? null, flags: {} });

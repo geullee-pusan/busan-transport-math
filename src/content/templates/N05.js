@@ -83,11 +83,11 @@ function multiGrade(answer, discs) {
   const key = (arr) => [...new Set((Array.isArray(arr) ? arr : []).map(Number))].sort((x, y) => x - y).join(',');
   const want = key(answer);
   return (r) => {
-    if (!Array.isArray(r) || r.length === 0) return { correct: false, flags: { careless: true }, feedback: '답을 먼저 골라 볼까요?' };
+    if (!Array.isArray(r) || r.length === 0) return { correct: false, flags: { careless: true }, kind: 'check', feedback: '답을 먼저 골라 볼까요?' };
     const got = key(r);
     if (got === want) return { correct: true };
     const d = discs.find((x) => key(x.value) === got);
-    return d ? { correct: false, category: d.category, feedback: d.feedback } : { correct: false, category: null, feedback: null };
+    return d ? { correct: false, category: d.category, kind: d.kind ?? 'check', feedbackCheck: d.feedbackCheck, feedback: d.feedback } : { correct: false, category: null, kind: 'check', feedback: null };
   };
 }
 
@@ -99,8 +99,8 @@ const SITUATION = '이 식은 어떤 상황이에요?';
 /** 상황과 다른 식(값은 맞음)을 찾는 판별 오답. 0.7절: N05·N06에서는 정답이 아니다. */
 function mismatch(N, d, q, nameOf = '이 식은 어떤 상황이에요?') {
   return [
-    { match: (r) => r?.op === '÷' && num(r.left) === N && num(r.right) === q && num(r.result) === d, category: '식', feedback: nameOf },
-    { match: (r) => r?.op === '×' && num(r.result) === N && ((num(r.left) === d && num(r.right) === q) || (num(r.left) === q && num(r.right) === d)), category: '식', feedback: nameOf },
+    { match: (r) => r?.op === '÷' && num(r.left) === N && num(r.right) === q && num(r.result) === d, category: '식', kind: 'check', feedback: nameOf },
+    { match: (r) => r?.op === '×' && num(r.result) === N && ((num(r.left) === d && num(r.right) === q) || (num(r.left) === q && num(r.right) === d)), category: '식', kind: 'check', feedback: nameOf },
   ];
 }
 
@@ -115,9 +115,9 @@ function t51Level1(q) {
     answer: q,
     discriminators: uniq(
       [
-        { value: total * 8, category: '식', feedback: '한 칸 사람 수가 전체보다 많을까요?' },
-        { value: total - 8, category: '식', feedback: '8량에 똑같이 나눠 탔나요?' },
-        { value: 8, category: '읽기', feedback: '8은 칸 수예요. 무엇을 물었죠?' },
+        { value: total * 8, category: '식', kind: 'check', feedback: '한 칸 사람 수가 전체보다 많을까요?' },
+        { value: total - 8, category: '식', kind: 'check', feedback: '8량에 똑같이 나눠 탔나요?' },
+        { value: 8, category: '읽기', kind: 'check', feedback: '8은 칸 수예요. 무엇을 물었죠?' },
       ],
       q,
     ),
@@ -141,8 +141,8 @@ function t51Level2(q) {
     answer: { left: N, op: '÷', right: 8, result: q },
     discriminators: [
       ...mismatch(N, 8, q),
-      { match: (r) => r?.op === '×' && num(r.left) === N, category: '식', feedback: '한 칸 사람 수가 전체보다 많을까요?' },
-      { match: (r) => r?.op === '-', category: '식', feedback: '칸마다 똑같이 나눠 탔나요?' },
+      { match: (r) => r?.op === '×' && num(r.left) === N, category: '식', kind: 'check', feedback: '한 칸 사람 수가 전체보다 많을까요?' },
+      { match: (r) => r?.op === '-', category: '식', kind: 'check', feedback: '칸마다 똑같이 나눠 탔나요?' },
     ],
     hints: [`사람은 ${N}명, 칸은 8개예요. 칸마다 같은 수만큼 타요. 한 칸에 몇 명인지 식과 답을 물어요.`, '전체를 칸 수만큼 똑같이 나누는 식이에요. 곱셈구구 8단을 떠올려 봐요.', `8 × ${q - 1} = ${ieyo(8 * (q - 1))}.`, `${N} ÷ 8 = ☐`],
     blank: `${N} ÷ 8 = ☐`,
@@ -167,7 +167,7 @@ function t51Level3(N, k, eqFirst) {
     figure: null,
     input: { kind: 'choice', options: ['(가)', '(나)'] },
     answer: eqL,
-    discriminators: [{ value: otL, category: '개념', feedback: '칸 수가 정해진 쪽은 어디일까요?' }],
+    discriminators: [{ value: otL, category: '개념', kind: 'nudge', feedbackCheck: '두 이야기를 다시 읽어 볼까요?', feedback: '칸 수가 정해진 쪽은 어디일까요?' }],
     hints: [
       eqFirst ? `(가)는 ${N}명이 8량에 타는 상황, (나)는 ${N}명이 ${k}명씩 줄을 서는 상황이에요. 문제가 묻는 쪽을 골라요.` : `(가)는 ${N}명이 ${k}명씩 줄을 서는 상황, (나)는 ${N}명이 8량에 타는 상황이에요. 문제가 묻는 쪽을 골라요.`,
       '묶음의 수가 정해져 있는지, 한 묶음의 크기가 정해져 있는지 봐요.',
@@ -195,9 +195,9 @@ function t51Level4(m, x) {
     answer: ans,
     discriminators: uniq(
       [
-        { value: x, category: '읽기', feedback: `${x}명은 몰렸을 때예요. 고르게 타면요?` },
-        { value: (x * 8) / m, category: '식', feedback: '고르게 퍼지면 한 칸은 늘까요?' },
-        { value: all, category: '식', feedback: `${all}명을 찾았어요. 8량에 나누면요?` },
+        { value: x, category: '읽기', kind: 'nudge', feedbackCheck: '문제가 무엇을 물었는지 다시 볼까요?', feedback: `${x}명은 몰렸을 때예요. 고르게 타면요?` },
+        { value: (x * 8) / m, category: '식', kind: 'nudge', feedbackCheck: '문제가 무엇을 물었는지 다시 볼까요?', feedback: '고르게 퍼지면 한 칸은 늘까요?' },
+        { value: all, category: '식', kind: 'nudge', feedbackCheck: '무엇을 물었는지 다시 볼까요?', feedback: `${all}명을 찾았어요. 8량에 나누면요?` },
       ],
       ans,
     ),
@@ -216,12 +216,12 @@ function t51Level5(k, L) {
   const answer = [];
   for (let v = k; v < L; v += k) answer.push(v);
   const options = Array.from({ length: L }, (_, i) => i + 1);
-  const discs = [{ value: answer.slice(1), category: '개념', feedback: '한 줄만 서도 남는 사람이 없나요?' }];
-  if (L % k === 0) discs.push({ value: [...answer, L], category: '개념', feedback: `${L}명보다 적어야 해요. ${L}도 될까요?` });
+  const discs = [{ value: answer.slice(1), category: '개념', kind: 'nudge', feedbackCheck: '빠진 것이 없나요?', feedback: '한 줄만 서도 남는 사람이 없나요?' }];
+  if (L % k === 0) discs.push({ value: [...answer, L], category: '개념', kind: 'check', feedback: `${L}명보다 적어야 해요. ${L}도 될까요?` });
   const last = answer.at(-1);
   const blank = [...answer.slice(0, -1), '☐'].join(', ');
   return {
-    text: ['승강장에서 ', V(k), '명씩 줄을 서요. 남는 사람 없이 줄을 세울 수 있는 인원을 ', n(L), '명보다 적은 수에서 모두 골라요.'],
+    text: ['승강장에서 ', V(k), '명씩 줄을 서요. 남는 사람 없이 줄을 세울 수 있는 인원을 ', V(L), '명보다 적은 수에서 모두 골라요.'],
     figure: null,
     input: { kind: 'multi', options },
     answer,
@@ -287,9 +287,9 @@ function t52Level1(k, m) {
     answer: m,
     discriminators: uniq(
       [
-        { value: N - k, category: '식', feedback: '줄 수를 물었어요. 몇 번 묶이나요?' },
-        { value: k, category: '읽기', feedback: `${k}명은 한 줄의 사람 수예요. 몇 줄이죠?` },
-        { value: N * k, category: '식', feedback: '줄 수가 사람 수보다 많을까요?' },
+        { value: N - k, category: '식', kind: 'nudge', feedbackCheck: '줄 수를 물었어요. 다시 볼까요?', feedback: '줄 수를 물었어요. 몇 번 묶이나요?' },
+        { value: k, category: '읽기', kind: 'check', feedback: `${k}명은 한 줄의 사람 수예요. 몇 줄이죠?` },
+        { value: N * k, category: '식', kind: 'check', feedback: '줄 수가 사람 수보다 많을까요?' },
       ],
       m,
     ),
@@ -313,8 +313,8 @@ function t52Level2(k, m) {
     input: { kind: 'equation' },
     answer: { left: N, op: '÷', right: k, result: m },
     discriminators: [
-      { match: (r) => r?.op === '÷' && num(r.left) === N && num(r.right) === m && num(r.result) === k, category: '식', feedback: SITUATION },
-      { match: (r) => r?.op === '×', category: '식', feedback: '나눗셈식으로 써 볼까요?' },
+      { match: (r) => r?.op === '÷' && num(r.left) === N && num(r.right) === m && num(r.result) === k, category: '식', kind: 'check', feedback: SITUATION },
+      { match: (r) => r?.op === '×', category: '식', kind: 'nudge', feedbackCheck: '이 식은 어떤 상황이에요?', feedback: '나눗셈식으로 써 볼까요?' },
     ],
     hints: [`${N}에서 ${k}씩 덜어 내어 0이 될 때까지의 횟수와, 그 뜻의 나눗셈식을 물어요.`, `${N}, ${N - k}처럼 차례로 적어 볼까요? 몇 번 만에 0이 되는지 세어 봐요.`, `${N} − ${k} = ${N - k}, ${N - k} − ${k} = ${ieyo(N - 2 * k)}.`, `${N} ÷ ${k} = ☐`],
     blank: `${N} ÷ ${k} = ☐`,
@@ -336,9 +336,9 @@ function t52Level3(m) {
     answer: m,
     discriminators: uniq(
       [
-        { value: 8, category: '읽기', feedback: '8량은 열차 한 대예요. 몇 대를 물었죠?' },
-        { value: total - 8, category: '식', feedback: '8량씩 몇 번 묶이나요?' },
-        { value: total * 8, category: '식', feedback: '열차가 차량보다 많을까요?' },
+        { value: 8, category: '읽기', kind: 'check', feedback: '8량은 열차 한 대예요. 몇 대를 물었죠?' },
+        { value: total - 8, category: '식', kind: 'nudge', feedbackCheck: '몇 대를 물었는지 다시 볼까요?', feedback: '8량씩 몇 번 묶이나요?' },
+        { value: total * 8, category: '식', kind: 'check', feedback: '열차가 차량보다 많을까요?' },
       ],
       m,
     ),
@@ -419,9 +419,9 @@ function storiesText(head, stories) {
 function t53Level1(q, order) {
   const N = 8 * q;
   const pool = {
-    share: [V(N), '명이 ', L1(), '호선 ', CARS(), '량에 똑같이 나눠 타면 한 칸에 ', n(q), '명이에요.'],
-    mult: ['한 칸에 ', V(8), '명씩 ', V(q), '칸이면 ', n(N), '명이에요.'],
-    sub: [V(N), '명 중 ', V(8), '명이 내리면 ', n(N - 8), '명이에요.'],
+    share: [V(N), '명이 ', L1(), '호선 ', CARS(), '량에 똑같이 나눠 타면 한 칸에 ', V(q), '명이에요.'],
+    mult: ['한 칸에 ', V(8), '명씩 ', V(q), '칸이면 ', V(N), '명이에요.'],
+    sub: [V(N), '명 중 ', V(8), '명이 내리면 ', V(N - 8), '명이에요.'],
   };
   const stories = order.map((id) => ({ id, parts: pool[id] }));
   const lab = (id) => STORY_LABELS[order.indexOf(id)];
@@ -432,8 +432,8 @@ function t53Level1(q, order) {
     input: { kind: 'choice', options: STORY_LABELS },
     answer: ans,
     discriminators: [
-      { value: lab('mult'), category: '개념', feedback: `${eul(N)} 나누는 이야기일까요, 만드는 이야기일까요?` },
-      { value: lab('sub'), category: '식', feedback: SITUATION },
+      { value: lab('mult'), category: '개념', kind: 'nudge', feedbackCheck: '이야기를 다시 읽어 볼까요?', feedback: `${eul(N)} 나누는 이야기일까요, 만드는 이야기일까요?` },
+      { value: lab('sub'), category: '식', kind: 'check', feedback: SITUATION },
     ],
     hints: [
       '식 하나와 이야기 세 개가 있어요. 식에 맞는 이야기를 물어요.',
@@ -455,9 +455,9 @@ function t53Level1(q, order) {
 function t53Level2(k, m, order) {
   const N = k * m;
   const pool = {
-    group: [V(N), '명이 ', V(k), '명씩 줄을 서면 ', n(m), '줄이에요.'],
-    add: [V(N), '명에서 ', V(k), '명이 더 오면 ', n(N + k), '명이에요.'],
-    mult: [V(k), '줄에 ', V(m), '명씩 서면 ', n(N), '명이에요.'],
+    group: [V(N), '명이 ', V(k), '명씩 줄을 서면 ', V(m), '줄이에요.'],
+    add: [V(N), '명에서 ', V(k), '명이 더 오면 ', V(N + k), '명이에요.'],
+    mult: [V(k), '줄에 ', V(m), '명씩 서면 ', V(N), '명이에요.'],
   };
   const stories = order.map((id) => ({ id, parts: pool[id] }));
   const lab = (id) => STORY_LABELS[order.indexOf(id)];
@@ -468,8 +468,8 @@ function t53Level2(k, m, order) {
     input: { kind: 'choice', options: STORY_LABELS },
     answer: ans,
     discriminators: [
-      { value: lab('mult'), category: '개념', feedback: `${eul(N)} 나누는 이야기일까요, 만드는 이야기일까요?` },
-      { value: lab('add'), category: '식', feedback: SITUATION },
+      { value: lab('mult'), category: '개념', kind: 'nudge', feedbackCheck: '이야기를 다시 읽어 볼까요?', feedback: `${eul(N)} 나누는 이야기일까요, 만드는 이야기일까요?` },
+      { value: lab('add'), category: '식', kind: 'check', feedback: SITUATION },
     ],
     hints: [
       '식 하나와 이야기 세 개가 있어요. 식에 맞는 이야기를 물어요.',
@@ -512,8 +512,8 @@ function t53Level3(m, trainFirst) {
     },
     answer: { ga, na },
     discriminators: [
-      { key: 'ga', value: na, category: '개념', feedback: `(가)에서 ${eun(gaNum)} 무엇의 수예요?` },
-      { key: 'na', value: ga, category: '개념', feedback: `(나)에서 ${eun(naNum)} 무엇의 수예요?` },
+      { key: 'ga', value: na, category: '개념', kind: 'check', feedback: `(가)에서 ${eun(gaNum)} 무엇의 수예요?` },
+      { key: 'na', value: ga, category: '개념', kind: 'check', feedback: `(나)에서 ${eun(naNum)} 무엇의 수예요?` },
     ],
     hints: [
       '식 두 개와 이야기 두 개가 있어요. 이야기마다 맞는 식을 물어요.',

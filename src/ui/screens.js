@@ -247,7 +247,7 @@ function parentBody(root, app, { onHome, onReset }) {
   const hard = touched
     .map((n) => ({ n, ns: state.nodes[n.id] }))
     .filter(({ ns }) => ns.attempts.length >= 3)
-    .map(({ n, ns }) => ({ n, rate: ns.attempts.filter((x) => x.c).length / ns.attempts.length, hinted: ns.attempts.filter((x) => x.h >= 2).length }))
+    .map(({ n, ns }) => ({ n, rate: ns.attempts.filter((x) => x.c).length / ns.attempts.length, hinted: ns.attempts.filter((x) => (x.o ?? x.h) >= 2).length }))
     .sort((a, b) => a.rate - b.rate)
     .slice(0, 2);
   const weekAgo = Date.now() - 7 * 86400000;
@@ -257,7 +257,7 @@ function parentBody(root, app, { onHome, onReset }) {
     const ns = state.nodes[n.id];
     const tries = ns.attempts.length;
     const right = ns.attempts.filter((x) => x.c).length;
-    const hinted = ns.attempts.filter((x) => x.h >= 2).length;
+    const hinted = ns.attempts.filter((x) => (x.o ?? x.h) >= 2).length;
     return h('tr', h('td', stationOf(n.id).name), h('td', n.title), h('td', (n.codes ?? []).join(' ')), h('td', { open: '진행 중', lit: '개통', passed: '통과', confirmed: '확정' }[ns.status] ?? ns.status), h('td', `${right}/${tries}`), h('td', String(hinted)));
   });
   const backup = h('textarea.backup', { readonly: true }, exportBackup(state));

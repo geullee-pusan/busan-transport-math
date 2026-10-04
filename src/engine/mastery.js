@@ -22,7 +22,8 @@ export function emptyNode() {
  * @returns {{ node: object, gained: number, lit: boolean, pending: string|null }}
  */
 export function applyAttempt(ns, a, day) {
-  const node = { ...ns, attempts: [...ns.attempts, { c: a.correct, h: a.hint, l: a.level, r: a.repr, d: day }].slice(-20), reprs: ns.reprs.slice() };
+  // h = 칸 무게용 힌트 값(다시 시도한 정답은 2로 셈), o = 아이가 실제로 연 힌트(부모 화면·일지용, 게이미피케이션 04 P0)
+  const node = { ...ns, attempts: [...ns.attempts, { c: a.correct, h: a.hint, o: a.opened ?? a.hint, l: a.level, r: a.repr, d: day }].slice(-20), reprs: ns.reprs.slice() };
   node.rating = nextRating(ns.rating, a);
   let gained = 0;
   let lit = false;

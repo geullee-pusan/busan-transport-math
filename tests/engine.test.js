@@ -5,6 +5,7 @@ import { createState, startRatingOf } from '../src/engine/state.js';
 import { LINE1_NODES, NODES, MUST_CHECK, ancestorsOf } from '../src/engine/world.js';
 import { applyAttempt, applyReview, emptyNode, FULL } from '../src/engine/mastery.js';
 import { startRun, currentProblem, submit, giveUp, destination, summary, openHint, ceilingOf, licenseOf } from '../src/engine/run.js';
+import { templatesFor } from '../src/content/index.js';
 import { startExpress, submitExpress, startPlacement, submitPlacement } from '../src/engine/express.js';
 
 test('칸: 혼자 = 한 칸, 힌트 ②~④ = 반 칸, 1단계는 준비 구간', () => {
@@ -438,4 +439,32 @@ test('점검이 두 운행 안에 끝나지 않으면 목적지를 내주고 보
   assert.equal(state.nodes[x].inspect, false);
   assert.equal(state.nodes[x].status, 'passed', '불은 그대로');
   assert.notEqual(destination(state, 'L1').id, x);
+});
+
+test('힌트 없이 틀린 뒤 맞히면 hinted 0, retried 1(게이미피케이션 04 P0)', () => {
+  let state = createState();
+  let run = startRun(state, { day: 1, seed: 11 });
+  const cur = currentProblem(run);
+  ({ state, run } = submit(state, run, -12345));
+  ({ state, run } = submit(state, run, cur.problem.answer));
+  const sm = summary(state, run);
+  assert.equal(sm.hinted, 0);
+  assert.equal(sm.retried, 1);
+  const att = state.nodes[cur.slot.node].attempts.at(-1);
+  assert.equal(att.o, 0, '실제로 연 힌트는 0');
+});
+
+test('한 운행에서 같은 템플릿은 두 번까지, 연달아서는 나오지 않는다(여러 씨앗)', () => {
+  for (let seed = 1; seed <= 40; seed++) {
+    let state = createState();
+    let run = startRun(state, { day: 1, seed });
+    const ids = [];
+    let guard = 0;
+    while (!run.finished && guard++ < 20) {
+      const cur = currentProblem(run);
+      if (cur.slot.kind !== 'easy' && cur.slot.kind !== 'redo' && cur.slot.kind !== 'parked' && templatesFor(cur.slot.node).filter((t) => t.minLevel <= cur.level && cur.level <= t.maxLevel).length >= 3) ids.push(cur.template.id);
+      ({ state, run } = submit(state, run, cur.problem.answer));
+    }
+    for (let i = 1; i < ids.length; i++) assert.notEqual(ids[i], ids[i - 1], `씨앗 ${seed}: 연달아 ${ids[i]}`);
+  }
 });

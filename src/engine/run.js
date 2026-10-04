@@ -59,12 +59,18 @@ function workingLevel(state, nodeId) {
   return clamp(Math.round(nodeState(state, nodeId).rating), 1, ceilingOf(nodeId));
 }
 
-/** 같은 표현이 연달아 나오지 않게 템플릿을 고른다. */
-function pickTemplate(nodeId, level, rng, recentReprs) {
+/**
+ * 템플릿 고르기: 한 운행에서 같은 템플릿은 두 번까지, 연달아서는 내지 않는다(학생 #2·게이미피케이션 04 P0: 세 자리 뺄셈 4연속).
+ * 그 안에서 같은 표현이 연달아 나오지 않게 한다.
+ */
+function pickTemplate(nodeId, level, rng, recentReprs, used = []) {
   const fits = templatesFor(nodeId).filter((t) => t.minLevel <= level && level <= t.maxLevel);
   if (fits.length === 0) return null;
-  const fresh = fits.filter((t) => !recentReprs.slice(-2).includes(t.repr));
-  return rng.pick(fresh.length ? fresh : fits);
+  const count = (id) => used.filter((x) => x === id).length;
+  const allowed = fits.filter((t) => count(t.id) < 2 && t.id !== used.at(-1));
+  const pool = allowed.length ? allowed : fits.filter((t) => t.id !== used.at(-1)).length ? fits.filter((t) => t.id !== used.at(-1)) : fits;
+  const fresh = pool.filter((t) => !recentReprs.slice(-2).includes(t.repr));
+  return rng.pick(fresh.length ? fresh : pool);
 }
 
 function reviewDue(state, day, exclude) {
@@ -132,7 +138,7 @@ export function currentProblem(run, state = run.stateRef) {
   const rng = createRng(s);
   let template = slot.templateId ? [...templatesFor(slot.node), ...diagnosticsFor(slot.node)].find((t) => t.id === slot.templateId) : null;
   if (template && (slot.level < template.minLevel || slot.level > template.maxLevel)) template = null;
-  if (!template) template = slot.diagnostic ? diagnosticsFor(slot.node)[slot.diagIndex ?? 0] : pickTemplate(slot.node, slot.level, rng, run.recentReprs);
+  if (!template) template = slot.diagnostic ? diagnosticsFor(slot.node)[slot.diagIndex ?? 0] : pickTemplate(slot.node, slot.level, rng, run.recentReprs, run.usedTemplates ?? []);
   if (!template) return null;
   const level = clamp(slot.level, template.minLevel, template.maxLevel);
   // 출제 조건(requires): 문제에 필요한 다른 개념(예: 5자리 수 N20, 서면 환승 N25)을 아직 켜지 않았으면 씨앗값을 바꿔 다시 만든다.
@@ -236,7 +242,7 @@ function finishProblem(state0, run, correct, hint) {
     // 급행 진단은 칸에 넣지 않는다(별도 판정).
     state.nodes[slot.node] = { ...ns, attempts: [...ns.attempts, { c: correct, h: hint, l: level, r: template.repr, x: 1 }].slice(-20) };
   } else {
-    const { node, gained, lit, pending } = applyAttempt(ns.status ? ns : emptyNode(), { correct, hint, level, repr: template.repr, counted }, run.day);
+    const { node, gained, lit, pending } = applyAttempt(ns.status ? ns : emptyNode(), { correct, hint, opened: run.hint, level, repr: template.repr, counted }, run.day);
     state.nodes[slot.node] = node;
     if (gained > 0) {
       const perHalf = segmentMeters(slot.node) / FULL;
@@ -258,12 +264,12 @@ function finishProblem(state0, run, correct, hint) {
     run.events.push({ type: 'gold' });
   }
 
-  if (correct && hint >= 2) run.events.push({ type: 'hinted' });
+  if (correct && run.hint >= 2) run.events.push({ type: 'hinted' }); // 실제로 연 힌트만(다시 시도해서 맞힌 것은 retried로 따로 센다)
   if (correct && run.tries > 0) run.events.push({ type: 'retried' }); // 다시 생각해서 맞힘(행동 기록, 메달 아님)
   // 자기 변화: 이 역에서 바로 전 정답은 힌트 ②~④와 함께였는데 이번엔 힌트 없이 첫 시도에 맞힘
   if (correct && hint === 0 && run.tries === 0) {
     const prev = ns.attempts.filter((x) => x.c && typeof x.d === 'number' && x.d < run.day).at(-1); // 다른 날의 기록과만 비교
-    if (prev && prev.h >= 2 && !run.events.some((e) => e.type === 'grew')) run.events.push({ type: 'grew', node: slot.node });
+    if (prev && (prev.o ?? prev.h) >= 2 && !run.events.some((e) => e.type === 'grew')) run.events.push({ type: 'grew', node: slot.node });
   }
 
   // 힌트 ②~④를 썼거나 넘긴 문제는 다음 운행 임시 정차로 다시 낸다(같은 템플릿, 다른 씨앗값).
@@ -288,6 +294,7 @@ function finishProblem(state0, run, correct, hint) {
   run.stateRef = state;
   run.wrongStreak = correct ? 0 : run.wrongStreak + 1;
   run.recentReprs.push(template.repr);
+  run.usedTemplates = [...(run.usedTemplates ?? []), template.id];
   advance(state, run, correct);
   return { state, run };
 }

@@ -225,3 +225,4 @@ details summary { min-height: 48px; display: flex; align-items: center; font-siz
 .tap-dot { cursor: pointer; }
 .license-card { border-style: double; border-width: 6px; display: grid; gap: 4px; }
 .small-btn { min-height: 40px; font-size: 14px; padding: 0 10px; }
+.primary:disabled { opacity: 0.45; cursor: not-allowed; }

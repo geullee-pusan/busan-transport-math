@@ -16,6 +16,7 @@
 | [07-line1-templates.md](07-line1-templates.md) | **MVP 구현용**: 1호선 앞 10역 템플릿(변수·단계 규칙·채점·판별 오답·힌트 문구·급행 통과 진단·해설), 곁가지 진단 |
 | [08-line1-templates-11-20.md](08-line1-templates-11-20.md) | **MVP 구현용**: 1호선 11~20역(괴정~초량) 템플릿, 07과 같은 형식. 토성 1~11단계 전부 |
 | [09-templates-additions.md](09-templates-additions.md) | 1~10역 일반 템플릿 보강(역마다 표현 3가지 이상), 11~20역 보강 후보 |
+| [10-line2-pilot.md](10-line2-pilot.md) | 2호선 시범 구간(서면·부암·가야·동의대·개금: 초 단위 시간, 시간표, mm·km), 서면 갈아타기 지도 규칙, 금 도장과 판별 피드백(check/nudge) |
 | [concept-graph.json](concept-graph.json) | 엔진이 읽는 개념 그래프 137노드(B11·N40·G43·R10·D10·X23) |
 | [concept-graph.schema.json](concept-graph.schema.json) | 그래프 JSON 스키마 |
 | [tools/validate-graph.mjs](tools/validate-graph.mjs) | 그래프 검사(순환, 없는 선수, 노선 순서 위반, 단계 조건). `node docs/curriculum/tools/validate-graph.mjs --verbose` |

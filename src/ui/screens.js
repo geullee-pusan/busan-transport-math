@@ -16,17 +16,19 @@ const COLORS = ['#F7941D', '#C8342B', '#2E8B57', '#1F6FB2', '#6B4FA0', '#1F3342'
 export function renderSetup(root, app, { onDone }) {
   let name = app.state.profile.nickname || '';
   let color = app.state.profile.color;
-  const nameBox = h('input.name-input', { type: 'text', maxlength: 8, placeholder: '별명(없어도 돼요)', value: name, oninput: (e) => (name = e.target.value) });
+  const nameBox = h('input.name-input', { type: 'text', maxlength: 8, placeholder: '이름이나 별명', value: name, autocomplete: 'off', oninput: (e) => { name = e.target.value; startBtn.disabled = !name.trim(); } });
   const swatches = COLORS.map((c) => h('button.swatch', { type: 'button', style: { background: c }, 'aria-label': '차량 색', onclick: () => { color = c; swatches.forEach((b) => b.classList.toggle('on', b.dataset.c === c)); } }));
   swatches.forEach((b, i) => { b.dataset.c = COLORS[i]; b.classList.toggle('on', COLORS[i] === color); });
+  const startBtn = h('button.primary.big', { type: 'button', disabled: !name.trim() || undefined, onclick: () => name.trim() && onDone({ nickname: name.trim(), color }) }, '시승 운행 출발');
   clear(root).append(
     h('main.setup',
       h('h1', '부산 교통 수학'),
       h('p.lead', '불이 꺼진 1호선을 문제를 풀며 하나씩 켜요.'),
-      h('label', '별명', nameBox),
+      h('label', '내 이름', nameBox),
+      h('p.small', '이름은 이 기기에만 저장돼요.'),
       h('div', h('div.label', '내 차량 색'), h('div.swatches', swatches)),
       h('div.notice', h('p', '부모님도 이 앱을 볼 수 있어요.'), h('p', '어떤 역을 켰는지, 어디가 어려웠는지 봐요.'), h('p', '같이 이야기하려고 보는 거예요. 맞힌 개수로 혼내려는 게 아니에요.')),
-      h('button.primary.big', { type: 'button', onclick: () => onDone({ nickname: name.trim(), color }) }, '시승 운행 출발'),
+      startBtn,
       h('p.small', '시승 운행은 어느 역에서 출발할지 정하는 짧은 운행이에요. 모르는 문제는 "아직 몰라요"를 눌러도 돼요.'),
     ),
   );
@@ -50,7 +52,7 @@ export function renderHome(root, app, { onStart, onExpress, onChallenge, onGarag
   clear(root).append(
     h('main.home',
       h('header.home-head',
-        h('div.license', h('span.license-tier', tier.name), h('span.license-sub', '면허')),
+        h('div.license', state.profile.nickname?.trim() ? h('span.license-sub', `${state.profile.nickname.trim()} 기관사`) : null, h('span.license-tier', tier.name), h('span.license-sub', '면허')),
         h('div.km', kmText(state.meters), h('span.km-sub', `40역 중 ${litCount}역 켜짐`)),
         h('div.head-btns', h('button.icon-btn', { type: 'button', onclick: onSettings, 'aria-label': '설정' }, '⚙'), h('button.parent-btn', { type: 'button', onclick: onParent }, '부모')),
       ),
@@ -233,6 +235,7 @@ function parentBody(root, app, { onHome, onReset }) {
         h('p', '아이가 앞서가는 것(학교 진도보다 위)은 괜찮아요. 다른 아이나 형제와 비교하지는 말아 주세요.'),
       ),
       h('p.guide', '이 화면의 숫자로 꾸짖지 마세요. "이 문제 같이 풀어 볼까?"라고 말해 보세요. 아이가 지쳐 보이면(한숨, 찍기, 화면을 오래 멍하게 봄) 그날은 쉬게 해 주세요.'),
+      h('section.guide', h('h3', '아이 이름'), (() => { const box = h('input.name-input', { type: 'text', maxlength: 8, value: state.profile.nickname?.trim() ?? '' }); return h('div', box, h('button.secondary', { type: 'button', onclick: () => { if (!box.value.trim()) return; app.save({ ...app.state, profile: { ...app.state.profile, nickname: box.value.trim() } }); parentBody(root, app, { onHome, onReset }); } }, '이름 바꾸기')); })()),
       h('section.guide', h('h3', '하루 운행 수'), h('p', `하루에 ${state.settings.dailyRuns ?? 2}번(한 번에 약 10분). 마지막 운행을 시작할 때만 "오늘의 막차예요"라고 알려요. 못 한 운행은 다음 날로 쌓이지 않아요.`),
         h('div.chips', [1, 2, 3, 4].map((k) => h(`button.chip${(state.settings.dailyRuns ?? 2) === k ? '.chosen' : ''}`, { type: 'button', onclick: () => { app.save({ ...app.state, settings: { ...app.state.settings, dailyRuns: k } }); parentBody(root, app, { onHome, onReset }); } }, `${k}번`))),
         h('button.secondary', { type: 'button', onclick: () => { app.save({ ...app.state, extraToday: dayNumber() }); parentBody(root, app, { onHome, onReset }); } }, state.extraToday === dayNumber() ? '오늘 한 번 더 허락함' : '오늘만 한 번 더 허락하기')),

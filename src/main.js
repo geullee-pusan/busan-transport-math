@@ -19,7 +19,8 @@ const app = {
 const seed = () => (Date.now() ^ (app.state.runs * 2654435761)) >>> 0;
 
 function home() {
-  if (!app.state.placementDone && app.state.runs === 0 && !app.state.profile.nickname && Object.keys(app.state.nodes).length === 0) return setup();
+  // 이름이 없으면(처음 켰거나 "처음부터 다시") 처음 화면에서 이름부터 받는다.
+  if (!app.state.profile.nickname?.trim()) return setup();
   renderHome(root, app, {
     onStart: () => {
       if (!app.state.placementDone) app.save({ ...app.state, placementDone: true });
@@ -37,7 +38,8 @@ function home() {
 function setup() {
   renderSetup(root, app, {
     onDone: ({ nickname, color }) => {
-      app.save({ ...app.state, profile: { ...app.state.profile, nickname: nickname || ' ', color } });
+      app.save({ ...app.state, profile: { ...app.state.profile, nickname, color } });
+      if (app.state.placementDone) return home(); // 이미 진행이 있으면 이름만 받고 이어서
       const run = startPlacement(app.state, { day: dayNumber(), seed: seed() });
       if (run) go(run);
       else home();

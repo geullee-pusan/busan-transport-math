@@ -303,7 +303,7 @@ test('시작 실력: 같은 줄기 틀림 없이 2번 이상 통과 + 6역 안�
   const { state } = placeAll((cur) => cur.problem.answer);
   const pl = state.placement;
   assert.ok(pl.passes.whole >= 2 && !pl.misses.whole);
-  const near = LINE1_NODES.find((n) => n.strand === 'whole' && !state.nodes[n.id] && n.order - pl.farthest.whole <= 6 && !(n.prereqs ?? []).some((p) => p.minLevel && state.nodes[p.node]?.inferred));
+  const near = LINE1_NODES.find((n) => n.strand === 'whole' && !state.nodes[n.id] && !MUST_CHECK.has(n.id) && n.order - pl.farthest.whole <= 6 && !(n.prereqs ?? []).some((p) => p.minLevel && state.nodes[p.node]?.inferred));
   if (near) assert.equal(startRatingOf(state, near.id), 3.5, near.id);
   const far = LINE1_NODES.find((n) => n.strand === 'whole' && n.order - pl.farthest.whole > 6);
   if (far) assert.equal(startRatingOf(state, far.id), 3, far.id);
@@ -404,4 +404,15 @@ test('시승에서 맞힌 진단 문제는 면허를 올리지 않고, 넘긴 �
   }
   assert.equal(state.license, 1);
   assert.ok(!run.events.some((e) => e.type === 'license'));
+});
+
+test('추정으로 켠 역은 선수 닫힘(1호선 역)이 모두 켜져 있고, 필수 확인 역은 시작 실력 3(커리큘럼 11 검토 7·8)', () => {
+  const { state } = placeAll((cur) => cur.problem.answer);
+  const playable = new Set(LINE1_NODES.map((n) => n.id));
+  const lit = (id) => ['lit', 'passed', 'confirmed'].includes(state.nodes[id]?.status);
+  for (const [id, ns] of Object.entries(state.nodes)) {
+    if (!ns.inferred) continue;
+    for (const a of ancestorsOf(id)) if (playable.has(a)) assert.ok(lit(a), `${id}의 선수 ${a}가 꺼져 있음`);
+  }
+  for (const id of MUST_CHECK) if (!state.nodes[id]) assert.equal(startRatingOf(state, id), 3, id);
 });

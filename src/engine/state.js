@@ -1,6 +1,6 @@
 // 학습 상태: 만들기, 저장, 불러오기, 백업. localStorage는 늘 try/catch로 감싼다.
 import { emptyNode } from './mastery.js';
-import { NODES, FAR_FROM_EVIDENCE } from './world.js';
+import { NODES, FAR_FROM_EVIDENCE, MUST_CHECK } from './world.js';
 
 const KEY = 'busan-transport-math:v1';
 
@@ -38,7 +38,8 @@ export function startRatingOf(state, id) {
   const pl = state.placement;
   if (!pl?.any) return 2;
   const node = NODES.get(id);
-  if (!node || node.line !== 'L1' || FAR_FROM_EVIDENCE.has(id)) return 3;
+  // 필수 확인 역은 판별 오답이 가장 흔한 곳이라 늘 3에서 시작한다(4·5단계부터면 오개념을 놓친다, 커리큘럼 11 검토 8).
+  if (!node || node.line !== 'L1' || FAR_FROM_EVIDENCE.has(id) || MUST_CHECK.has(id)) return 3;
   const s = node.strand;
   const near = node.order - (pl.farthest[s] ?? -99) <= 6;
   const weakPrereq = (node.prereqs ?? []).some((p) => p.minLevel && state.nodes[p.node]?.inferred);

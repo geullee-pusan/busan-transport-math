@@ -219,9 +219,14 @@ function finishPlacement(state, run) {
   const p = run.placement;
   state.placement = placementResult(p);
   // 추정 규칙: 아직 꺼진 역 중 켤 수 있는 역을 통과역(추정)으로 켠다. 다음 날부터 임시 정차에서 확인한다.
+  // 추천 순서대로 보며, 선수 닫힘(1호선 역)이 모두 켜져 있어야 켠다(커리큘럼 11 검토 7). 그래서 필수 확인 역에 기대는 역은
+  // 그 역이 확인될 때까지 추정하지 않는다(N04←N03, N09·N10←N08, N16·N19←N15 …).
+  const playable = new Set(playableNodes().map((n) => n.id));
+  const lit = (id) => ['lit', 'passed', 'confirmed'].includes(nodeState(state, id).status);
   for (const n of playableNodes()) {
     const s = nodeState(state, n.id);
     if (s.status !== 'open' || !inferable(n.id, p.passedIds, p.missedIds)) continue;
+    if ([...ancestorsOf(n.id)].some((a) => playable.has(a) && !lit(a))) continue;
     markPassed(state, n.id, run.day, { inferred: true, rating: Math.max(s.rating, 3) });
   }
   state.placement.inferredCount = Object.values(state.nodes).filter((x) => x.inferred).length;

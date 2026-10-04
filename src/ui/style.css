@@ -370,3 +370,5 @@ details summary { min-height: var(--hit); display: flex; align-items: center; fo
 
 /* 역 시트의 점검 꼬리표(시각 3차 5절): 테 1.5px, 16px, 색 없음 */
 .check-tag { display: inline-block; margin-left: 8px; padding: 0 6px; border: 1.5px solid var(--ink); border-radius: 4px; font-size: 16px; font-weight: var(--fw-heavy); vertical-align: middle; }
+/* 큰 수 입력(9~13자리): 칸 안에 들어가게 글자를 조금 줄이고 숫자 사이를 벌린다 */
+.answer-box.long .answer-text { font-size: 0.85em; letter-spacing: 0.06em; }

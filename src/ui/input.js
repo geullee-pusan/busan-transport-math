@@ -35,6 +35,9 @@ function numberInput(input, onSubmit) {
   const box = h('div.answer-box.active', { 'aria-live': 'polite' }); // 키패드가 채우는 칸(대상)
   const unit = input?.unit ? h('span.unit', input.unit) : null;
   const allowDot = input?.kind === 'decimal';
+  // 자리 수 제한: 기본 8자리, 큰 수 역은 템플릿이 maxDigits(조까지 13)를 준다(커리큘럼 11 검토). 끊어 쓰기 표시는 하지 않는다(자릿값 판단을 대신하지 않게).
+  const maxDigits = input?.maxDigits ?? 8;
+  if (maxDigits > 8) box.classList.add('long');
   const allowSlash = input?.kind === 'fraction';
   const render = () => {
     clear(box);
@@ -47,7 +50,7 @@ function numberInput(input, onSubmit) {
       if (k === '⌫') blank.filled = '';
       else if (/\d/.test(k)) blank.filled = k;
     } else if (k === '⌫') text = text.slice(0, -1);
-    else if (text.length < 8) text += k;
+    else if (text.length < maxDigits) text += k;
     render();
     syncBtn();
   };
@@ -128,7 +131,7 @@ function compoundInput(input, onSubmit) {
   const onKey = (k) => {
     if (!active) return;
     const cur = vals[active] ?? '';
-    vals[active] = k === '⌫' ? cur.slice(0, -1) : (cur + k).slice(0, 8);
+    vals[active] = k === '⌫' ? cur.slice(0, -1) : (cur + k).slice(0, input.fields.find((x) => x.key === active)?.maxDigits ?? 8);
     paint();
   };
   const hasNumber = input.fields.some((f) => !f.options);

@@ -113,9 +113,9 @@ function t111Level1(x, y, farIsDaeti) {
     input: { kind: 'choice', options: ['대티역', '사하역'] },
     answer: farName,
     discriminators: [{ value: nearName, category: '개념', kind: 'nudge', feedbackCheck: '자연수 부분을 다시 볼까요?', feedback: `${eun(farD)} 1보다 크고 ${eun(nearD)} 1보다 작나요?` }],
-    hints: [`대티역까지는 ${dD}km, 사하역까지는 ${dS}km예요. 더 먼 역을 물어요.`, '수직선에서 두 거리의 자리를 찾아볼까요? 오른쪽에 있을수록 멀어요.', `${eun(nearD)} 0과 1 사이, ${eun(farD)} 1과 2 사이에 있어요.`, `${eun(farD)} 0.1이 1☐개, ${eun(nearD)} 0.1이 ${x}개`],
-    blank: '1☐',
-    blankAnswer: String(y),
+    hints: [`대티역까지는 ${dD}km, 사하역까지는 ${dS}km예요. 더 먼 역을 물어요.`, '수직선에서 두 거리의 자리를 찾아볼까요? 오른쪽에 있을수록 멀어요.', `${eun(nearD)} 0과 1 사이, ${eun(farD)} 1과 2 사이에 있어요.`, `${eun(nearD)} 0.1이 ${x}개, ${eun(farD)} 0.1이 ☐개`],
+    blank: '0.1이 ☐개',
+    blankAnswer: String(10 + y),
     blankThen: '어느 역이 더 멀어요?',
     explain: {
       why: [`${eun(farD)} 1과 0.${y}${jo(y, '이고', '고')}, ${eun(nearD)} 1보다 작아요.`, `자연수 부분이 큰 ${farD}${jo(farD, '이', '가')} 더 커요.`, `그래서 ${jw(farName, '이', '가')} 더 멀어요.`],
@@ -129,14 +129,14 @@ function t111Level2(a, b, c) {
   const x = tenth(10 * a + b);
   const y = tenth(10 * a + c);
   const ans = signOf(x, y);
-  const bl = blankAt(10 * a + c, 0);
+  const bl = { blank: '0.1이 ☐개', blankAnswer: String(10 * a + c) };
   return {
     text: [n(x), ' ○ ', n(y), '에서 ○ 안에 알맞은 기호를 골라요.'],
     figure: { kind: 'numberline', from: a, to: a + 1, ticks: 10 },
     input: { kind: 'choice', options: SIGNS },
     answer: ans,
     discriminators: SIGNS.filter((s) => s !== ans).map((s) => (s === '=' ? { value: s, category: '개념', kind: 'check', feedback: '두 수가 같은 수일까요?' } : { value: s, category: '개념', kind: 'check', feedback: '소수점 아래 숫자를 다시 볼까요?' })),
-    hints: [`${wa(x)} ${y}의 크기를 견주는 기호를 물어요.`, '자연수 부분이 같아요. 0.1이 몇 개인지 견주어 볼까요?', `${eun(x)} 0.1이 ${10 * a + b}개예요.`, `${eun(y)} 0.1이 ${bl.blank}개`],
+    hints: [`${wa(x)} ${y}의 크기를 견주는 기호를 물어요.`, '자연수 부분이 같아요. 0.1이 몇 개인지 견주어 볼까요?', `${eun(x)} 0.1이 ${10 * a + b}개예요.`, `${eun(y)} 0.1이 ☐개`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     blankThen: '알맞은 기호는 무엇이에요?',
@@ -169,9 +169,9 @@ function t111Level3(k, m) {
     input: { kind: 'compound', fields: [{ key: 'num', label: `0.1이 ${k}개인 수`, kind: 'decimal' }, { key: 'big', label: '더 큰 수', kind: 'decimal' }] },
     answer,
     discriminators: discs,
-    hints: [`0.1이 ${k}개인 수와 ${other} 중 더 큰 수를 물어요.`, '두 수를 모두 0.1이 몇 개인지로 나타내 볼까요?', '0.1이 10개면 1이에요.', `${eun(other)} 0.1이 1☐개`],
-    blank: '1☐',
-    blankAnswer: String(m),
+    hints: [`0.1이 ${k}개인 수와 ${other} 중 더 큰 수를 물어요.`, '두 수를 모두 0.1이 몇 개인지로 나타내 볼까요?', '0.1이 10개면 1이에요.', `${eun(other)} 0.1이 ☐개`],
+    blank: '0.1이 ☐개',
+    blankAnswer: String(10 + m),
     blankThen: '더 큰 수는 얼마예요?',
     explain: {
       why: [`0.1이 ${k}개인 수는 ${ieyo(num)}.`, `${wa(num)} ${eun(other)} 자연수 부분이 같고, 소수점 아래 숫자는 ${wa(k - 10)} ${ieyo(m)}.`, `그래서 더 큰 수는 ${ieyo(big)}.`],
@@ -275,7 +275,7 @@ function t112(x, y, kind) {
   const ans = signOf(x, y);
   const wrongFb = kind === 2 ? '소수점 아래 숫자를 다시 볼까요?' : '자연수 부분을 다시 볼까요?';
   const cy = cnt(y);
-  const bl = blankAt(cy, 0);
+  const bl = { blank: '0.1이 ☐개', blankAnswer: String(cy) };
   const isInt = (v) => Number.isInteger(v);
   return {
     text: [n(x), ' ○ ', n(y), '에서 ○ 안에 알맞은 기호를 골라요.'],
@@ -287,7 +287,7 @@ function t112(x, y, kind) {
       `${x} ○ ${y}의 ○에 들어갈 기호를 물어요.`,
       '두 수가 0.1이 몇 개인지 세어 볼까요? 개수가 많은 쪽이 커요.',
       `${eun(x)} 0.1이 ${cnt(x)}개예요.`,
-      `${eun(y)} 0.1이 ${bl.blank}개`,
+      `${eun(y)} 0.1이 ☐개`,
     ],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
@@ -358,7 +358,7 @@ function t113(items, level) {
   });
   text.push('라고 해 봐요. 괴정역에서 가까운 곳부터 차례로 눌러요.');
   const mid = [...items].sort((p, q) => p.d - q.d)[1];
-  const bl = blankAt(cnt(mid.d), 0);
+  const bl = { blank: '0.1km가 ☐개', blankAnswer: String(cnt(mid.d)) };
   const listTxt = items.map((p) => (p.asCount ? `${p.name} 0.1km가 ${cnt(p.d)}개` : `${p.name} ${p.d}km`)).join(', ');
   return {
     text,
@@ -367,7 +367,7 @@ function t113(items, level) {
     answer,
     discriminators: clean,
     grade: orderGrade(answer, clean),
-    hints: [`괴정역에서 ${listTxt}예요. 가까운 곳부터 늘어놓는 순서를 물어요.`, '거리를 모두 0.1km가 몇 개인지로 바꿔 볼까요? 개수가 적을수록 가까워요.', `가장 가까운 곳은 ${jw(answer[0], '이에요', '예요')}.`, `${mid.name}까지 0.1km가 ${bl.blank}개`],
+    hints: [`괴정역에서 ${listTxt}예요. 가까운 곳부터 늘어놓는 순서를 물어요.`, '거리를 모두 0.1km가 몇 개인지로 바꿔 볼까요? 개수가 적을수록 가까워요.', `가장 가까운 곳은 ${jw(answer[0], '이에요', '예요')}.`, `${mid.name}까지 0.1km가 ☐개`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     blankThen: '가까운 곳부터 차례로 눌러요.',

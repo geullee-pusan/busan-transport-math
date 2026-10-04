@@ -255,7 +255,7 @@ const T15_1 = {
       const [a, m, r, b] = draw(
         rng,
         () => [rng.int(4, 9), rng.int(3, 9), rng.int(1, 8), rng.int(4, 9)],
-        ([aa, mm, rr, bb]) => rr < aa && aa !== bb && aa * mm + rr <= 99 && Math.floor((aa * mm + rr) / bb) <= 9 && (aa * mm + rr) % bb !== 0 && (aa * mm) % bb !== (aa * mm + rr) % bb,
+        ([aa, mm, rr, bb]) => rr < aa && aa !== bb && aa * mm + rr <= 99 && Math.floor((aa * mm + rr) / bb) <= 9 && (aa * mm + rr) % bb !== 0 && (aa * mm) % bb !== (aa * mm + rr) % bb && Math.floor((aa * mm + rr) / bb) !== bb,
         [6, 7, 5, 8],
       );
       return t151Level4(a, m, r, b);
@@ -281,7 +281,7 @@ function t152Level6(K, S) {
     counting: true,
     discriminators: uniq(
       [
-        { value: r, category: '개념', kind: 'check', feedback: '1번에서 출발했어요. 0정거장이면 몇 번?' },
+        { value: r, category: '개념', kind: 'nudge', feedbackCheck: `1번에서 ${r}번까지 몇 정거장인지 세어 볼까요?`, feedback: '1번에서 출발했어요. 0정거장이면 몇 번?' },
         { value: q, category: '개념', kind: 'nudge', feedbackCheck: '무엇을 물었는지 다시 볼까요?', feedback: `${eun(q)} 몇 바퀴 돌았는지예요.` },
       ],
       ans,
@@ -372,8 +372,8 @@ function t152Level9(S) {
   const bl = p >= 10 ? blankAt(p, 0) : { blank: '☐', blankAnswer: String(p) };
   const discs = [];
   if (p - 2 >= 0) discs.push({ value: LINE1[p - 2], category: '개념', kind: 'nudge', feedbackCheck: '한 번 왕복이 몇 정거장인지 다시 세어 볼까요?', feedback: '한 번 왕복은 역 수일까요, 정거장 수일까요?' });
-  if (p - 1 >= 0) discs.push({ value: LINE1[p - 1], category: '개념', kind: 'check', feedback: '노포에서 돌아오는 곳을 다시 볼까요?' });
-  if (p + 1 <= 39) discs.push({ value: LINE1[p + 1], category: '개념', kind: 'check', feedback: '출발역을 몇 정거장으로 셌나요?' });
+  if (p - 1 >= 0) discs.push({ value: LINE1[p - 1], category: '개념', kind: 'check', feedback: '출발역을 몇 정거장으로 셌나요?' });
+  if (p + 1 <= 39) discs.push({ value: LINE1[p + 1], category: '개념', kind: 'check', feedback: '노포에서 돌아오는 곳을 다시 볼까요?' });
   return {
     text: ['열차가 다대포해수욕장과 노포 사이를 쉬지 않고 왕복한다고 해 봐요. 다대포해수욕장에서 출발해 ', V(S), '정거장을 가면 어느 역에 있어요? (', L1(), '호선은 ', FORTY(), '역이에요.)'],
     figure: { kind: 'stations', stations: ['다대포해수욕장', '…', '노포'] },

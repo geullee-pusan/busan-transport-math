@@ -263,8 +263,8 @@ function t132Level3(x) {
     answer,
     discriminators: uniqK(
       [
-        { key: 'count', value: 12, category: '개념', kind: 'check', feedback: fb },
-        { key: 'total', value: 12 * x, category: '개념', kind: 'check', feedback: fb },
+        { key: 'count', value: 12, category: '개념', kind: 'nudge', feedbackCheck: '그림에서 역을 하나씩 다시 세어 볼까요?', feedback: fb },
+        { key: 'total', value: 12 * x, category: '개념', kind: 'nudge', feedbackCheck: '그림에서 역을 하나씩 다시 세어 볼까요?', feedback: fb },
       ],
       answer,
     ),

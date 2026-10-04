@@ -48,7 +48,7 @@ function numberInput(input, onSubmit) {
   const onKey = (k) => {
     if (blank) {
       if (k === '⌫') blank.filled = '';
-      else if (/\d/.test(k)) blank.filled = k;
+      else if (/\d/.test(k)) blank.filled = blank.size > 1 ? (blank.filled + k).slice(0, blank.size) : k;
     } else if (k === '⌫') text = text.slice(0, -1);
     else if (text.length < maxDigits) text += k;
     render();
@@ -71,8 +71,9 @@ function numberInput(input, onSubmit) {
       render();
       syncBtn();
     },
-    setBlank: (pattern) => {
-      blank = { pattern, filled: '' };
+    // size: 빈칸에 들어갈 숫자 개수(보통 1, '0.1이 ☐개'처럼 두 자리면 2)
+    setBlank: (pattern, size = 1) => {
+      blank = { pattern, filled: '', size };
       render();
       syncBtn();
     },

@@ -401,8 +401,9 @@ const T19_2 = {
       const [a, r1, b, r2, L] = draw(
         rng,
         () => {
-          const [aa, bb] = rng.pick([[4, 6], [3, 4], [4, 5], [3, 5], [4, 7]]);
-          return [aa, rng.int(1, aa - 1), bb, rng.int(1, bb - 1), rng.pick([40, 50, 60, 70])];
+          // 08처럼 나머지가 서로 다른 두 조건(마지막 줄이 한 명 모자람). 토성 7단계와 숫자가 겹치지 않게 짝을 따로 둔다(11 검토).
+          const [aa, bb] = rng.pick([[4, 6], [6, 8], [4, 10], [6, 9]]);
+          return [aa, aa - 1, bb, bb - 1, rng.pick([40, 50, 60, 70, 80])];
         },
         ([aa, rr1, bb, rr2, LL]) => {
           let c = 0;
@@ -454,27 +455,30 @@ function t193Level1(s, R, N) {
 }
 
 function t193Level2(s, R, N) {
-  const ans = s * R - N;
+  // 빈 줄 수: 앉은 줄 수(올림)를 먼저 구해야 한다(11 검토: 뺄셈만 남지 않게).
+  const q = Math.floor(N / s);
   const r = N % s;
-  const bl = blankOf(ans);
+  const used = q + 1;
+  const ans = R - used;
   return {
-    text: seatText(s, R, N, '모두 앉고 나면 빈자리는 모두 몇 개예요?'),
+    text: seatText(s, R, N, '모두 앉고 나면 아무도 앉지 않은 빈 줄은 몇 줄이에요?'),
     figure: { kind: 'array', rows: R, cols: s },
-    input: { kind: 'number', unit: '개' },
+    input: { kind: 'number', unit: '줄' },
     answer: ans,
     discriminators: uniq(
       [
-        { value: s - r, category: '개념', kind: 'check', feedback: '빈 줄의 자리도 셌나요?' },
-        { value: s * R, category: '읽기', kind: 'check', feedback: '빈자리를 물었어요. 다시 볼까요?' },
+        { value: R - q, category: '개념', kind: 'check', feedback: '마지막 줄에 앉은 사람도 있나요?' },
+        { value: used, category: '읽기', kind: 'check', feedback: '빈 줄을 물었어요. 다시 볼까요?' },
+        { value: s * R - N, category: '읽기', kind: 'check', feedback: '빈자리가 아니라 빈 줄을 물었어요.' },
       ],
       ans,
     ),
-    hints: [`좌석은 한 줄에 ${s}자리씩 ${R}줄이고, ${N}명이 앉아요. 남은 빈자리 수를 물어요.`, '좌석이 모두 몇 자리인지 먼저 구해 볼까요?', `좌석은 모두 ${s} × ${R} = ${s * R}자리예요.`, `${s * R} − ${N} = ${bl.blank}`],
-    blank: bl.blank,
-    blankAnswer: bl.blankAnswer,
+    hints: [`좌석은 한 줄에 ${s}자리씩 ${R}줄이고, ${N}명이 앞줄부터 앉아요. 아무도 앉지 않은 줄의 수를 물어요.`, '사람이 앉은 줄이 몇 줄인지 먼저 구해 볼까요? 덜 찬 줄도 앉은 줄이에요.', `${N} ÷ ${s} = ${q} … ${ieyo(r)}.`, '빈 줄: ☐줄'],
+    blank: '빈 줄: ☐줄',
+    blankAnswer: String(ans),
     explain: {
-      why: [`좌석은 ${s} × ${R} = ${s * R}자리예요.`, `${N}명이 앉으면 ${s * R} − ${N} = ${ans}자리가 남아요.`, `그래서 빈자리는 ${ans}개예요.`],
-      alt: [`꽉 찬 줄 ${Math.floor(N / s)}줄 뒤 마지막 줄에 ${s - r}자리, 빈 줄 ${R - Math.floor(N / s) - 1}줄에 ${s * (R - Math.floor(N / s) - 1)}자리가 남아요.`, `두 풀이 모두 ${ans}개예요.`],
+      why: [`${N} ÷ ${s} = ${q} … ${r}, 마지막 줄에도 ${r}명이 앉아서 앉은 줄은 ${used}줄이에요.`, `좌석은 ${R}줄이니 ${R} − ${used} = ${ans}줄이 비어요.`, `그래서 빈 줄은 ${ans}줄이에요.`],
+      alt: [`그림에서 앞줄부터 ${s}명씩 칠해 보면 ${used}줄을 쓰고 ${ans}줄이 남아요.`, `두 풀이 모두 ${ans}줄이에요.`],
     },
   };
 }
@@ -524,7 +528,7 @@ const T19_3 = {
         const NN = level === 3 ? ss * (RR - 1) + rng.int(1, 2 * ss - 1) : rng.int(ss * 2 + 1, ss * RR - 1);
         return [ss, RR, NN];
       },
-      ([ss, RR, NN]) => NN % ss !== 0 && Math.floor(NN / ss) <= 9 && Math.floor(NN / ss) !== NN % ss && (level !== 2 || ![NN % ss, ss, RR, NN].includes(ss * RR - NN)),
+      ([ss, RR, NN]) => NN % ss !== 0 && Math.floor(NN / ss) <= 9 && Math.floor(NN / ss) !== NN % ss && (level !== 2 || (RR - Math.floor(NN / ss) - 1 >= 1 && ![ss, RR, NN].includes(RR - Math.floor(NN / ss) - 1))),
       [4, 8, 27],
     );
     if (level === 1) return t193Level1(s, R, N);
@@ -584,7 +588,7 @@ const T19_4 = {
   minLevel: 1,
   maxLevel: 3,
   generate(rng, level) {
-    const [N, s] = draw(rng, () => [rng.int(30, 99), rng.int(3, 9)], ([NN, ss]) => NN % ss !== 0 && Math.floor(NN / ss) >= 3 && Math.floor(NN / ss) <= 14 && 2 * (NN % ss) !== ss, [53, 4]);
+    const [N, s] = draw(rng, () => [rng.int(30, 99), rng.int(3, 9)], ([NN, ss]) => NN % ss !== 0 && Math.floor(NN / ss) >= 3 && Math.floor(NN / ss) <= 14 && 2 * (NN % ss) !== ss && (level < 2 || ![Math.floor(NN / ss), Math.floor(NN / ss) + 1].includes(NN % ss)) && (level < 3 || ![Math.floor(NN / ss), Math.floor(NN / ss) + 1, NN % ss].includes(ss - (NN % ss))), [53, 4]);
     return t194(N, s, level);
   },
 };

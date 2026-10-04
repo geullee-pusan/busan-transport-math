@@ -121,7 +121,7 @@ export function renderRun(root, app, run, { onFinish }) {
       openHint(run, hintLevel);
       renderDrawer();
       if (hintLevel === 4 && p.blank) {
-        input.setBlank(p.blank);
+        input.setBlank(p.blank, String(p.blankAnswer ?? '').length || 1);
         drawer.classList.remove('open'); // 빈칸 틀이 보이게 서랍을 닫는다
         clear(feedback).append(fbLine('info', 'info', '빈칸에 들어갈 숫자를 써요.'));
       }

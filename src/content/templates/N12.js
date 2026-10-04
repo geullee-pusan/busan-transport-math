@@ -137,6 +137,18 @@ function mulHints(a, m, lead) {
   const bl = blankAt(P, 1);
   const prods = ps.map((x) => `${x} × ${m} = ${x * m}`).join(', ');
   const split = ps.length === 2 ? `${wa(ps[0])} ${ro(ps[1])}` : `${ps[0]}, ${wa(ps[1])} ${ro(ps[2])}`;
+  const u = a % 10;
+  if (u * m < 10) {
+    // 일의 자리 곱에 올림이 없으면 빈칸 값이 ③의 부분곱에 그대로 보인다. ③은 앞 부분곱만, ④는 일의 자리 곱을 직접 계산하게(11 검토 4).
+    const head = ps.slice(0, -1);
+    const bl0 = blankAt(P, 0);
+    const prods0 = head.map((x) => `${x} × ${m} = ${x * m}`).join(', ');
+    return {
+      hints: [lead, `${eul(a)} ${split} 나눠서 각각 ${m}배 해 볼까요?`, `${prods0}${jo(head.at(-1) * m, "이에요", "예요")}.`, `${head.map((x) => x * m).join(' + ')} + ${u} × ${m} = ${bl0.blank}`],
+      blank: bl0.blank,
+      blankAnswer: bl0.blankAnswer,
+    };
+  }
   return {
     hints: [lead, `${eul(a)} ${split} 나눠서 각각 ${m}배 해 볼까요?`, `${prods}${jo(ps.at(-1) * m, "이에요", "예요")}.`, `${ps.map((x) => x * m).join(' + ')} = ${bl.blank}`],
     blank: bl.blank,
@@ -218,7 +230,7 @@ function t122Level1(c) {
       ],
       P,
     ),
-    hints: [`열차는 8칸이고, 칸마다 ${c}명씩 탔어요. 열차에 탄 사람 수를 모두 물어요.`, `${c}명씩 8칸이에요. ${eul(c)} ${wa(Math.floor(c / 100) * 100)} ${ro(c % 100)} 나눠 생각해 볼까요?`, `${Math.floor(c / 100) * 100} × 8 = ${ieyo(Math.floor(c / 100) * 800)}.`, `${Math.floor(c / 100) * 800} + ${(c % 100) * 8} = ${bl.blank}`],
+    hints: [`열차는 8칸이고, 칸마다 ${c}명씩 탔어요. 열차에 탄 사람 수를 모두 물어요.`, `${c}명씩 8칸이에요. ${eul(c)} ${wa(Math.floor(c / 100) * 100)} ${ro(c % 100)} 나눠 생각해 볼까요?`, `${Math.floor(c / 100) * 100} × 8 = ${ieyo(Math.floor(c / 100) * 800)}.`, `${Math.floor(c / 100) * 800} + ${c % 100} × 8 = ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     explain: { ...mulExplain(c, 8, '명'), why: [`${c}명씩 8칸이니 ${c} × 8을 해요.`, `${Math.floor(c / 100) * 100} × 8 = ${Math.floor(c / 100) * 800}, ${c % 100} × 8 = ${ieyo((c % 100) * 8)}.`, `그래서 모두 ${P}명이에요.`] },

@@ -1,5 +1,5 @@
 // N20 초량 — 10000 이상의 큰 수: 자릿값, 읽고 쓰기 [4수01-01]. 천장 7.
-// 기준: docs/curriculum/08-line1-templates-11-20.md 20절(지하철 하루 87만 3천 명, 1년 3억 1,877만 명 — FACTS ✅), 09 끝 보강 후보(그림: 수직선 뛰어 세기). 반올림은 쓰지 않는다.
+// 기준: docs/curriculum/08-line1-templates-11-20.md 20절(지하철 하루 87만 3천 명, 1년 3억 1,877만 명 — FACTS ✅), 11 검토(그림: 자릿값 묶음·자릿값 표; 뛰어 세기는 N28용으로 따로 남김). 반올림은 쓰지 않는다.
 import { n, unknown, label } from '../num.js';
 
 // ── 말 도우미(숫자 뒤 조사) ──
@@ -77,7 +77,7 @@ function multiGrade(answer, discs) {
     return d ? { correct: false, category: d.category, kind: d.kind ?? 'check', feedbackCheck: d.feedbackCheck, feedback: d.feedback } : { correct: false, category: null, kind: 'check', feedback: null };
   };
 }
-// 숫자 입력 칸은 8자리까지라 아홉 자리 수(318770000)를 쓰는 2단계는 바르게 쓴 수 고르기로 바꿨다.
+// 2단계(아홉 자리 수 쓰기)는 숫자 입력 maxDigits: 13을 쓴다(화면이 13자리까지 받도록 고치는 중).
 
 const SRC_RIDE = 'FACTS: 부산 지하철 2025년 하루 평균 87만 3천 명, 1년 3억 1,877만 명, 2024년 하루 평균 86만 2천 명(1~4호선, 부산교통공사 운영실적, 2026-10-04 확인)';
 const R = (v) => n(v, { real: true, source: SRC_RIDE });
@@ -146,9 +146,9 @@ function t201Level1(year) {
       ],
       ans,
     ),
-    hints: [`${year}년 하루 이용객 ${a}만 ${b}천 명을 숫자로 쓰는 문제예요.`, `${a}만과 ${b}천을 따로 숫자로 써 볼까요?`, `만이 ${a}개인 수는 ${ieyo(a * 10000)}.`, `${a * 10000} + ${b * 1000} = ${blankAt(ans, 3).blank}`],
-    blank: blankAt(ans, 3).blank,
-    blankAnswer: blankAt(ans, 3).blankAnswer,
+    hints: [`${year}년 하루 이용객 ${a}만 ${b}천 명을 숫자로 쓰는 문제예요.`, `${a}만과 ${b}천을 따로 숫자로 써 볼까요?`, `${a}만은 ${ieyo(a * 10000)}.`, '천의 자리 숫자: ☐'],
+    blank: '천의 자리 숫자: ☐',
+    blankAnswer: String(b),
     explain: {
       why: [`${a}만은 ${a * 10000}, ${b}천은 ${ieyo(b * 1000)}.`, `둘을 합치면 ${ieyo(ans)}.`, `그래서 ${a}만 ${b}천은 ${ieyo(ans)}.`],
       alt: [`만 앞에 ${a}, 만 뒤 네 자리에 ${b}000을 써도 ${ieyo(ans)}.`, `두 풀이 모두 ${ieyo(ans)}.`],
@@ -157,26 +157,25 @@ function t201Level1(year) {
 }
 
 /** 2단계: 1년 이용객을 숫자로(바르게 쓴 수 고르기) */
-function t201Level2(order) {
-  const ans = String(YEAR_TOTAL);
-  const pool = { ok: ans, short: '31877000', long: '3187700000', gap: '318077000' };
-  const options = order.map((k) => pool[k]);
+function t201Level2() {
+  const ans = YEAR_TOTAL;
   return {
-    text: [Y(2025), '년 한 해 동안 부산 지하철을 탄 사람은 ', R(3), '억 ', R('1,877'), '만 명이에요. 이 수를 숫자로 바르게 쓴 것을 골라요.'],
+    text: [Y(2025), '년 한 해 동안 부산 지하철을 탄 사람은 ', R(3), '억 ', R('1,877'), '만 명이에요. 이 수를 숫자로 써요.'],
     figure: null,
-    input: { kind: 'choice', options },
+    input: { kind: 'number', unit: '명', maxDigits: 13 },
     answer: ans,
     discriminators: [
-      { value: pool.short, category: '개념', kind: 'check', feedback: '3억은 몇 자리 수일까요?' },
-      { value: pool.long, category: '개념', kind: 'check', feedback: '3억은 몇 자리 수일까요?' },
-      { value: pool.gap, category: '개념', kind: 'check', feedback: '만 앞의 네 자리를 다시 볼까요?' },
+      { value: 31877000, category: '개념', kind: 'check', feedback: '3억은 몇 자리 수일까요?' },
+      { value: 3187700000, category: '개념', kind: 'check', feedback: '3억은 몇 자리 수일까요?' },
+      { value: 318077000, category: '개념', kind: 'check', feedback: '만 앞의 네 자리를 다시 볼까요?' },
+      { value: 3018770000, category: '개념', kind: 'check', feedback: '만 앞의 네 자리를 다시 볼까요?' },
     ],
-    hints: ['3억 1,877만을 숫자로 바르게 쓴 것을 물어요.', '억, 만, 일의 묶음이 네 자리씩이에요. 묶음마다 칸을 채워 볼까요?', '1억은 1 뒤에 0이 8개인 수예요.', '3억 1877만은 모두 ☐자리 수'],
+    hints: ['3억 1,877만을 숫자로 쓰는 문제예요.', '억, 만, 일의 묶음이 네 자리씩이에요. 묶음마다 칸을 채워 볼까요?', '1억은 1 뒤에 0이 8개인 수예요.', '3억 1877만은 모두 ☐자리 수'],
     blank: '모두 ☐자리 수',
     blankAnswer: '9',
-    blankThen: '바르게 쓴 수를 골라요.',
+    blankThen: '숫자로 써요.',
     explain: {
-      why: ['억 자리에 3, 만 앞 네 자리에 1877, 만 뒤 네 자리에 0000을 써요.', '3 | 1877 | 0000을 이어 쓰면 318770000이에요.', '그래서 바르게 쓴 수는 318770000이에요.'],
+      why: ['억 자리에 3, 만 앞 네 자리에 1877, 만 뒤 네 자리에 0000을 써요.', '3 | 1877 | 0000을 이어 쓰면 318770000이에요.', '그래서 318770000이에요.'],
       alt: ['300000000 + 18770000 = 318770000으로 생각해도 돼요.', '두 풀이 모두 318770000이에요.'],
     },
   };
@@ -223,7 +222,6 @@ function t201Level4(variant) {
   const what = variant === 'A' ? '하루 이용객' : `${variant}년 하루 이용객`;
   const answer = { num: ans, what };
   const lead = variant === 'A' ? [Y(2025), '년 부산 지하철 이용객은 하루 평균 ', R(87), '만 ', R(3), '천 명, ', n(1), '년 ', R(3), '억 ', R('1,877'), '만 명이에요. '] : ['부산 지하철 하루 평균 이용객은 ', Y(2024), '년 ', R(86), '만 ', R(2), '천 명, ', Y(2025), '년 ', R(87), '만 ', R(3), '천 명이에요. '];
-  const bl = blankAt(ans, 3);
   return {
     text: [...lead, n(10000), '이 ', n(a), '개, ', n(1000), '이 ', n(b), '개인 수는 얼마이고, 이 수와 같은 것은 무엇이에요?'],
     figure: null,
@@ -237,9 +235,9 @@ function t201Level4(variant) {
       ],
       answer,
     ),
-    hints: [`10000이 ${a}개, 1000이 ${b}개인 수와, 그 수가 어느 이용객 수와 같은지 물어요.`, '10000이 몇 개인 수와 1000이 몇 개인 수를 따로 구해 볼까요?', `10000이 ${a}개면 ${ieyo(a * 10000)}.`, `${a * 10000} + ${b * 1000} = ${bl.blank}`],
-    blank: bl.blank,
-    blankAnswer: bl.blankAnswer,
+    hints: [`10000이 ${a}개, 1000이 ${b}개인 수와, 그 수가 어느 이용객 수와 같은지 물어요.`, '10000이 몇 개인 수와 1000이 몇 개인 수를 따로 구해 볼까요?', `${a}만은 ${ieyo(a * 10000)}.`, '천의 자리 숫자: ☐'],
+    blank: '천의 자리 숫자: ☐',
+    blankAnswer: String(b),
     blankThen: '같은 것을 골라요.',
     explain: {
       why: [`10000이 ${a}개면 ${a}만, 1000이 ${b}개면 ${b}천이에요.`, `${a}만 ${b}천은 ${ieyo(ans)}.`, `그래서 수는 ${ans}, ${what}${jw(what, '과', '와').slice(what.length)} 같아요.`],
@@ -301,8 +299,8 @@ function t201Level6(X, order) {
     blankAnswer: String(groups.length),
     blankThen: '바르게 읽은 것을 골라요.',
     explain: {
-      why: [`쉼표는 세 자리마다, 우리말은 네 자리마다 끊어요.`, `네 자리씩 끊으면 ${groups.join(' | ')}이라 ${pool.ok}${bat(pool.ok) ? '이라고' : '라고'} 읽어요.`, `그래서 답은 "${pool.ok}"예요.`],
-      alt: [`쉼표대로 끊어 읽으면 "${pool.comma}"처럼 틀려요.`, `두 풀이 모두 "${pool.ok}"예요.`],
+      why: [`쉼표는 세 자리마다, 우리말은 네 자리마다 끊어요.`, `네 자리씩 끊으면 ${groups.join(' | ')}이라 ${pool.ok}${bat(pool.ok) ? '이라고' : '라고'} 읽어요.`, `그래서 답은 "${pool.ok}"${bat(pool.ok) ? '이에요' : '예요'}.`],
+      alt: [`쉼표대로 끊어 읽으면 "${pool.comma}"처럼 틀려요.`, `두 풀이 모두 "${pool.ok}"${bat(pool.ok) ? '이에요' : '예요'}.`],
     },
   };
 }
@@ -360,7 +358,7 @@ const T20_1 = {
   maxLevel: 7,
   generate(rng, level) {
     if (level === 1) return t201Level1(rng.pick([2025, 2024]));
-    if (level === 2) return t201Level2(rng.shuffle(['ok', 'short', 'long', 'gap']));
+    if (level === 2) return t201Level2();
     if (level === 3) return t201Level3(...rng.pick([[YEAR_TOTAL, 7], [YEAR_TOTAL, 6], [873000, 5], [873000, 4], [873000, 3], [862000, 5], [862000, 4], [862000, 3]]));
     if (level === 4) return t201Level4(rng.pick(['A', 2024, 2025]));
     if (level === 5) {
@@ -477,7 +475,7 @@ const T20_2 = {
   },
 };
 
-// ── T20-3 수직선 뛰어 세기 (그림) — 1~3단계, 09 보강 후보 ──
+// ── (N28용) 수직선 뛰어 세기 도우미 — 아래 N28_JUMP에서 쓴다 ──
 function t203Level1(X, k) {
   const ans = X + k * 1000;
   return {
@@ -558,9 +556,11 @@ function t203Level3(E, step, c) {
   };
 }
 
-const T20_3 = {
-  id: 'T20-3',
-  node: 'N20',
+// ── N28(시청)용으로 남겨 둔 뛰어 세기 문항 — 11 검토 2: 뛰어 세기·수직선 위치는 4수01-02(N28) 내용이라 N20에서 뺐다.
+// 이 파일의 기본 내보내기에는 들어가지 않는다. 시청 N28 템플릿을 만들 때 옮겨 쓴다.
+export const N28_JUMP = {
+  id: 'T28-jump',
+  node: 'N28',
   title: '수직선 뛰어 세기',
   repr: '그림',
   minLevel: 1,
@@ -572,6 +572,130 @@ const T20_3 = {
     if (level === 2) return t203Level2(draw(rng, () => rng.pick([873000, 862000, 405000, 230000]), (S) => S + step * 10 < 10000000, 873000), step, c);
     const E = draw(rng, () => rng.pick([873000, 862000, 600000, 950000]), (e) => e - step * c > 0 && ![step, c, e].includes(e - step * c), 873000);
     return t203Level3(E, step, c);
+  },
+};
+
+// ── T20-3 자릿값 그림 (그림) — 1~3단계. 11 검토 2: 묶음 그림 → 수, 0이 있는 자리, 자릿값 표 → 읽는 말 ──
+// 묶음 그림은 기존 표 그림(table)으로 보인다: 묶음 이름 칸과 개수 칸.
+
+/** 1단계: 만 묶음과 천 묶음 → 수 */
+function t203pLevel1(a, b, year) {
+  const ans = a * 10000 + b * 1000;
+  const lead = year ? ['그림은 ', Y(year), '년 부산 지하철 하루 평균 이용객을 만 명 묶음과 천 명 묶음으로 나타낸 거예요. 모두 몇 명이에요?'] : ['그림은 어떤 수를 만 묶음과 천 묶음으로 나타낸 거예요. 이 수는 얼마예요?'];
+  const unit = year ? ' 명' : '';
+  return {
+    text: lead,
+    figure: { kind: 'table', columns: [`만${unit} 묶음`, `천${unit} 묶음`], rows: [[`${a}개`, `${b}개`]] },
+    input: { kind: 'number', unit: year ? '명' : undefined },
+    answer: ans,
+    discriminators: uniq(
+      [
+        { value: a * 100000 + b * 1000, ...manNudge(a) },
+        { value: a * 1000 + b * 100, ...manNudge(a) },
+        { value: a * 10000 + b * 100, category: '개념', kind: 'check', feedback: '천 묶음 하나는 얼마일까요?' },
+      ],
+      ans,
+    ),
+    hints: [`만 묶음 ${a}개와 천 묶음 ${b}개가 나타내는 수를 물어요.`, '만 묶음 수는 만의 자리부터, 천 묶음 수는 천의 자리에 써 볼까요?', `만 묶음 ${a}개는 ${ieyo(a * 10000)}.`, '천의 자리 숫자: ☐'],
+    blank: '천의 자리 숫자: ☐',
+    blankAnswer: String(b),
+    blankThen: '모두 얼마인지 써요.',
+    explain: {
+      why: [`만 묶음 ${a}개는 ${a * 10000}, 천 묶음 ${b}개는 ${ieyo(b * 1000)}.`, `합치면 ${ieyo(ans)}.`, `그래서 ${ieyo(ans)}.`],
+      alt: [`${a}만 ${b}천이라고 읽고 숫자로 써도 ${ieyo(ans)}.`, `두 풀이 모두 ${ieyo(ans)}.`],
+    },
+  };
+}
+
+/** 2단계: 0이 있는 자리(만 묶음 + 십 묶음) */
+function t203pLevel2(M, t) {
+  const ans = M * 10000 + t * 10;
+  return {
+    text: ['그림은 어떤 수를 만 묶음과 십 묶음으로 나타낸 거예요. 이 수는 얼마예요?'],
+    figure: { kind: 'table', columns: ['만 묶음', '십 묶음'], rows: [[`${M}개`, `${t}개`]] },
+    input: { kind: 'number' },
+    answer: ans,
+    discriminators: uniq(
+      [
+        { value: M * 1000 + t * 10, category: '개념', kind: 'nudge', feedbackCheck: '만 뒤의 자리 수를 다시 볼까요?', feedback: '만 뒤에 네 칸을 채웠나요?' },
+        { value: M * 100000 + t * 10, category: '개념', kind: 'nudge', feedbackCheck: '만 뒤의 자리 수를 다시 볼까요?', feedback: '만 뒤에 네 칸을 채웠나요?' },
+        { value: M * 10000 + t, category: '개념', kind: 'check', feedback: '십 묶음 하나는 얼마일까요?' },
+      ],
+      ans,
+    ),
+    hints: [`만 묶음 ${M}개와 십 묶음 ${t}개가 나타내는 수를 물어요.`, '만 앞과 만 뒤를 나눠 볼까요? 만 뒤에는 네 자리가 와요.', `만 묶음 ${M}개는 ${ieyo(M * 10000)}.`, '만 뒤의 네 자리: 00☐0'],
+    blank: '00☐0',
+    blankAnswer: String(t),
+    blankThen: '이 수를 써요.',
+    explain: {
+      why: [`만 묶음 ${M}개는 ${M}만이라 ${M} 다음에 네 자리가 와요.`, `십 묶음 ${t}개는 ${t * 10}이라 만 뒤 네 자리는 ${String(t * 10).padStart(4, '0')}${roOnly(t * 10)} 써요.`, `그래서 ${ieyo(ans)}.`],
+      alt: [`${M * 10000} + ${t * 10} = ${ro(ans)} 생각해도 같아요.`, `두 풀이 모두 ${ieyo(ans)}.`],
+    },
+  };
+}
+
+/** 3단계: 자릿값 표 → 읽는 말 고르기 */
+const PV_COLS = ['천만', '백만', '십만', '만', '천', '백', '십', '일'];
+function t203pLevel3(X, order) {
+  const ds = String(X).padStart(8, '0').split('');
+  const man = Math.floor(X / 10000);
+  const low = X % 10000;
+  const pool = { ok: korean(X), big: korean(X * 10), small: korean(Math.floor(X / 10)), shift: korean(man * 1000 + low) };
+  const options = order.map((k) => pool[k]);
+  const fb = '만의 자리가 어디인지 표에서 다시 볼까요?';
+  return {
+    text: ['그림은 어떤 수를 자릿값 표에 나타낸 거예요. 이 수를 바르게 읽은 것을 골라요.'],
+    figure: { kind: 'table', columns: PV_COLS, rows: [ds] },
+    input: { kind: 'choice', options },
+    answer: pool.ok,
+    discriminators: [
+      { value: pool.big, category: '개념', kind: 'check', feedback: fb },
+      { value: pool.small, category: '개념', kind: 'check', feedback: fb },
+      { value: pool.shift, category: '개념', kind: 'check', feedback: '0인 자리도 세었나요?' },
+    ],
+    hints: ['자릿값 표에 나타낸 수를 바르게 읽은 것을 물어요.', '만의 자리에서 끊어 볼까요? 만 앞의 네 자리를 먼저 읽고 "만"을 붙여요.', '만의 자리는 오른쪽에서 다섯 번째 칸이에요.', '만의 자리 숫자: ☐'],
+    blank: '만의 자리 숫자: ☐',
+    blankAnswer: ds[3],
+    blankThen: '바르게 읽은 것을 골라요.',
+    explain: {
+      why: [low ? `만 앞 네 자리는 "${korean(man)}", 만 뒤 네 자리는 "${korean(low)}"${roOnly(low)} 읽어요.` : `만 앞 네 자리는 "${korean(man)}"${roOnly(man)} 읽고, 만 뒤는 모두 0이라 읽지 않아요.`, `만 앞을 읽고 "만"을 붙인 뒤 만 뒤를 읽어요.`, `그래서 "${pool.ok}"${bat(pool.ok) ? '이에요' : '예요'}.`],
+      alt: [`${X}${jo(X, '을', '를')} 네 자리씩 끊으면 ${split4(X).join(' | ')}이에요.`, `두 풀이 모두 "${pool.ok}"${bat(pool.ok) ? '이에요' : '예요'}.`],
+    },
+  };
+}
+
+const T20_3 = {
+  id: 'T20-3',
+  node: 'N20',
+  title: '자릿값 그림',
+  repr: '그림',
+  minLevel: 1,
+  maxLevel: 3,
+  generate(rng, level) {
+    if (level === 1) {
+      const kind = rng.int(0, 2);
+      if (kind < 2) {
+        const year = kind === 0 ? 2025 : 2024;
+        return t203pLevel1(...DAY[year], year);
+      }
+      return t203pLevel1(rng.int(11, 99), rng.int(1, 9), null);
+    }
+    if (level === 2) {
+      const M = draw(rng, () => rng.int(101, 909), (m) => Math.floor(m / 10) % 10 === 0 && m % 10 !== 0, 302);
+      return t203pLevel2(M, rng.int(1, 9));
+    }
+    const X = draw(
+      rng,
+      () => {
+        const ds = [rng.int(1, 9), rng.int(0, 9), rng.int(0, 9), rng.int(1, 9), rng.int(0, 9), rng.int(0, 9), rng.int(0, 9), rng.int(0, 9)];
+        if (rng.next() < 0.7) ds[rng.int(1, 2)] = 0;
+        ds[rng.int(4, 7)] = 0;
+        return Number(ds.join(''));
+      },
+      (x) => new Set([korean(x), korean(x * 10), korean(Math.floor(x / 10)), korean(Math.floor(x / 10000) * 1000 + (x % 10000))]).size === 4,
+      30200450,
+    );
+    return t203pLevel3(X, rng.shuffle(['ok', 'big', 'small', 'shift']));
   },
 };
 

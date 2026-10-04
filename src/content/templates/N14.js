@@ -358,18 +358,17 @@ const T14_2 = {
   minLevel: 1,
   maxLevel: 6,
   generate(rng, level) {
-    if (level === 1) return t142Level1(rng.int(10, 12));
+    if (level === 1) return t142Level1(rng.int(11, 12));
     if (level === 2) {
       const [k, q] = draw(rng, () => [rng.int(2, 4), rng.int(12, 33)], ([kk, qq]) => kk * qq <= 99 && qq % 10 !== 0 && Math.floor((kk * qq) / 10) % kk !== 0, [4, 21]);
       return t142Level2(k, q);
     }
     if (level === 3) {
-      // 하루 5역·8역은 8 − 5 = 3이 답(며칠 빨리)과 우연히 같아서 뺀다(4역·10역도 같은 까닭으로 뺀다).
+      // 하루 역 수는 한 자리 약수(2·4·5·8)에서 고르고, 날수 = 하루 역 수, 며칠 차이 = 날수 또는 하루 역 수인 짝은 뺀다(11 검토 1).
       const [a, b] = rng.pick([
+        [2, 5],
+        [2, 8],
         [4, 5],
-        [4, 8],
-        [5, 10],
-        [8, 10],
       ]);
       return t142Level3(a, b);
     }

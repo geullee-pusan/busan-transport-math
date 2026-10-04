@@ -168,7 +168,7 @@ function t171Level4(a, b, u) {
   const f = fr(a, b);
   const bl = blankOf(total);
   return {
-    text: ['어느 날 남포역에서 내린 사람은 열차 승객의 ', n(f), '인 ', V(part), '명이었어요. 열차 승객은 모두 몇 명이에요?'],
+    text: ['어느 날 남포역에서 열차 한 칸의 승객 중 ', n(f), '인 ', V(part), '명이 내렸어요. 그 칸의 승객은 처음에 모두 몇 명이었어요?'],
     figure: null,
     input: { kind: 'number', unit: '명' },
     answer: total,
@@ -180,11 +180,11 @@ function t171Level4(a, b, u) {
       ],
       total,
     ),
-    hints: [`내린 사람 ${part}명은 열차 승객의 ${f}예요. 열차 승객 모두를 물어요.`.replace(`${f}예요`, `${f}${jo(f, '이에요', '예요')}`), `승객을 ${b}묶음으로 나누면 ${part}명은 그중 ${a}묶음이에요. 한 묶음은 몇 명일까요?`, `한 묶음은 ${part} ÷ ${a} = ${u}명이에요.`, `${u}명씩 ${b}묶음: ${bl.blank}명`],
+    hints: [`내린 사람 ${part}명은 한 칸 승객의 ${f}예요. 그 칸의 승객 수를 물어요.`.replace(`${f}예요`, `${f}${jo(f, '이에요', '예요')}`), `승객을 ${b}묶음으로 나누면 ${part}명은 그중 ${a}묶음이에요. 한 묶음은 몇 명일까요?`, `한 묶음은 ${part} ÷ ${a} = ${u}명이에요.`, `${u}명씩 ${b}묶음: ${bl.blank}명`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     explain: {
-      why: [`${part}명이 ${b}묶음 중 ${a}묶음이니 한 묶음은 ${u}명이에요.`, `전체는 ${b}묶음이라 ${u} × ${b} = ${total}명이에요.`, `그래서 열차 승객은 모두 ${total}명이에요.`],
+      why: [`${part}명이 ${b}묶음 중 ${a}묶음이니 한 묶음은 ${u}명이에요.`, `전체는 ${b}묶음이라 ${u} × ${b} = ${total}명이에요.`, `그래서 그 칸의 승객은 모두 ${total}명이에요.`],
       alt: [`${total}명의 ${eun(f)} ${part}명이 맞는지 확인해요.`, `두 풀이 모두 ${total}명이에요.`],
     },
   };
@@ -273,7 +273,7 @@ const T17_1 = {
         () => [rng.pick([4, 5, 8]), rng.int(12, 36)],
         ([bb, TT]) => {
           const c = Array.from({ length: bb - 1 }, (_, i) => i + 1).filter((k) => (40 / bb) * k < TT).length;
-          return c >= 1 && c <= bb - 2;
+          return c >= 2 && c <= bb - 2;
         },
         [8, 20],
       );

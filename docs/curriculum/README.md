@@ -18,6 +18,7 @@
 | [09-templates-additions.md](09-templates-additions.md) | 1~10역 일반 템플릿 보강(역마다 표현 3가지 이상), 11~20역 보강 후보 |
 | [10-line2-pilot.md](10-line2-pilot.md) | 2호선 시범 구간(서면·부암·가야·동의대·개금: 초 단위 시간, 시간표, mm·km), 서면 갈아타기 지도 규칙, 금 도장과 판별 피드백(check/nudge) |
 | [11-review-11-20.md](11-review-11-20.md) | 11~20역 구현 검토(f74f174): 꼭 고칠 것 8건, check/nudge 판정, 바뀐 곳 판정 |
+| [knowledge.md](knowledge.md) | **근거 노트**: 2022 개정 원문·교과서 단원·성취수준, 수학교육 연구(오개념·학습 궤적·CPA·스키마·풀이 예제), 학습과학(간격·교차·인출·숙달·피드백), 경시 범위와 유형 — 출처 링크와 고칠 점(6절) |
 | [concept-graph.json](concept-graph.json) | 엔진이 읽는 개념 그래프 139노드(B13·N40·G43·R10·D10·X23) |
 | [concept-graph.schema.json](concept-graph.schema.json) | 그래프 JSON 스키마 |
 | [tools/validate-graph.mjs](tools/validate-graph.mjs) | 그래프 검사(순환, 없는 선수, 노선 순서 위반, 단계 조건). `node docs/curriculum/tools/validate-graph.mjs --verbose` |

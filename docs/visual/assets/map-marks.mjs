@@ -18,17 +18,17 @@ export const TIERS = {
   // g ≥ 32: 확대 보기(홈 첫 화면, 목적지 앞뒤 약 6역)
   zoom: {
     locked: { r: 5.5, sw: 2 }, reachable: { r: 6.5, sw: 2.5 }, dest: { r: 11, inner: 5, sw: 2.5 },
-    lit: { r: 8, sw: 3.5 }, confirmed: { r: 8.5, inner: 3.5 }, pass: 10, names: 'all',
+    lit: { r: 9, sw: 2.5, hole: 4, glow: 6 }, confirmed: { r: 9, sw: 2.5, glow: 6 }, pass: 10, names: 'all',
   },
   // 20 ≤ g < 32
   mid: {
     locked: { r: 4, sw: 1.5 }, reachable: { r: 5, sw: 2 }, dest: { r: 9, inner: 4, sw: 2.5 },
-    lit: { r: 6, sw: 3 }, confirmed: { r: 6.5, inner: 2.5 }, pass: 8, names: 'lit+dest',
+    lit: { r: 7, sw: 2.2, hole: 3, glow: 4 }, confirmed: { r: 7, sw: 2.2, glow: 4 }, pass: 8, names: 'lit+dest',
   },
   // g < 20: 1호선 전체 보기(촘촘한 구간 g ≈ 15)
   dense: {
     locked: null, reachable: null, dest: { r: 8, inner: 3.5, sw: 2.5 },
-    lit: { r: 4.5, sw: 2.2 }, confirmed: { r: 5, inner: 0 }, pass: 0, names: 'ends', // 지름 11.2·11.5 ≤ 0.8 × 15 = 12
+    lit: { r: 5, sw: 1.8, hole: 0, glow: 2.5 }, confirmed: { r: 5, sw: 1.8, glow: 2.5 }, pass: 0, names: 'ends', // 지름 11.8 ≤ 0.8 × 15. 촘촘하면 개통·확정이 같은 꽉 찬 점(전체 보기는 "얼마나 왔나"만)
     // names 'ends' = 목적지, 켜진 역 중 가장 앞·가장 뒤, 환승역, 종점만. 통과역은 이름 옆 ≫(passMark)로
   },
 };
@@ -41,11 +41,11 @@ export const STATION = {
   locked: '아직 못 감: 가는 회색 빈 원(촘촘하면 그리지 않음)',
   reachable: '갈 수 있음: 진한 빈 원(촘촘하면 그리지 않음)',
   dest: '목적지(= 다음 역): 이중 고리, 늘 맨 위에',
-  lit: '개통: 흰 원 + 굵은 진한 테 + 양옆 노선 색 꼬리',
+  lit: '개통: 노선 색 굵은 고리(가운데 작은 흰 구멍) + 진한 테 + 노선 색 빛 테(옅게) — 꺼진 역(흰 빈 원)과 한눈에 다름(학생 #1, 4차)',
   passed: '통과역: 개통 + ≫',
   'check-dest': '점검 역이 목적지일 때: 목적지 이중 고리의 바깥 고리만 점선(한 점에 고리 둘을 겹치지 않음). 촘촘하면 보통 목적지',
   check: '점검: 개통 모양(불은 그대로) + 바깥 점선 고리 = 아직 확인할 것이 남음. 공구·느낌표·색 없음',
-  confirmed: '확정: 진한 꽉 찬 원(+ 넓을 때 가운데 노선 색 점) + 꼬리',
+  confirmed: '확정: 노선 색으로 꽉 찬 원(구멍이 채워짐) + 진한 테 + 빛 테',
 };
 
 /**
@@ -78,15 +78,18 @@ export function stationMark(x, y, state, color, tier = TIERS.zoom, { u = 1, term
     const dashed = state === 'check-dest' && tier !== TIERS.dense ? ` stroke-dasharray="${3.5 * u} ${2.6 * u}" stroke-linecap="butt"` : '';
     out.push(`<circle cx="${x}" cy="${y}" r="${r}" fill="${PAPER}" stroke="${INK}" stroke-width="${sw}"${dashed}/>`);
     out.push(`<circle cx="${x}" cy="${y}" r="${S.inner * u}" fill="${PAPER}" stroke="${INK}" stroke-width="${sw}"/>`);
-  } else if (state === 'confirmed') {
-    out.push(`<circle cx="${x}" cy="${y}" r="${r}" fill="${INK}" stroke="${PAPER}" stroke-width="${1.5 * u}"/>`);
-    if (S.inner) out.push(`<circle cx="${x}" cy="${y}" r="${S.inner * u}" fill="${color}"/>`);
   } else {
-    // lit, passed: 흰 원 + 굵은 진한 테. 노선 색 고리는 같은 색 선로에 묻혀서 쓰지 않는다
-    out.push(`<circle cx="${x}" cy="${y}" r="${r}" fill="${PAPER}" stroke="${INK}" stroke-width="${sw}"/>`);
+    // 개통·통과·점검·확정: 노선 색으로 채운 원 + 진한 테 + 옅은 빛 테(같은 노선 색, 투명도 0.3).
+    // 개통은 가운데 흰 구멍(고리), 확정은 구멍이 채워진 꽉 찬 원 → "속이 채워지는" 작은 변화(SPEC 9.5b)
+    const lit = tier[key] ?? tier.lit;
+    const glow = (lit.glow ?? 0) * u;
+    if (glow) out.push(`<circle cx="${x}" cy="${y}" r="${r + glow}" fill="${color}" fill-opacity="0.3"/>`);
+    out.push(`<circle cx="${x}" cy="${y}" r="${r}" fill="${color}" stroke="${INK}" stroke-width="${sw}"/>`);
+    const hole = state === 'confirmed' ? 0 : (tier.lit.hole ?? 0) * u;
+    if (hole) out.push(`<circle cx="${x}" cy="${y}" r="${hole}" fill="${PAPER}" stroke="${INK}" stroke-width="${1 * u}"/>`);
     if (state === 'passed' && tier.pass) out.push(passMark(x + (r + 3 * u), y - (r + 6 * u), u * (tier.pass / 10)));
-    // 점검: 바깥에 점선 고리(선 문법: 점선 = 아직). 촘촘하면(dense) 고리를 그리지 않고 개통과 같게 — 역 시트에서 알림
-    if (state === 'check' && tier !== TIERS.dense) out.push(`<circle cx="${x}" cy="${y}" r="${r + (tier === TIERS.zoom ? 5 : 3.5) * u}" fill="none" stroke="${INK}" stroke-width="${1.8 * u}" stroke-dasharray="${3 * u} ${2.6 * u}" stroke-linecap="butt"/>`);
+    // 점검: 빛 테 바깥에 점선 고리(선 문법: 점선 = 아직). 촘촘하면 그리지 않는다
+    if (state === 'check' && tier !== TIERS.dense) out.push(`<circle cx="${x}" cy="${y}" r="${r + glow + 2.5 * u}" fill="none" stroke="${INK}" stroke-width="${1.8 * u}" stroke-dasharray="${3 * u} ${2.6 * u}" stroke-linecap="butt"/>`);
   }
   return out.join('');
 }
@@ -110,10 +113,12 @@ export function transferMark(x, y, state, color, tier = TIERS.zoom, { angle = 0,
   else if (state === 'reachable' || state === 'dest') {
     g.push(rect(0, PAPER, `stroke="${INK}" stroke-width="${2.5 * u}"`));
     if (state === 'dest') g.push(rect(-h * 0.28, PAPER, `stroke="${INK}" stroke-width="${2.5 * u}"`));
-  } else if (state === 'confirmed') {
-    g.push(rect(0, INK, `stroke="${PAPER}" stroke-width="${1.5 * u}"`));
-    if (key !== 'dense') g.push(rect(-h * 0.3, color));
-  } else g.push(rect(0, PAPER, `stroke="${INK}" stroke-width="${sw}"`));
+  } else {
+    // 켜진 환승역: 역 점과 같은 말 — 노선 색 채움 + 진한 테 + 빛 테, 개통은 가운데 흰 구멍, 확정은 꽉 참
+    g.push(rect(key === 'dense' ? 2.5 * u : 5 * u, color, 'fill-opacity="0.3"'));
+    g.push(rect(0, color, `stroke="${INK}" stroke-width="${2.2 * u}"`));
+    if (state !== 'confirmed' && key !== 'dense') g.push(rect(-h * 0.3, PAPER, `stroke="${INK}" stroke-width="${1 * u}"`));
+  }
   const body = `<g transform="rotate(${angle} ${x} ${y})">${g.join('')}</g>`;
   return state === 'passed' && tier.pass ? body + passMark(x + w / 2 + 3 * u, y - h / 2 - 6 * u, u * (tier.pass / 10)) : body;
 }

@@ -7,6 +7,7 @@
 - 사실 확인표: `docs/FACTS.md` / 교육과정: `docs/CURRICULUM.md`
 - 커리큘럼 자문 산출물: `docs/curriculum/` (개념 그래프 `concept-graph.json`, 역별 문제 템플릿 문서 `07-…`, `08-…`)
 - UX 자문 산출물: `docs/design/`
+- 문제은행·출제 자문 산출물: `docs/problem-bank/` (웹에서 모은 문제 유형 은행, 문체 검토. 유형만 추상화해 기록하고 문제 문장은 옮기지 않는다)
 - 학생 세션 피드백과 결정 기록: `docs/student-feedback.md`
 - 형제 프로젝트: `C:\Subway game` (busan-subway-design). 배포 방식과 부산 데이터를 이어받았다. 그 저장소는 고치지 않는다.
 

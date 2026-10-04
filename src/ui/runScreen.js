@@ -194,7 +194,7 @@ export function renderRun(root, app, run, { onFinish }) {
         const step = tick ? (tick.gained >= 2 ? ' · 한 칸 앞으로' : ' · 반 칸 앞으로') : evs.some((e) => e.type === 'prep') ? ' · 몸풀기 문제라 칸은 그대로예요' : '';
         if (out.passed) feedback.append(fbLine('right', 'pass', `${stationOf(out.passed)?.name}역 통과!`));
         else if (ev?.type === 'lit') feedback.append(fbLine('right', 'check', `${stationOf(ev.node)?.name}역 개통!`));
-        else if (ev?.type === 'inspected') feedback.append(fbLine('right', 'check', `${stationOf(ev.node)?.name}역 점검 완료!`));
+        else if (ev?.type === 'inspected') feedback.append(fbLine('right', 'check', `${stationOf(ev.node)?.name}역 점검 끝!`));
         else feedback.append(fbLine('right', 'check', `맞았어요${step}`));
         const pend = evs.find((e) => e.type === 'pending');
         if (pend) feedback.append(h('div.info', pendingText(pend.code)));

@@ -74,7 +74,7 @@ export function renderHome(root, app, { onStart, onExpress, onChallenge, onGarag
       ),
       ackNote,
       returning,
-      h('div.map-wrap', drawMap(state, { destId: dest?.id, onAnyStation: (id) => root.querySelector('.home')?.append(stationSheet(id, null, { inspect: LINE1_NODES.some((n) => stationOf(n.id)?.id === id && nodeState(state, n.id).inspect) })) })),
+      h('div.map-wrap', drawMap(state, { destId: dest?.id, onAnyStation: (id) => root.querySelector('.home')?.append(stationSheet(id, null, (() => { const n = LINE1_NODES.find((x) => stationOf(x.id)?.id === id); const ns2 = n ? nodeState(state, n.id) : {}; return { inspect: !!ns2.inspect, inferred: !!ns2.inferred }; })())) })),
       h('p.small', '역을 누르면 그 역 이야기를 볼 수 있어요.'),
       !state.placementDone && onPlacement
         ? h('section.next', h('div.next-dest', '먼저 시승 운행으로 어느 역에서 출발할지 정해요.'), h('div.next-btns', h('button.primary.big', { type: 'button', onclick: onPlacement }, icon('depart'), '시승 운행 출발'), h('button.secondary', { type: 'button', onclick: onStart }, '그냥 처음 역부터 출발')))
@@ -83,7 +83,7 @@ export function renderHome(root, app, { onStart, onExpress, onChallenge, onGarag
         : dest
         ? h('section.next',
             h('div.next-dest', h(`span.badge-1${dest.line === 'L2' ? '.badge-2' : ''}`, dest.line === 'L2' ? '2' : '1'), ns.inspect ? ` ${stationOf(dest.id)?.name ?? ''}역 점검` : ` ${stationOf(dest.id)?.name ?? ''}역까지 `, ns.inspect ? null : h('strong', left)),
-            ns.inspect ? h('div.info', `${stationOf(dest.id)?.name ?? ''}역을 한 번 더 살펴봐요. 불은 그대로예요. 힌트 없이 2문제를 맞히면 점검 완료예요.`) : ns.pending ? h('div.info', pendingText(ns.pending)) : null,
+            ns.inspect ? h('div.info', `${stationOf(dest.id)?.name ?? ''}역을 한 번 더 살펴봐요. 불은 그대로예요. 혼자 2문제를 맞히면 점검 끝이에요. ① 노선 확인은 봐도 괜찮아요.`) : ns.pending ? h('div.info', pendingText(ns.pending)) : null,
             h('div.next-btns',
               h('button.primary.big', { type: 'button', onclick: onStart }, icon('depart'), parkedSt ? `${parkedSt.name}역에서 출발` : '출발'),
               canExpress ? h('button.secondary', { type: 'button', onclick: onExpress, title: '급행: 역마다 2문제를 맞히면 통과해요 · 세 번째 역은 1문제 더' }, icon('express'), '급행') : null,
@@ -112,7 +112,7 @@ export function renderLog(root, app, run, { onAgain, onHome }) {
   if (sm.license) big = h('div.big-news.license-card', h('div.small', '면허증'), h('div.big-title', `${tierOf(sm.license).name} 운행 허가`), state.profile.nickname?.trim() ? h('div', `운전사: ${state.profile.nickname.trim()}`) : null, h('div.small', `발급일 ${new Date().toLocaleDateString('ko-KR')}`), sm.licenseEvidence.length ? h('div', `${sm.licenseEvidence.map((id) => stationOf(id)?.name).filter(Boolean).join(' · ')}역에서 이 단계 문제를 풀어서 올랐어요.`) : null, h('div', '새 카드를 받았어요. 차고에서 볼 수 있어요.'));
   else if (sm.line2Opened) big = h('div.big-news', h('div.big-title', '서면역 개통! 2호선으로 갈아탈 수 있어요'), h('div', '이제 운행마다 1호선과 2호선을 번갈아 달려요. 2호선에서는 시간과 길이를 배워요.'));
   else if (run.mode === 'placement') big = newly.length ? h('div.big-news', h('div.big-title', newly.length > 2 ? `${newly.length}역에 불을 켰어요` : `${newly.join(' · ')}역 통과!`), h('div', newly.length > 2 ? `${newly.slice(0, 3).join(', ')} 같은 역이에요. 켠 역은 운행 중에 한 역씩 다시 들러서 확인해요.` : '켠 역은 운행 중에 한 번 더 들러서 확인해요.')) : null;
-  else if (inspected.length) big = h('div.big-news', h('div.big-title', `${inspected.join(' · ')}역 점검 완료!`));
+  else if (inspected.length) big = h('div.big-news', h('div.big-title', `${inspected.join(' · ')}역 점검 끝!`));
   else if (newly.length) big = h('div.big-news', h('div.big-title', passed.length === newly.length ? `${newly.join(' · ')}역 통과!` : `${newly.join(' · ')}역 개통!`));
 
   const lines = [];

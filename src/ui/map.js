@@ -108,13 +108,15 @@ function drawTrack(svg, { nodes, stations, color, label }, { state, destId, P, o
     g.append(s('circle', { cx: x, cy: y, r: 14, fill: 'transparent' })); // 누르는 영역
     const isDest = n.id === destId;
     if (st === 'confirmed') g.append(s('circle', { cx: x, cy: y, r: 7, fill: INK, stroke: INK, 'stroke-width': 3 }));
-    else if (st === 'lit') g.append(s('circle', { cx: x, cy: y, r: 8, fill: '#fff', stroke: INK, 'stroke-width': 1.5 }), s('circle', { cx: x, cy: y, r: 6, fill: '#fff', stroke: color, 'stroke-width': 4 }));
+    else if (st === 'lit') g.append(s('circle', { cx: x, cy: y, r: 7, fill: '#fff', stroke: INK, 'stroke-width': 3 })); // 켜진 역은 통과역과 같은 흰 원 + 진한 테(≫ 없음, 시각 3차 6절)
     else if (st === 'passed' && ns(i).inspect) {
       // 점검 중인 추정 역: 켜진 역 모양 그대로 + 바깥 점선 고리(점선 = 아직). 글자·≫·공구 없음(시각 3차 5절)
-      g.append(s('circle', { cx: x, cy: y, r: 7, fill: '#fff', stroke: INK, 'stroke-width': 3 }), s('circle', { cx: x, cy: y, r: 12, fill: 'none', stroke: INK, 'stroke-width': 1.8, 'stroke-dasharray': '3 2.6' }));
+      // 지금 목적지이면 목적지 이중 고리의 바깥 고리를 점선으로 그린 한 가지 모양(점 하나에 표시 하나, UX 확인)
+      if (isDest) g.append(s('circle', { cx: x, cy: y, r: 10, fill: '#fff', stroke: INK, 'stroke-width': 2.5, 'stroke-dasharray': '3 2.6' }), s('circle', { cx: x, cy: y, r: 5, fill: '#fff', stroke: INK, 'stroke-width': 2.5 }));
+      else g.append(s('circle', { cx: x, cy: y, r: 7, fill: '#fff', stroke: INK, 'stroke-width': 3 }), s('circle', { cx: x, cy: y, r: 12, fill: 'none', stroke: INK, 'stroke-width': 1.8, 'stroke-dasharray': '3 2.6' }));
     } else if (st === 'passed') {
-      // 시승으로 추정해 켠 역은 아직 확인 전이라 테두리를 점선으로(선 문법: 점선 = 아직). 임시 정차에서 확인되면 실선
-      g.append(s('circle', { cx: x, cy: y, r: 7, fill: '#fff', stroke: INK, 'stroke-width': 3, 'stroke-dasharray': ns(i).inferred ? '3 2.5' : undefined }));
+      // 급행 통과·시승으로 미리 켠 역은 같은 모양(실선 + ≫). 점선은 다시 풀게 될 점검에만 쓴다(시각 3차 6절). 추정이라는 것은 역 시트 글로
+      g.append(s('circle', { cx: x, cy: y, r: 7, fill: '#fff', stroke: INK, 'stroke-width': 3 }));
       g.append(s('text', { x: x + 9, y: y - 8, class: 'pass-mark' }, '≫'));
     } else if (isDest) {
       g.append(s('circle', { cx: x, cy: y, r: 10, fill: '#fff', stroke: INK, 'stroke-width': 2.5 }));

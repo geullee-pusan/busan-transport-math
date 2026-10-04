@@ -1,5 +1,6 @@
 // 앱 시작점: 상태를 불러오고 화면을 오간다.
 import './ui/style.css';
+import './ui/v2.css';
 import { load, save, createState, dayNumber, runsLeftToday, countRun } from './engine/state.js';
 import { startRun } from './engine/run.js';
 import { startExpress, startPlacement } from './engine/express.js';

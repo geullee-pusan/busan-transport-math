@@ -12,6 +12,7 @@ import { nodeState } from '../engine/state.js';
 import { FULL, pendingText } from '../engine/mastery.js';
 import { tierOf } from '../content/vehicles.js';
 import { askPin } from './pin.js';
+import { makeBand } from './band.js';
 import { icon } from './icons.js';
 
 /** 피드백 한 줄: [상태 아이콘][글자]. ✓ ⏸ ⓘ ≫를 이모지·글자 대신 SVG로(기기마다 모양이 같게) */
@@ -79,25 +80,17 @@ export function renderRun(root, app, run, { onFinish }) {
     onFinish(null, state);
   };
 
+  /** 운행 띠 v2(band.js). 시승은 칸 대신 "시승 운행 · 문제 n / 약 N" */
   function band(cur) {
-    const node = cur?.slot.node ?? run.dest;
-    const st = stationOf(node);
-    const ns = nodeState(state, node);
-    const litCount = LINE1_NODES.filter((n) => ['lit', 'passed', 'confirmed'].includes(nodeState(state, n.id).status)).length;
-    const ticks = [];
-    for (let i = 0; i < 4; i++) {
-      const filled = ns.halves >= (i + 1) * 2 ? 'full' : ns.halves === i * 2 + 1 ? 'half' : 'empty';
-      // 지금 채우는 칸(대상) = 굵은 테두리 4px(선 문법). 채운 칸은 --fig-fill이라 대상과 구분된다
-      const target = filled !== 'full' && Math.floor(ns.halves / 2) === i;
-      ticks.push(h(`span.tick.${filled}${target ? '.target' : ''}`));
+    const st = stationOf(cur?.slot.node ?? run.dest);
+    const tag = run.mode === 'placement' ? null : MODE_LABEL[run.mode] ?? (cur?.slot.kind === 'review' || cur?.slot.kind === 'redo' ? `임시 정차 · ${st?.name ?? ''}역` : run.lastRun && run.index === 0 ? '오늘의 막차예요' : null);
+    let trial = null;
+    if (run.mode === 'placement') {
+      // 대략 전체 = 줄기별 시험 역 수 × 2문제(끝이 정해지지 않아 "약")
+      const est = (run.placement?.groups ?? []).reduce((a, g) => a + (g.quota ?? 0) * 2, 0) || 8;
+      trial = [run.index + 1, Math.max(est, run.index + 1)];
     }
-    const tag = MODE_LABEL[run.mode] ?? (cur?.slot.kind === 'review' || cur?.slot.kind === 'redo' ? `임시 정차 · ${st?.name ?? ''}역` : run.lastRun && run.index === 0 ? '오늘의 막차예요' : null);
-    return h(
-      'header.band',
-      h('button.icon-btn', { type: 'button', onclick: exit, 'aria-label': '운행 멈추기' }, icon('close')),
-      h('div.band-main', h('div.band-line', h(`span.badge-1${NODES.get(node)?.line === 'L2' ? '.badge-2' : ''}`, NODES.get(node)?.line === 'L2' ? '2' : '1'), h('span.band-dest', `${st?.name ?? ''}역 가는 길`), tag ? h('span.band-tag', tag) : null), run.mode === 'normal' || run.mode === 'challenge' ? h('div.ticks', { 'aria-label': `${Math.floor((FULL - ns.halves) / 2)}칸 남음` }, ticks) : null),
-      h('div.band-side', h('div.license-chip', tierOf(state.license).short), h('div.band-progress', `40역 중 ${litCount}역 켜짐`), run.restAfter ? h('div.band-tag', '이번 운행이 끝나면 쉬어요') : !state.parentPin ? null : h('button.parent-btn.small-btn', { type: 'button', onclick: () => restAfterRun() }, icon('parent'), '부모')),
-    );
+    return makeBand({ state, run, cur, tag, trial, onExit: exit, onRest: state.parentPin ? () => restAfterRun() : null, restNote: run.restAfter ? '이번 운행이 끝나면 쉬어요' : null });
   }
 
   let stallTimer = null;
@@ -190,7 +183,8 @@ export function renderRun(root, app, run, { onFinish }) {
       const hintBtn = tools.querySelector('.tool-hint');
       if (hintBtn) { hintBtn.classList.add('wanted'); hintBtn.replaceChildren(icon('hintOn'), '힌트'); }
     }, 120000);
-    clear(screen).append(band(cur), h('div.run-body', h('div.col-b', problemEl, estimate), h('div.col-c', input.el, feedback, after)), tools, drawer, pad);
+    const bandCtl = band(cur);
+    clear(screen).append(bandCtl.el, h('div.run-body', h('div.col-b', problemEl, estimate), h('div.col-c', input.el, feedback, after)), tools, drawer, pad);
     if (state.settings.readAloud === true || (state.settings.readAloud === null && cur.level <= 3 && !isDiag)) speak(plainText(p.text));
 
     function report() {
@@ -227,6 +221,7 @@ export function renderRun(root, app, run, { onFinish }) {
       }
       if (out.outcome === 'correct') {
         correctTone(state.settings);
+        bandCtl.advance(nodeState(state, cur.slot.node).halves); // 칸이 차오르고 차량이 앞으로(띠)
         input.lock(true); input.el.classList.add('done'); screen.querySelector('.unknown-btn')?.setAttribute('disabled', '');
         // 이번 문제에서 생긴 사건만 본다(금 도장이 뒤에 붙어도 칸 소식이 사라지지 않게)
         const evs = run.events?.slice(evBefore) ?? [];
@@ -244,6 +239,7 @@ export function renderRun(root, app, run, { onFinish }) {
       }
       // 오답(같은 문제에서 두 번째 오답이면 소리를 생략한다)
       if (run.tries !== 2) brake(state.settings);
+      bandCtl.brake(); // 차량이 제자리에서 멈칫(3px)
       if (response !== UNKNOWN) feedback.append(h('div.wrong', h('s.my-answer', typeof response === 'object' ? Object.values(response).join(', ') : String(response))), fbLine('wrong', 'pause', '차량이 잠깐 멈췄어요.'));
       else feedback.append(h('div.info', '괜찮아요. 이건 운행하면서 배워요.')); // 시승에서는 바로 다음 문제로 가므로 "같이 배워요"라고 약속하지 않는다(학생 #1)
       if (r.feedback) feedback.append(h('div.wrong-detail', r.feedback));

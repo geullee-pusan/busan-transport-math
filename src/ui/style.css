@@ -126,19 +126,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus
 
 /* 운행 화면: A 띠 / B 문제(60%) / C 입력(40%) / D 도구 */
 .run-screen { min-height: 100vh; display: grid; grid-template-rows: auto 1fr auto; }
-.band { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-2) var(--sp-3); background: var(--paper); border-bottom: var(--bw) solid var(--soft); }
-.band-main { flex: 1; display: grid; gap: 6px; min-width: 0; }
-.band-line { display: flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-ui); font-weight: var(--fw-bold); flex-wrap: wrap; }
-.band-tag { display: inline-flex; align-items: center; font-size: var(--fs-label); font-weight: var(--fw-bold); border: var(--bw-hair) solid var(--ink); border-radius: var(--r-pill); padding: 2px var(--sp-3); }
-/* 진행 칸(침목) 44×18: 채움 = --fig-fill(진한 남색 아님 — 다음 칸 '대상'과 구분) / 반 칸 = 빗금(서행) / 빈칸 = 흰색 */
-.ticks { display: flex; gap: 6px; }
-.tick { width: 44px; height: 18px; border: var(--bw) solid var(--ink); border-radius: 3px; background: var(--paper); flex: none; }
-.tick.full { background: var(--fig-fill); }
-.tick.half { background: repeating-linear-gradient(-45deg, var(--fig-hatch) 0 2px, transparent 2px 6px), var(--paper); }
-.tick.target { border-width: var(--bw-strong); }
-.band-side { text-align: right; display: grid; justify-items: end; gap: 2px; }
-.license-chip { font-weight: var(--fw-heavy); font-size: var(--fs-ui); }
-.band-progress { font-size: var(--fs-label); color: var(--ink-2); }
+/* 운행 띠(A)는 v2.css(.v2-band) */
 .run-body { display: grid; grid-template-columns: 3fr 2fr; gap: var(--sp-4); padding: var(--sp-4); align-items: start; align-content: start; }
 .col-b, .col-c { display: grid; gap: 14px; min-width: 0; }
 .problem { background: var(--paper); border-radius: var(--r-lg); padding: 20px 22px; }
@@ -285,8 +273,6 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus
 }
 /* 휴대폰 폭: 띠의 칸이 줄을 넘치지 않게 조금 줄인다 */
 @media (max-width: 520px) {
-  .tick { width: 36px; }
-  .band { flex-wrap: wrap; }
   .tool { padding: 0 var(--sp-3); }
   .tool.quiet { margin-left: 0; }
 }

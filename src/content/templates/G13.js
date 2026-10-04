@@ -211,7 +211,7 @@ const T13_1 = {
 function t132Level1(x) {
   const ans = 60 + x;
   return {
-    text: ['서면역에서 ', label('1'), '호선에서 ', label('2'), '호선으로 갈아타는 데 ', V(1), '분 ', V(x), '초가 걸렸어요. 몇 초예요?'],
+    text: ['어느 날 서면역에서 ', label('1'), '호선에서 ', label('2'), '호선으로 갈아타는 데 ', V(1), '분 ', V(x), '초가 걸렸어요. 몇 초예요?'],
     figure: null,
     input: { kind: 'number', unit: '초' },
     answer: ans,
@@ -226,7 +226,7 @@ function t132Level2(T) {
   const answer = msAns(T);
   const wrong100 = { m: Math.floor(T / 100), s: T % 100 };
   return {
-    text: ['서면역 환승 통로를 걷는 데 ', V(T), '초가 걸렸어요. 몇 분 몇 초예요?'],
+    text: ['어느 날 서면역 환승 통로를 걷는 데 ', V(T), '초가 걸렸어요. 몇 분 몇 초예요?'],
     figure: null,
     input: { kind: 'compound', fields: MS_FIELDS },
     answer,

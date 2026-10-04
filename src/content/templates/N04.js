@@ -114,7 +114,7 @@ function t41Level1(a, b) {
   const front = (hund(a) + hund(b)) * 100;
   const bl = blankAt(S, 2);
   return {
-    text: ['신장림역에서 오전에 ', V(a), '명, 오후에 ', V(b), '명이 탔어요. 하루에 탄 사람은 대충 몇백 명쯤일까요?'],
+    text: ['어느 날 신장림역에서 오전에 ', V(a), '명, 오후에 ', V(b), '명이 탔어요. 하루에 탄 사람은 대충 몇백 명쯤일까요?'],
     figure: null,
     estimateFirst: true,
     estimate: { answer: c, min: c - 100, max: c + 100 },
@@ -173,7 +173,7 @@ function t41Level3(C, x, y, z) {
   const word = can ? '크게' : '작게';
   const bl = blankAt(E, 1);
   return {
-    text: ['이번 열차에는 ', V(C), '명이 더 탈 수 있어요. 신장림역 승강장에 가 단체 ', V(x), '명, 나 단체 ', V(y), '명, 다 단체 ', V(z), '명이 기다려요. 세 단체가 모두 탈 수 있을까요?'],
+    text: ['어느 날 신장림역에 온 열차에는 ', V(C), '명이 더 탈 수 있었어요. 승강장에는 가 단체 ', V(x), '명, 나 단체 ', V(y), '명, 다 단체 ', V(z), '명이 기다렸어요. 세 단체가 모두 탈 수 있을까요?'],
     figure: null,
     estimateFirst: true,
     estimate: { answer: sum, min: sum - 50, max: sum + 50 },
@@ -318,8 +318,8 @@ function t42Level3(s, p, q, offFirst) {
   const before = offFirst ? '타기' : '내리기';
   return {
     text: offFirst
-      ? ['열차에 ', V(s), '명이 타 있었어요. 신장림역에서 ', V(q), '명이 내렸어요. 장림역에서는 ', V(p), '명이 타요. 장림역에서 타기 전에는 열차에 몇 명이 있어요?']
-      : ['열차에 ', V(s), '명이 타 있었어요. 신장림역에서 ', V(p), '명이 탔어요. 장림역에서는 ', V(q), '명이 내려요. 장림역에서 내리기 전에는 열차에 몇 명이 있어요?'],
+      ? ['어느 날 열차에 ', V(s), '명이 타 있었어요. 신장림역에서 ', V(q), '명이 내렸어요. 장림역에서는 ', V(p), '명이 탔어요. 장림역에서 타기 전에는 열차에 몇 명이 있었어요?']
+      : ['어느 날 열차에 ', V(s), '명이 타 있었어요. 신장림역에서 ', V(p), '명이 탔어요. 장림역에서는 ', V(q), '명이 내렸어요. 장림역에서 내리기 전에는 열차에 몇 명이 있었어요?'],
     figure: { kind: 'stations', stations: ['신장림', '장림'] },
     input: { kind: 'number', unit: '명' },
     answer: ans,
@@ -356,8 +356,8 @@ function t42Level4(s, p, q, offFirst) {
   const bl = blankAt(s, 1);
   return {
     text: offFirst
-      ? ['신장림역에서 ', V(q), '명이 내리고, 장림역에서 ', V(p), '명이 탔더니 지금 열차에 ', V(e), '명이 있어요. 처음에는 몇 명이 타 있었어요?']
-      : ['신장림역에서 ', V(p), '명이 타고, 장림역에서 ', V(q), '명이 내렸더니 지금 열차에 ', V(e), '명이 있어요. 처음에는 몇 명이 타 있었어요?'],
+      ? ['어느 날 신장림역에서 ', V(q), '명이 내리고, 장림역에서 ', V(p), '명이 탔더니 열차에 ', V(e), '명이 있었어요. 처음에는 몇 명이 타 있었어요?']
+      : ['어느 날 신장림역에서 ', V(p), '명이 타고, 장림역에서 ', V(q), '명이 내렸더니 열차에 ', V(e), '명이 있었어요. 처음에는 몇 명이 타 있었어요?'],
     figure: { kind: 'stations', stations: ['신장림', '장림'] },
     input: { kind: 'number', unit: '명' },
     answer: s,
@@ -428,7 +428,7 @@ function t42Level6(s, rows) {
   const ans = SECTIONS[counts.indexOf(max)];
   const maxOn = rows.map((r) => r[0]).indexOf(Math.max(...rows.map((r) => r[0])));
   const names = ['신장림역', '장림역', '동매역'];
-  const text = ['열차에 ', V(s), '명이 타고 신장림역에 왔어요.'];
+  const text = ['어느 날 열차에 ', V(s), '명이 타고 신장림역에 왔어요.'];
   rows.forEach(([on, off], i) => text.push(` ${names[i]}: 탄 사람 `, V(on), '명, 내린 사람 ', V(off), '명.'));
   text.push(' 열차 안 사람이 가장 많았던 구간은 어디예요?');
   const bl = blankAt(counts[1], 1);
@@ -485,7 +485,7 @@ function t42Level7(s, q, K, T) {
     { value: opts.filter(ok2), category: '개념', kind: 'check', feedback: '신장림역을 지난 뒤도 확인했나요?' },
   ];
   return {
-    text: ['열차에 ', V(s), '명이 타 있었어요. 신장림역에서 ', unknown('□'), '명이 타고, 장림역에서 ', V(q), '명이 내렸어요. 신장림역을 지난 뒤 열차 안 사람은 ', V(K), '명을 넘지 않았고, 장림역을 지난 뒤에는 ', V(T), '명보다 많았어요. □에 들어갈 수 있는 수를 보기에서 모두 골라요.'],
+    text: ['어느 날 열차에 ', V(s), '명이 타 있었어요. 신장림역에서 ', unknown('□'), '명이 타고, 장림역에서 ', V(q), '명이 내렸어요. 신장림역을 지난 뒤 열차 안 사람은 ', V(K), '명을 넘지 않았고, 장림역을 지난 뒤에는 ', V(T), '명보다 많았어요. □에 들어갈 수 있는 수를 보기에서 모두 골라요.'],
     figure: { kind: 'stations', stations: ['신장림', '장림'] },
     input: { kind: 'multi', options: opts },
     answer,
@@ -729,7 +729,7 @@ function t43Three(s, p, q) {
   const forward = key([[1, s], [1, p], [-1, q]]);
   const bl = blankAt(s, 1);
   return {
-    text: ['신장림역에 열차가 오기 전에 ', V(s), '명이 타 있었어요. 신장림역에서 ', V(p), '명이 타고 ', V(q), '명이 내렸어요. 친구는 지금 열차 안 사람이 ', V(r), '명이라고 했어요. 처음 수로 되돌아가는 검산식을 쓰고 맞는지 판단해요.'],
+    text: ['어느 날 신장림역에 열차가 오기 전에 ', V(s), '명이 타 있었어요. 신장림역에서 ', V(p), '명이 타고 ', V(q), '명이 내렸어요. 친구는 지금 열차 안 사람이 ', V(r), '명이라고 했어요. 처음 수로 되돌아가는 검산식을 쓰고 맞는지 판단해요.'],
     figure: null,
     input: { kind: 'compound', fields },
     answer: { n1: r, op1: '+', n2: q, op2: '−', n3: p, result: s, judge: '맞아요' },

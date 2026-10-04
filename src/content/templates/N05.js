@@ -108,7 +108,7 @@ function mismatch(N, d, q, nameOf = '이 식은 어떤 상황이에요?') {
 function t51Level1(q) {
   const total = 8 * q;
   return {
-    text: [L1(), '호선 ', CARS(), '량 열차에 ', V(total), '명이 똑같이 나눠 타요. 한 칸에 몇 명이에요?'],
+    text: ['어느 날 ', V(total), '명이 ', L1(), '호선 ', CARS(), '량 열차에 똑같이 나눠 탔어요. 한 칸에 몇 명이에요?'],
     figure: { kind: 'groups', items: total, groups: 8, train: true },
     input: { kind: 'place', items: total, groups: 8 },
     answer: q,
@@ -134,7 +134,7 @@ function t51Level1(q) {
 function t51Level2(q) {
   const N = 8 * q;
   return {
-    text: [L1(), '호선은 ', CARS(), '량이에요. ', V(N), '명이 칸마다 똑같이 나눠 타요. 한 칸에 몇 명인지 식과 답을 써요.'],
+    text: [L1(), '호선은 ', CARS(), '량이에요. 어느 날 ', V(N), '명이 칸마다 똑같이 나눠 탔어요. 한 칸에 몇 명인지 식과 답을 써요.'],
     figure: { kind: 'train', cars: 8 },
     input: { kind: 'equation' },
     answer: { left: N, op: '÷', right: 8, result: q },
@@ -188,7 +188,7 @@ function t51Level4(m, x) {
   const all = m * x;
   const ans = all / 8;
   return {
-    text: ['사람들이 ', L1(), '호선 앞 ', V(m), '량에만 몰려서 한 칸에 ', V(x), '명씩 탔어요. 이 사람들이 ', CARS(), '량에 고르게 나눠 타면 한 칸에 몇 명이에요?'],
+    text: ['어느 날 사람들이 ', L1(), '호선 앞 ', V(m), '량에만 몰려서 한 칸에 ', V(x), '명씩 탔어요. 이 사람들이 ', CARS(), '량에 고르게 나눠 타면 한 칸에 몇 명이에요?'],
     figure: { kind: 'train', cars: 8, crowded: m },
     input: { kind: 'number', unit: '명' },
     answer: ans,

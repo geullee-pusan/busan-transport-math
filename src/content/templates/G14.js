@@ -257,7 +257,7 @@ function t142Level2(x, y) {
     answer,
   );
   return {
-    text: ['서면역에서 갈아타는 데 걸은 시간이 ', ...msText(x), ', 기다린 시간이 ', ...msText(y), '예요. 모두 몇 분 몇 초예요?'],
+    text: ['어느 날 서면역에서 갈아타는 데 걸은 시간이 ', ...msText(x), ', 기다린 시간이 ', ...msText(y), (y % 60 === 0 ? '이었어요.' : '였어요.') + ' 모두 몇 분 몇 초예요?'],
     figure: null,
     input: { kind: 'compound', fields: MS_FIELDS },
     answer,
@@ -316,7 +316,7 @@ function t142Level4(h, m, s, t) {
     answer,
   );
   return {
-    text: ['서면역 ', L2(), '호선 승강장에 ', ...hmsText(h, m, s), '에 도착했어요. 부암역에서 ', ...msText(t), ' 걸렸어요. 부암역에서 몇 시 몇 분 몇 초에 출발했어요?'],
+    text: ['어느 날 서면역 ', L2(), '호선 승강장에 ', ...hmsText(h, m, s), '에 도착했어요. 부암역에서 ', ...msText(t), ' 걸렸어요. 부암역에서 몇 시 몇 분 몇 초에 출발했어요?'],
     figure: null,
     input: { kind: 'compound', fields: HMS_FIELDS },
     answer,
@@ -547,7 +547,7 @@ function fusion4(rng, h, m, s, g) {
     textTrains.push(i < 2 ? ', ' : '에 떠나요. ');
   });
   return {
-    text: [L1(), '호선이 서면역에 ', ...hmsText(h, m, s), '에 도착했어요. 갈아타는 데 ', V(g), '분 걸려요. 이 문제의 ', L2(), '호선 열차는 ', ...textTrains, '탈 수 있는 첫 열차는 몇 시 몇 분 열차예요?'],
+    text: ['어느 날 ', L1(), '호선이 서면역에 ', ...hmsText(h, m, s), '에 도착했어요. 갈아타는 데 ', V(g), '분 걸렸어요. 이 문제의 ', L2(), '호선 열차는 ', ...textTrains, '탈 수 있는 첫 열차는 몇 시 몇 분 열차예요?'],
     figure: { kind: 'table', columns: ['이 문제의 2호선 열차', '떠나는 시각'], rows: trains.map((t, i) => [`${i + 1}`, show(t)]) },
     input: { kind: 'choice', options: trains.map(show) },
     answer,

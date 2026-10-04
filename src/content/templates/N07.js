@@ -220,7 +220,7 @@ function t72Level2(k, x) {
   const h = mulHints(x, k, `앞 ${k}칸에 한 칸마다 ${x}명씩 탔어요. 앞 ${k}칸에 탄 사람 수를 모두 물어요.`);
   const e = mulExplain(x, k, '명');
   return {
-    text: [L1(), '호선 열차 앞 ', V(k), '칸에 ', V(x), '명씩 탔어요. 앞 ', V(k), '칸에 탄 사람은 모두 몇 명이에요?'],
+    text: ['어느 날 ', L1(), '호선 열차 앞 ', V(k), '칸에 ', V(x), '명씩 탔어요. 앞 ', V(k), '칸에 탄 사람은 모두 몇 명이에요?'],
     figure: { kind: 'train', cars: 8, highlight: Array.from({ length: k }, (_, i) => i) },
     input: { kind: 'number', unit: '명' },
     answer: P,
@@ -268,7 +268,7 @@ function t72Level4(m, x) {
   const P = x * m;
   const bl = blankAt(P, 1);
   return {
-    text: ['앞 ', V(m), '칸에 같은 수만큼 탔어요. 역무원이 한 칸 사람 수에 ', V(m), jo(m, '을', '를'), ' 곱해야 하는데, 계산기에서 × 대신 +를 눌러 ', V(w), jo(w, '이', '가'), ' 나왔어요. 바르게 계산하면 얼마예요?'],
+    text: ['어느 날 앞 ', V(m), '칸에 같은 수만큼 탔어요. 역무원이 한 칸 사람 수에 ', V(m), jo(m, '을', '를'), ' 곱해야 하는데, 계산기에서 × 대신 +를 눌러 ', V(w), jo(w, '이', '가'), ' 나왔어요. 바르게 계산하면 얼마예요?'],
     figure: null,
     input: { kind: 'number' },
     answer: P,

@@ -258,7 +258,7 @@ function t152Level3(D, g, e, k) {
     if (i < 2) textTrains.push(', ');
   });
   return {
-    text: ['서면역에 ', ...tText(D), '까지 도착해야 해요(그 시각에 도착해도 돼요). 이 문제에서 가야역 열차는 ', ...textTrains, '에 떠나요. 서면까지 ', V(g), '분일 때 늦지 않는 가장 늦은 열차는 어느 것이에요?'],
+    text: ['어느 날 서면역에 ', ...tText(D), '까지 도착해야 했어요(그 시각에 도착해도 됐어요). 이 문제에서 가야역 열차는 ', ...textTrains, '에 떠나요. 서면까지 ', V(g), '분일 때 늦지 않는 가장 늦은 열차는 어느 것이에요?'],
     figure: { kind: 'table', columns: ['이 문제의 가야역 서면 방향', '출발 시각'], rows: trains.map((t, i) => [ORD[i], tHm(t)]) },
     input: { kind: 'choice', options: opts },
     answer: opts[1],
@@ -287,7 +287,7 @@ function t152Level4(H, m, g) {
     answer,
   );
   return {
-    text: ['서면역에 ', ...hmsText(H, m), '에 도착했어요. 가야역에서 ', V(g), '분 걸렸어요. 가야역에서 몇 시 몇 분 열차를 탔어요?'],
+    text: ['어느 날 서면역에 ', ...hmsText(H, m), '에 도착했어요. 가야역에서 ', V(g), '분 걸렸어요. 가야역에서 몇 시 몇 분 열차를 탔어요?'],
     figure: null,
     input: { kind: 'compound', fields: HM_FIELDS },
     answer,

@@ -187,7 +187,7 @@ function t32Level12(a, b) {
   const d = a - b;
   const bl = blankAt(d, 1);
   return {
-    text: ['열차에 ', V(a), '명이 타 있었어요. 낫개역에서 ', V(b), '명이 내렸어요. 열차에 남은 사람은 몇 명이에요?'],
+    text: ['어느 날 열차에 ', V(a), '명이 타 있었어요. 낫개역에서 ', V(b), '명이 내렸어요. 열차에 남은 사람은 몇 명이에요?'],
     figure: { kind: 'train', cars: 8 },
     input: { kind: 'number', unit: '명' },
     answer: d,
@@ -208,7 +208,7 @@ function t32Level3(total, front) {
   const more = front > back ? '앞' : '뒤';
   const bl = blankAt(back, 1);
   return {
-    text: [L1(), '호선 ', CARS(), '량 열차에 ', V(total), '명이 타 있어요. 그중 앞 ', V(4), '량에 ', V(front), '명이 탔어요. 뒤 ', V(4), '량에는 몇 명이 탔고, 앞과 뒤 중 어느 쪽에 더 많이 탔어요?'],
+    text: ['어느 날 ', V(total), '명이 ', L1(), '호선 ', CARS(), '량 열차에 타 있었어요. 그중 앞 ', V(4), '량에 ', V(front), '명이 탔어요. 뒤 ', V(4), '량에는 몇 명이 탔고, 앞과 뒤 중 어느 쪽에 더 많이 탔어요?'],
     figure: { kind: 'train', cars: 8, split: 4 },
     input: { kind: 'compound', fields: [{ key: 'back', label: '뒤 4량' }, { key: 'more', label: '더 많은 쪽', options: ['앞', '뒤'] }] },
     answer: { back, more },
@@ -242,7 +242,7 @@ function t32Level4(s, w) {
   const gap = sw - s;
   const bl = blankAt(ans, 1);
   return {
-    text: ['교통카드 잔액을 계산기로 셈해요. 처음 금액에서 ', V(s), '원을 빼야 하는데, 숫자를 바꿔 ', V(sw), '원을 뺐어요. 계산기에 ', V(w), '원이 나왔어요. 바르게 빼면 얼마예요?'],
+    text: ['어느 날 교통카드 잔액을 계산기로 셈했어요. 처음 금액에서 ', V(s), '원을 빼야 하는데, 숫자를 바꿔 ', V(sw), '원을 뺐어요. 계산기에 ', V(w), '원이 나왔어요. 바르게 빼면 얼마예요?'],
     figure: null,
     input: { kind: 'number', unit: '원' },
     answer: ans,
@@ -500,7 +500,7 @@ function t34(a, b, level) {
       ? `십 모형 1개를 바꾸면 일 모형이 ${O}개, 백 모형 1개를 바꾸면 십 모형이 ${T}개가 돼요. 백 ${H}, 십 ${T}, 일 ${ieyo(O)}.`
       : `백 모형 1개를 바꾸면 십 모형 10개, 그중 1개를 바꾸면 일 모형 ${O}개예요. 백 ${H}, 십 ${T}, 일 ${O}${jo(O, '이', '가')} 돼요.`;
   return {
-    text: ['열차에 ', V(a), '명이 타 있었어요. 낫개역에서 ', V(b), '명이 내렸어요. 수 모형을 바꾸어 가며 남은 사람을 구해요.' + ask],
+    text: [(level >= 3 ? '어느 날 ' : '') + '열차에 ', V(a), '명이 타 있었어요. 낫개역에서 ', V(b), '명이 내렸어요. 수 모형을 바꾸어 가며 남은 사람을 구해요.' + ask],
     figure: { kind: 'base10', hundreds: ah, tens: at, ones: au },
     input: { kind: 'compound', fields },
     answer,

@@ -360,7 +360,7 @@ function t62Level1(q) {
 function t62Level2(q) {
   const N = 8 * q;
   return {
-    text: [L1(), '호선 ', CARS(), '량에 ', V(N), '명이 칸마다 똑같이 탔어요. 한 칸에 몇 명인지 식과 답을 써요.'],
+    text: ['어느 날 ', V(N), '명이 ', L1(), '호선 ', CARS(), '량에 칸마다 똑같이 탔어요. 한 칸에 몇 명인지 식과 답을 써요.'],
     figure: { kind: 'train', cars: 8 },
     input: { kind: 'equation' },
     answer: { left: N, op: '÷', right: 8, result: q },
@@ -382,7 +382,7 @@ function t62Level3(a, b) {
   const which = a > b ? '앞' : '뒤';
   const diff = Math.abs(a - b);
   return {
-    text: ['앞 열차 ', CARS(), '량에 ', V(A), '명, 뒤 열차 ', CARS(), '량에 ', V(B), '명이 칸마다 똑같이 탔어요. 한 칸에 탄 사람이 더 많은 열차는 어느 쪽이고, 몇 명 더 많아요?'],
+    text: ['어느 날 ', V(A), '명이 앞 열차 ', CARS(), '량에, ', V(B), '명이 뒤 열차 ', CARS(), '량에 칸마다 똑같이 탔어요. 한 칸에 탄 사람이 더 많은 열차는 어느 쪽이고, 몇 명 더 많아요?'],
     figure: { kind: 'trains', trains: [{ name: '앞 열차', cars: 8 }, { name: '뒤 열차', cars: 8 }] },
     input: { kind: 'compound', fields: [{ key: 'which', label: '열차', options: ['앞', '뒤'] }, { key: 'diff', label: '몇 명 더' }] },
     answer: { which, diff },

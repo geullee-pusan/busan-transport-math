@@ -167,7 +167,7 @@ function t12Level1(a, b) {
   const sum = a + b;
   const bl = blankAt(sum, 1);
   return {
-    text: ['다대포해수욕장역에서 ', V(a), '명, 다대포항역에서 ', V(b), '명이 탔어요. 두 역에서 탄 사람은 모두 몇 명이에요?'],
+    text: ['어느 날 다대포해수욕장역에서 ', V(a), '명, 다대포항역에서 ', V(b), '명이 탔어요. 두 역에서 탄 사람은 모두 몇 명이에요?'],
     figure: { kind: 'train', cars: 8 },
     input: { kind: 'number', unit: '명' },
     answer: sum,
@@ -185,7 +185,7 @@ function t12Level2(a, b, T) {
   const more = sum > T ? '많아요' : '적어요';
   const bl = blankAt(sum, 1);
   return {
-    text: ['다대포해수욕장역에서 ', V(a), '명, 다대포항역에서 ', V(b), '명이 탔어요. 모두 몇 명이에요? ', V(T), '명보다 많아요?'],
+    text: ['어느 날 다대포해수욕장역에서 ', V(a), '명, 다대포항역에서 ', V(b), '명이 탔어요. 모두 몇 명이에요? ', V(T), '명보다 많아요?'],
     figure: { kind: 'train', cars: 8 },
     input: { kind: 'compound', fields: [{ key: 'sum', label: '모두 몇 명' }, { key: 'more', label: `${T}명보다`, options: ['많아요', '적어요'] }] },
     answer: { sum, more },
@@ -215,7 +215,7 @@ function t12Level3(p, m) {
   const total = p + back;
   const bl = blankAt(total, 1);
   return {
-    text: [L1(), '호선 열차는 ', CARS(), '량이에요. 앞 ', V(4), '량에 ', V(p), '명이 탔고, 뒤 ', V(4), '량에는 앞보다 ', V(m), '명 더 많이 탔어요. 열차에 탄 사람은 모두 몇 명이에요?'],
+    text: [L1(), '호선 열차는 ', CARS(), '량이에요. 어느 날 앞 ', V(4), '량에 ', V(p), '명이 탔고, 뒤 ', V(4), '량에는 앞보다 ', V(m), '명 더 많이 탔어요. 열차에 탄 사람은 모두 몇 명이에요?'],
     figure: { kind: 'train', cars: 8, split: 4 },
     input: { kind: 'number', unit: '명' },
     answer: total,
@@ -460,7 +460,7 @@ function t14(a, b, level) {
   const s1 = a + B.hundreds * 100;
   const s2 = s1 + B.tens * 10;
   return {
-    text: ['다대포해수욕장역에서 탄 사람 ', V(a), '명과 다대포항역에서 탄 사람 ', V(b), '명을 수 모형으로 나타내 같은 모형끼리 모았어요. 모두 몇 명이에요?'],
+    text: [(level >= 3 ? '어느 날 ' : '') + '다대포해수욕장역에서 탄 사람 ', V(a), '명과 다대포항역에서 탄 사람 ', V(b), '명을 수 모형으로 나타내 같은 모형끼리 모았어요. 모두 몇 명이에요?'],
     // 화면이 그리는 것은 모은 모형(hundreds·tens·ones). addends는 두 수를 따로 그릴 때 쓸 수 있는 덧붙임 정보.
     figure: { kind: 'base10', hundreds: H, tens: T, ones: O, addends: [A, B] },
     input: { kind: 'number', unit: '명' },

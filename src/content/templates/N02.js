@@ -202,7 +202,7 @@ function t22Level1(a, b) {
   const d = a - b;
   const bl = blankAt(d, 1);
   return {
-    text: ['열차에 ', V(a), '명이 타 있었어요. 다대포항역에서 ', V(b), '명이 내렸어요. 열차에 남은 사람은 몇 명이에요?'],
+    text: ['어느 날 열차에 ', V(a), '명이 타 있었어요. 다대포항역에서 ', V(b), '명이 내렸어요. 열차에 남은 사람은 몇 명이에요?'],
     figure: { kind: 'train', cars: 8 },
     input: { kind: 'number', unit: '명' },
     answer: d,
@@ -222,7 +222,7 @@ function t22Level2(am, pm) {
   const other = when === '오전' ? '오후' : '오전';
   const bl = blankAt(d, 1);
   return {
-    text: ['다대포항역에서 오전에 ', V(am), '명, 오후에 ', V(pm), '명이 탔어요. 언제 몇 명 더 많이 탔어요?'],
+    text: ['어느 날 다대포항역에서 오전에 ', V(am), '명, 오후에 ', V(pm), '명이 탔어요. 언제 몇 명 더 많이 탔어요?'],
     figure: null,
     input: { kind: 'compound', fields: [{ key: 'when', label: '언제', options: ['오전', '오후'] }, { key: 'diff', label: '몇 명 더' }] },
     answer: { when, diff: d },
@@ -245,7 +245,7 @@ function t22Level3(all, empty) {
   const d = all - empty;
   const bl = blankAt(d, 1);
   return {
-    text: ['열차에 ', V(all), '명이 타 있었어요. 그중 ', V(empty), '명이 서 있었어요. 앉아 있던 사람은 몇 명이에요?'],
+    text: ['어느 날 열차에 ', V(all), '명이 타 있었어요. 그중 ', V(empty), '명이 서 있었어요. 앉아 있던 사람은 몇 명이에요?'],
     figure: null,
     input: { kind: 'number', unit: '명' },
     answer: d,
@@ -278,7 +278,7 @@ function t22Level4(off, left) {
   const bl = blankAt(s, 1);
   const minus = Math.abs(left - off);
   return {
-    text: ['열차에 몇 명이 타 있었는데, 다대포항역에서 ', V(off), '명이 내려서 ', V(left), '명이 남았어요. 처음에 타 있던 사람은 몇 명이에요?'],
+    text: ['어느 날 열차에 몇 명이 타 있었는데, 다대포항역에서 ', V(off), '명이 내려서 ', V(left), '명이 남았어요. 처음에 타 있던 사람은 몇 명이에요?'],
     figure: { kind: 'train', cars: 8 },
     input: { kind: 'number', unit: '명' },
     answer: s,
@@ -570,7 +570,7 @@ function t24(a, b, level) {
         `그래서 남은 사람은 ${d}명이에요.`,
       ];
   return {
-    text: ['열차에 ', V(a), '명이 타 있었고, 다대포항역에서 ', V(b), '명이 내렸어요. 남은 사람을 세로식으로 계산하고 있어요. 빈칸을 채워요.'],
+    text: [(level >= 3 ? '어느 날 ' : '') + '열차에 ', V(a), '명이 타 있었고, 다대포항역에서 ', V(b), '명이 내렸어요. 남은 사람을 세로식으로 계산하고 있어요. 빈칸을 채워요.'],
     figure: { kind: 'vertical', op: '−', a, b },
     input: { kind: 'compound', fields },
     answer: { changed: from - 1, part, answer: d },

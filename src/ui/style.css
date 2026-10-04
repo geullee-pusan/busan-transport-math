@@ -1,6 +1,6 @@
 /* 부산 교통 수학 — 화면 규격은 docs/SPEC.md 9장(UX 자문), 모양·색·글자는 docs/visual/visual-review-01.md(시각 자문 1차)를 따른다.
    색·글자·간격·둥글기·선 굵기 변수는 tokens.css(docs/visual/assets/tokens.css를 옮김).
-   ■ 선 문법: 점선 = 아직 / 점점이 = 만든 숫자(이 뜻에만) / 실선 2px = 있음 / 굵은 4px(+✓ 배지) = 고름·대상·금테
+   ■ 선 문법: 점선 = 아직 / 점점이 = 쓰지 않음(만든 숫자 표시는 2026-10-04 부모 결정으로 뺌) / 실선 2px = 있음 / 굵은 4px(+✓ 배지) = 고름·대상·금테
              / 이중선 = 기록 / 채움 = 끝남·확정. 진한 채움 단추는 "답 내기"와 "출발"에만.
    정답·오답에 색을 쓰지 않는다(✓/⏸ 모양과 문구로). 그림자는 쓰지 않는다. */
 @import './tokens.css';
@@ -144,11 +144,6 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus
 .problem { background: var(--paper); border-radius: var(--r-lg); padding: 20px 22px; }
 .problem-text { font-size: var(--fs-problem); line-height: var(--lh-problem); margin: 0 0 var(--sp-3); max-width: 26em; }
 .num { font: inherit; color: inherit; background: none; border: 0; padding: 0 1px; position: relative; min-height: 0; font-variant-numeric: tabular-nums; font-weight: var(--fw-bold); }
-/* 만든 숫자: 점점이 밑줄(이 뜻에만 쓴다). 글자 흐름 밖에 그려 숫자와 단위 사이를 벌리지 않는다 */
-.num.virtual { border-bottom: 0; background: radial-gradient(circle, var(--ink-2) 1.2px, transparent 1.4px) 0 100% / 5px 4px repeat-x; padding-bottom: 4px; }
-/* 만든 숫자 안내: 문제 문장 위 회색 한 줄(UX 7차 결정) */
-.num-note { margin: 0 0 var(--sp-2); font-size: var(--fs-label); color: var(--ink-2); display: flex; align-items: baseline; gap: 6px; }
-.num-note .sample { font-weight: var(--fw-heavy); color: var(--ink); pointer-events: none; }
 .num-tip { position: absolute; left: 0; top: 110%; white-space: nowrap; background: var(--ink); color: var(--paper); font-size: var(--fs-label); font-weight: var(--fw-regular); border-radius: var(--r-sm); padding: 6px 10px; z-index: 5; }
 .unknown-num { font-weight: var(--fw-bold); }
 /* 문제 속 모르는 수 □: 실선 + 회색 바탕, 누를 수 없음(힌트 ④ 빈칸과 반대 모양) */

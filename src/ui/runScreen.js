@@ -61,11 +61,11 @@ export function renderRun(root, app, run, { onFinish }) {
     if (typeof piece === 'string') return piece;
     if (piece.label !== undefined) return piece.label;
     if (piece.unknown) return h('span.unknown-num', [...piece.unknown].map((ch) => (ch === '□' ? h('span.unknown-box', ' ') : ch)));
-    const virtual = piece.tag === 'virtual';
-    if (piece.tag !== 'real' && !virtual) return h('span.num.plain', String(piece.num)); // 맨 계산 수: 표시·말풍선 없음
-    const el = h(`button.num${virtual ? '.virtual' : ''}`, { type: 'button' }, String(piece.num));
+    // 만든 숫자·맨 계산 수는 표시 없이 그대로(부모 결정 2026-10-04: 표시가 오히려 헷갈림). 실제 값만 누르면 출처가 뜬다.
+    if (piece.tag !== 'real') return h('span.num.plain', String(piece.num));
+    const el = h('button.num', { type: 'button' }, String(piece.num));
     el.addEventListener('click', () => {
-      const tip = h('span.num-tip', virtual ? '이 문제를 위해 만든 숫자예요' : `출처: ${piece.source}`);
+      const tip = h('span.num-tip', `출처: ${piece.source}`);
       el.append(tip);
       setTimeout(() => tip.remove(), 2600);
     });
@@ -77,9 +77,6 @@ export function renderRun(root, app, run, { onFinish }) {
     if (!cur) return finish();
     const p = cur.problem;
     const isDiag = run.mode === 'express' || run.mode === 'placement';
-    if (p.text.some((x) => typeof x === 'object' && x && x.tag === 'virtual')) {
-      state = { ...state, settings: { ...state.settings, virtualShown: (state.settings.virtualShown ?? 0) + 1 } };
-    }
 
     const feedback = h('div.feedback', { 'aria-live': 'polite' });
     const after = h('div.after');
@@ -100,10 +97,7 @@ export function renderRun(root, app, run, { onFinish }) {
         })()
       : null;
 
-    // 만든 숫자 안내는 숫자 밑이 아니라 문제 위 한 줄에(줄 사이에 작은 글자가 끼지 않게, UX 7차 결정). 처음 세 문제에만.
-    const hasVirtual = p.text.some((x) => typeof x === 'object' && x && x.tag === 'virtual');
-    const numNote = hasVirtual && (state.settings.virtualShown ?? 0) <= 3 ? h('p.num-note', { 'aria-hidden': 'true' }, '숫자 아래 점선', h('span.num.virtual.sample', '24'), '= 만든 숫자예요') : null;
-    const problemEl = h('section.problem', numNote, h('p.problem-text', p.text.map(numSpan)), drawFigure(p.figure), p.challenge ? h('div.challenge-tag', '도전 문제') : null);
+    const problemEl = h('section.problem', h('p.problem-text', p.text.map(numSpan)), drawFigure(p.figure), p.challenge ? h('div.challenge-tag', '도전 문제') : null);
 
     // 힌트 서랍
     const drawer = h('aside.hint-drawer', { 'aria-hidden': 'true' });

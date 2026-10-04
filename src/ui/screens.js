@@ -290,6 +290,8 @@ function parentBody(root, app, { onHome, onReset }) {
         h('p', '정답보다 "어떻게 풀었어?"를 먼저 물어봐 주세요. 수학이 자신 없으시면 아이에게 설명을 부탁해 보세요.'),
         h('p', '아이가 앞서가는 것(학교 진도보다 위)은 괜찮아요. 다른 아이나 형제와 비교하지는 말아 주세요.'),
       ),
+      // 잠: 시간 제한 기능 대신 부모 안내로 지킨다(부모 결정 2026-10-04, 아동 심리 04 R10 — AASM 6~12세 9~12시간, 잠들기 전 화면은 잠을 늦춤)
+      h('p.guide', '잠자기 한 시간 전에는 운행하지 않게 해 주세요. 이 나이 아이는 하루 9~12시간 자는 것이 좋아요.'),
       h('p.guide', '이 화면의 숫자로 꾸짖지 마세요. "이 문제 같이 풀어 볼까?"라고 말해 보세요. 아이가 지쳐 보이면(한숨, 아무 답이나 빨리 냄, 화면을 오래 멍하게 봄) 그날은 쉬게 해 주세요.'),
       h('section.guide', h('h3', '아이 이름'), (() => { const box = h('input.name-input', { type: 'text', maxlength: 8, value: state.profile.nickname?.trim() ?? '' }); return h('div', box, h('button.secondary', { type: 'button', onclick: () => { if (!box.value.trim()) return; app.save({ ...app.state, profile: { ...app.state.profile, nickname: box.value.trim() } }); parentBody(root, app, { onHome, onReset }); } }, '이름 바꾸기')); })()),
       h('section.guide', h('h3', '하루 운행 수'), h('p', `하루에 ${state.settings.dailyRuns ?? 2}번(한 번에 약 10분). 마지막 운행을 시작할 때만 "오늘의 막차예요"라고 알려요. 못 한 운행은 다음 날로 쌓이지 않아요.`),

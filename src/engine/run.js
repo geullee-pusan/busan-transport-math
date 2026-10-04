@@ -205,10 +205,15 @@ function finishProblem(state0, run, correct, hint) {
   const before = ns.status;
 
   if (ns.inspect && slot.kind !== 'diag') {
-    // 점검 중인 추정 역: 3단계 이상을 힌트 ① 이하로 2문제 맞히면 확정. 칸과 거리는 이미 있으므로 늘지 않는다.
-    const right = (ns.inspectRight ?? 0) + (correct && hint <= 1 && level >= 3 ? 1 : 0);
-    const node = { ...ns, attempts: [...ns.attempts, { c: correct, h: hint, l: level, r: template.repr, d: run.day }].slice(-20), rating: nextRating(ns.rating, { correct, hint }), inspectRight: right };
-    if (right >= 2) {
+    // 점검 중인 추정 역: 3단계 이상 정답 2문제로 확정(힌트 ① 이하 = 한 문제, 힌트 ②~④ = 반 문제 — 힌트로 배워도 앞으로 간다).
+    // 두 운행 안에 끝나지 않으면 목적지를 내주고 보통 임시 정차로 돌린다(불은 그대로). 막힘이 되지 않게(아동 심리 자문 04 R2).
+    const right = (ns.inspectRight ?? 0) + (correct && level >= 3 ? (hint <= 1 ? 1 : 0.5) : 0);
+    const runs = ns.inspectRuns?.includes(run.seed) ? ns.inspectRuns : [...(ns.inspectRuns ?? []), run.seed];
+    const node = { ...ns, attempts: [...ns.attempts, { c: correct, h: hint, l: level, r: template.repr, d: run.day }].slice(-20), rating: nextRating(ns.rating, { correct, hint }), inspectRight: right, inspectRuns: runs };
+    if (right < 2 && runs.length >= 3) {
+      Object.assign(node, { inspect: false, inspectRight: 0, inspectRuns: [], inferStrikes: 0, reviewDay: run.day + 1 });
+      run.events.push({ type: 'inspectReleased', node: slot.node });
+    } else if (right >= 2) {
       Object.assign(node, { status: 'confirmed', inspect: false, inferred: false, confirmedDay: run.day, longStage: 0, reviewDay: run.day + LONG_GAPS[0] });
       run.events.push({ type: 'inspected', node: slot.node });
     }
@@ -336,7 +341,8 @@ export function licenseOf(state) {
 export function park(state, run) {
   const cur = run.current;
   if (!cur || run.finished) return state;
-  return { ...state, parked: { node: cur.slot.node, templateId: cur.template.id, level: cur.level, seed: cur.seed, tries: run.tries, hint: run.hint } };
+  // day: 같은 날 이어 타면 운행 수를 새로 세지 않는다(✕로 멈춰도 손해가 없게, 아동 심리 자문 04 R3)
+  return { ...state, parked: { node: cur.slot.node, templateId: cur.template.id, level: cur.level, seed: cur.seed, tries: run.tries, hint: run.hint, day: run.day } };
 }
 
 /** 운행 일지 */

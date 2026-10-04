@@ -30,7 +30,7 @@ export function stationSheet(stationId, onClose, { inspect = false, inferred = f
   ].filter(Boolean);
   const sheet = h('div.sheet.explore',
     h('div.sheet-tabs', h('strong', `${st.name}역`, inspect ? h('span.check-tag', '점검') : null), h('button.icon-btn', { type: 'button', 'aria-label': '닫기', onclick: () => { sheet.remove(); onClose?.(); } }, icon('close'))),
-    inspect ? h('p.info', '불은 켜진 채로 있어요. 다음 운행에서 이 역 문제를 한 번 더 풀어 봐요. 혼자 2문제를 맞히면 점검 끝이에요.') : inferred ? h('p.info', '시승 운행에서 켰어요. 나중에 임시 정차에서 한 문제로 확인해요.') : null,
+    inspect ? h('p.info', '불은 켜진 채로 있어요. 다음 운행에서 이 역 문제를 한 번 더 풀어 봐요. 두 문제를 더 맞히면 점검 끝이에요.') : inferred ? h('p.info', '시승 운행에서 켰어요. 나중에 임시 정차에서 한 문제로 확인해요.') : null,
     h('ul.explore-list', lines.map((l) => h('li', l))),
     h('p.small', '출처: 부산교통공사·공공데이터포털 자료(역 순서, 역 사이 거리, 역 번호)'),
   );

@@ -416,3 +416,26 @@ test('추정으로 켠 역은 선수 닫힘(1호선 역)이 모두 켜져 있고
   }
   for (const id of MUST_CHECK) if (!state.nodes[id]) assert.equal(startRatingOf(state, id), 3, id);
 });
+
+test('점검이 두 운행 안에 끝나지 않으면 목적지를 내주고 보통 임시 정차로(아동 심리 04 R2), 힌트 정답은 반 문제', () => {
+  let { state } = placeAll((cur) => cur.problem.answer);
+  const x = Object.keys(state.nodes).find((id) => state.nodes[id].inferred);
+  state.nodes[x] = { ...state.nodes[x], inspect: true, inspectRight: 0, inspectRuns: [] };
+  for (const id of Object.keys(state.nodes)) if (id !== x && state.nodes[id].status === 'passed') state.nodes[id] = { ...state.nodes[id], reviewDay: 999 };
+  let released = false;
+  for (let k = 0; k < 3 && !released; k++) {
+    let run = startRun(state, { day: 5 + k, seed: 100 + k });
+    let guard = 0;
+    while (!run.finished && guard++ < 20) {
+      currentProblem(run);
+      ({ state, run } = submit(state, run, -12345));
+      if (run.current) ({ state, run } = submit(state, run, -12346));
+      if (run.current) ({ state, run } = giveUp(state, run));
+      if (run.events.some((e) => e.type === 'inspectReleased')) released = true;
+    }
+  }
+  assert.ok(released, '세 번째 운행에서 점검이 풀린다');
+  assert.equal(state.nodes[x].inspect, false);
+  assert.equal(state.nodes[x].status, 'passed', '불은 그대로');
+  assert.notEqual(destination(state, 'L1').id, x);
+});

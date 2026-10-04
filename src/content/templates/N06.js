@@ -428,9 +428,9 @@ const D1 = {
   diagnostic: true,
   generate() {
     return {
-      text: [n(56), ' ÷ ', n(8), ' = ?'],
+      text: ['동매역에서 ', V(56), '명이 ', L1(), '호선 ', CARS(), '칸에 똑같이 나눠 탔어요. ', n(56), ' ÷ ', n(8), ' = ?'],
       figure: null,
-      input: { kind: 'number' },
+      input: { kind: 'number', unit: '명' },
       answer: 7,
       discriminators: [
         { value: 8, category: '개념', kind: 'nudge', feedbackCheck: '곱해서 확인해 볼까요?', feedback: '8단에서 56은 몇 번째에 있나요?' },

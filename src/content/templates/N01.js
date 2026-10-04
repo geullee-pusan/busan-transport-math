@@ -117,14 +117,15 @@ function addDiscs(a, b) {
   );
 }
 
-function buildAdd(a, b) {
+/** scene = { text: 식 앞 교통 장면 조각, unit } (없으면 식만) */
+function buildAdd(a, b, scene = null) {
   const sum = a + b;
   const bl = blankAt(sum, 1);
   const u = (a % 10) + (b % 10);
   return {
-    text: [n(a), ' + ', n(b), ' = ?'],
+    text: [...(scene?.text ?? []), n(a), ' + ', n(b), ' = ?'],
     figure: { kind: 'vertical', op: '+', a, b },
-    input: { kind: 'number' },
+    input: scene?.unit ? { kind: 'number', unit: scene.unit } : { kind: 'number' },
     answer: sum,
     discriminators: addDiscs(a, b),
     hints: [`${a} + ${b}의 값을 구해요.`, '자리를 맞춰 세로로 써 봐요. 일의 자리부터 차례로 해요.', `일의 자리는 ${a % 10} + ${b % 10} = ${ieyo(u)}.`, `${a} + ${b} = ${bl.blank}`],
@@ -158,7 +159,10 @@ const T1_1 = {
       },
       level === 1 ? [245, 138] : level === 2 ? [368, 275] : [586, 417],
     );
-    return buildAdd(a, b);
+    return buildAdd(a, b, {
+      text: [level >= 3 ? '어느 날 다대포해수욕장역에서 오전에 ' : '다대포해수욕장역에서 오전에 ', V(a), '명, 오후에 ', V(b), '명이 탔어요. 모두 몇 명인지 식으로 계산해요. '],
+      unit: '명',
+    });
   },
 };
 
@@ -377,7 +381,7 @@ const D1 = {
   maxLevel: 2,
   diagnostic: true,
   generate() {
-    return { ...buildAdd(368, 275), hints: [], blank: null };
+    return { ...buildAdd(368, 275, { text: ['다대포해수욕장역에서 오전에 ', V(368), '명, 오후에 ', V(275), '명이 탔어요. '], unit: '명' }), hints: [], blank: null };
   },
 };
 const D2 = {
@@ -401,7 +405,7 @@ const D3 = {
   maxLevel: 3,
   diagnostic: true,
   generate() {
-    return { ...buildAdd(586, 417), hints: [], blank: null };
+    return { ...buildAdd(586, 417, { text: ['다대포해수욕장역에서 오전에 ', V(586), '명, 오후에 ', V(417), '명이 탔어요. '], unit: '명' }), hints: [], blank: null };
   },
 };
 

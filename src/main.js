@@ -57,9 +57,11 @@ function go(run) {
   if (!run) return home();
   if (run.mode !== 'placement') {
     const day = dayNumber();
-    if (runsLeftToday(app.state, day) <= 0) return home();
-    run.lastRun = runsLeftToday(app.state, day) === 1; // 오늘의 막차
-    app.save(countRun(app.state, day));
+    // 같은 날 ✕로 멈춘 운행을 이어 타면 새 운행으로 세지 않는다(아동 심리 자문 04 R3). 막차를 멈췄으면 다음 날 첫차로 이어 탄다.
+    const resuming = app.state.parked?.day === day && run.slots[0]?.kind === 'parked';
+    if (!resuming && runsLeftToday(app.state, day) <= 0) return home();
+    run.lastRun = resuming ? runsLeftToday(app.state, day) <= 0 : runsLeftToday(app.state, day) === 1; // 오늘의 막차
+    if (!resuming) app.save(countRun(app.state, day));
   }
   renderRun(root, app, run, {
     onFinish: (finished, state) => {

@@ -166,12 +166,13 @@ function mulExplain(a, m, unit = '') {
   };
 }
 
-function buildMul(a, m) {
+/** scene = { text: 식 앞 교통 장면 조각, unit } (없으면 식만) */
+function buildMul(a, m, scene = null) {
   const [, t] = digits3(a);
   return {
-    text: [n(a), ' × ', n(m), ' = ?'],
+    text: [...(scene?.text ?? []), n(a), ' × ', n(m), ' = ?'],
     figure: { kind: 'vertical', op: '×', a, b: m },
-    input: { kind: 'number' },
+    input: scene?.unit ? { kind: 'number', unit: scene.unit } : { kind: 'number' },
     answer: a * m,
     discriminators: mulDiscs(a, m),
     ...mulHints(a, m, `${wa(a)} ${m}의 곱을 물어요.${t === 0 ? ` ${eun(a)} 십의 자리가 0이에요.` : ''}`),
@@ -208,7 +209,10 @@ const T12_1 = {
   maxLevel: 3,
   generate(rng, level) {
     const [a, m] = pickMul(rng, level);
-    return buildMul(a, m);
+    return buildMul(a, m, {
+      text: [level >= 3 ? '어느 날 대티역을 지난 열차마다 ' : '대티역을 지난 열차마다 ', V(a), '명씩 타 있었어요. 열차 ', V(m), '대에 탄 사람은 모두 몇 명인지 식으로 계산해요. '],
+      unit: '명',
+    });
   },
 };
 
@@ -505,7 +509,7 @@ const D1 = {
   maxLevel: 3,
   diagnostic: true,
   generate() {
-    return { ...buildMul(305, 4), hints: [], blank: null };
+    return { ...buildMul(305, 4, { text: ['대티역을 지난 열차 ', V(4), '대에 ', V(305), '명씩 타 있었어요. '], unit: '명' }), hints: [], blank: null };
   },
 };
 const D2 = {

@@ -96,7 +96,7 @@ export function renderRun(root, app, run, { onFinish }) {
       'header.band',
       h('button.icon-btn', { type: 'button', onclick: exit, 'aria-label': '운행 멈추기' }, icon('close')),
       h('div.band-main', h('div.band-line', h(`span.badge-1${NODES.get(node)?.line === 'L2' ? '.badge-2' : ''}`, NODES.get(node)?.line === 'L2' ? '2' : '1'), h('span.band-dest', `${st?.name ?? ''}역 가는 길`), tag ? h('span.band-tag', tag) : null), run.mode === 'normal' || run.mode === 'challenge' ? h('div.ticks', { 'aria-label': `${Math.floor((FULL - ns.halves) / 2)}칸 남음` }, ticks) : null),
-      h('div.band-side', h('div.license-chip', tierOf(state.license).short), h('div.band-progress', `40역 중 ${litCount}역 켜짐`), run.restAfter ? h('div.band-tag', '이번 운행이 끝나면 쉬어요') : h('button.parent-btn.small-btn', { type: 'button', onclick: () => restAfterRun() }, icon('parent'), '부모')),
+      h('div.band-side', h('div.license-chip', tierOf(state.license).short), h('div.band-progress', `40역 중 ${litCount}역 켜짐`), run.restAfter ? h('div.band-tag', '이번 운행이 끝나면 쉬어요') : !state.parentPin ? null : h('button.parent-btn.small-btn', { type: 'button', onclick: () => restAfterRun() }, icon('parent'), '부모')),
     );
   }
 
@@ -232,7 +232,7 @@ export function renderRun(root, app, run, { onFinish }) {
         const evs = run.events?.slice(evBefore) ?? [];
         const ev = evs.find((e) => e.type === 'lit') ?? evs.find((e) => e.type === 'inspected') ?? evs.at(-1);
         const tick = evs.find((e) => e.type === 'tick');
-        const step = tick ? (tick.gained >= 2 ? ' · 한 칸 앞으로' : ' · 반 칸 앞으로') : evs.some((e) => e.type === 'prep') ? ' · 몸풀기 문제라 칸은 그대로예요' : '';
+        const step = tick ? (tick.gained >= 2 ? ' · 한 칸 앞으로' : ' · 반 칸 앞으로') : evs.some((e) => e.type === 'prep') ? ' · 이 문제는 준비 구간이에요. 칸은 다음 문제부터 채워요' : '';
         if (out.passed) feedback.append(fbLine('right', 'pass', `${stationOf(out.passed)?.name}역 통과!`));
         else if (ev?.type === 'lit') feedback.append(fbLine('right', 'check', `${stationOf(ev.node)?.name}역 개통!`));
         else if (ev?.type === 'inspected') feedback.append(fbLine('right', 'check', `${stationOf(ev.node)?.name}역 점검 끝!`));
@@ -244,7 +244,7 @@ export function renderRun(root, app, run, { onFinish }) {
       }
       // 오답(같은 문제에서 두 번째 오답이면 소리를 생략한다)
       if (run.tries !== 2) brake(state.settings);
-      if (response !== UNKNOWN) feedback.append(h('div.wrong', h('s.my-answer', typeof response === 'object' ? Object.values(response).join(', ') : String(response))), fbLine('wrong', 'pause', '버스가 잠깐 멈췄어요.'));
+      if (response !== UNKNOWN) feedback.append(h('div.wrong', h('s.my-answer', typeof response === 'object' ? Object.values(response).join(', ') : String(response))), fbLine('wrong', 'pause', '차량이 잠깐 멈췄어요.'));
       else feedback.append(h('div.info', '괜찮아요. 이건 운행하면서 배워요.')); // 시승에서는 바로 다음 문제로 가므로 "같이 배워요"라고 약속하지 않는다(학생 #1)
       if (r.feedback) feedback.append(h('div.wrong-detail', r.feedback));
       input.reset();
@@ -286,7 +286,7 @@ export function renderRun(root, app, run, { onFinish }) {
 
   // 부모: "이번 운행 끝나면 쉬기" — 멈춤을 엄마의 명령이 아니라 운행 규칙으로(아동 심리 3차, 게이미피케이션 3차)
   async function restAfterRun() {
-    if (!state.parentPin) return alert('부모 화면에서 먼저 부모님 번호를 정해 주세요.');
+    if (!state.parentPin) return; // 번호가 없으면 단추 자체를 보이지 않는다(아동 심리 자문 04 R1)
     if (!(await askPin(state, '번호를 넣으면 이번 운행이 끝난 뒤 오늘 운행을 마쳐요.'))) return;
     run.restAfter = true;
     run.lastRun = true;

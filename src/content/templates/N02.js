@@ -148,11 +148,13 @@ const T2_1 = {
       level === 1 ? [586, 243] : [432, 127],
     );
     const d = a - b;
-    return build(a, b, d, level);
+    const scene = [level >= 3 ? '어느 날 다대포항역에 도착한 열차에 ' : '다대포항역에 도착한 열차에 ', V(a), '명이 타 있었고, ', V(b), '명이 내렸어요. '];
+    return build(a, b, d, level, { text: level < 3 ? [...scene, '남은 사람은 몇 명인지 식으로 계산해요. '] : [...scene, '남은 사람을 구해 봐요. '], unit: '명' });
   },
 };
 
-function build(a, b, d, level) {
+/** scene = { text: 식 앞 교통 장면 조각, unit } (없으면 식만) */
+function build(a, b, d, level, scene = null) {
   const bl = blankAt(d, 1);
   const explainWhy = borrowPos(a, b).length
     ? [firstStep(a, b), '빌려 준 자리는 1 줄어든 수로 계산해요.', `그래서 ${a} − ${b} = ${ieyo(d)}.`]
@@ -160,9 +162,9 @@ function build(a, b, d, level) {
   const alt = [`${b}에서 ${a}까지 더해서 세어도 돼요.`, `${b} + ${d} = ${ieyo(a)}.`, `어느 길로 해도 답은 ${ro(d)} 같아요.`];
   if (level < 3) {
     return {
-      text: [n(a), ' − ', n(b), ' = ?'],
+      text: [...(scene?.text ?? []), n(a), ' − ', n(b), ' = ?'],
       figure: { kind: 'vertical', op: '−', a, b },
-      input: { kind: 'number' },
+      input: scene?.unit ? { kind: 'number', unit: scene.unit } : { kind: 'number' },
       answer: d,
       discriminators: subDiscs(a, b),
       hints: [`${a} − ${b}의 값을 구해요.`, '자리를 맞춰 세로로 써 봐요. 일의 자리부터 차례로 해요.', firstStep(a, b), `${a} − ${b} = ${bl.blank}`],
@@ -174,7 +176,7 @@ function build(a, b, d, level) {
   // 3단계: 뺄셈 + 덧셈 검산식(equation)
   const wrongs = [absDigits(a, b), d + 10, d + 100].filter((v) => v !== d);
   return {
-    text: [n(a), ' − ', n(b), '의 답을 구해서, 그 답에 ', n(b), jo(b, '을', '를'), ' 더하는 덧셈식으로 써요.'],
+    text: [...(scene?.text ?? []), n(a), ' − ', n(b), '의 답을 구해서, 그 답에 ', n(b), jo(b, '을', '를'), ' 더하는 덧셈식으로 써요.'],
     figure: { kind: 'vertical', op: '−', a, b },
     input: { kind: 'equation' },
     answer: { left: d, op: '+', right: b, result: a, commutative: true },
@@ -494,7 +496,7 @@ const D1 = {
   maxLevel: 2,
   diagnostic: true,
   generate() {
-    return { ...build(352, 127, 225, 2), hints: [], blank: null };
+    return { ...build(352, 127, 225, 2, { text: ['다대포항역에서 열차 승객 ', V(352), '명 중 ', V(127), '명이 내렸어요. '], unit: '명' }), hints: [], blank: null };
   },
 };
 const D2 = {

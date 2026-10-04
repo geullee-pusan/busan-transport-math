@@ -130,7 +130,8 @@ const msMath = (sec) => msText(sec, n);
 
 // ── T14-1 정비창 점검 (식) — 1~3단계 ──
 // 단계 불변식: 1 받아올림 없음 / 2 초 받아올림 / 3 뺄셈 받아내림.
-function t141Add(x, y, level) {
+// scene = 식 앞 교통 장면 조각(없으면 식만)
+function t141Add(x, y, level, scene = null) {
   const sum = x + y;
   const answer = msAns(sum);
   const [a, b, c, d] = [Math.floor(x / 60), x % 60, Math.floor(y / 60), y % 60];
@@ -147,7 +148,7 @@ function t141Add(x, y, level) {
         );
   const carry = b + d >= 60;
   return {
-    text: [...msMath(x), ' + ', ...msMath(y), ' = ?'],
+    text: [...(scene ?? []), ...msMath(x), ' + ', ...msMath(y), ' = ?'],
     figure: null,
     input: { kind: 'compound', fields: MS_FIELDS },
     answer,
@@ -169,7 +170,7 @@ function t141Add(x, y, level) {
     },
   };
 }
-function t141Sub(x, y) {
+function t141Sub(x, y, scene = null) {
   const diff = x - y;
   const answer = msAns(diff);
   const [a, b, c, d] = [Math.floor(x / 60), x % 60, Math.floor(y / 60), y % 60];
@@ -182,7 +183,7 @@ function t141Sub(x, y) {
     answer,
   );
   return {
-    text: [...msMath(x), ' − ', ...msMath(y), ' = ?'],
+    text: [...(scene ?? []), ...msMath(x), ' − ', ...msMath(y), ' = ?'],
     figure: null,
     input: { kind: 'compound', fields: MS_FIELDS },
     answer,
@@ -212,7 +213,7 @@ const T14_1 = {
         ([p, q]) => p % 60 < q % 60 && Math.floor(p / 60) - Math.floor(q / 60) - 1 >= 1 && (p - q) % 60 >= 5,
         [190, 100],
       );
-      return t141Sub(x, y);
+      return t141Sub(x, y, ['어느 날 부암역 승강장에서 나는 열차를 ', ...msText(x), ' 기다렸고, 친구는 ', ...msText(y), ' 기다렸어요. 내가 몇 분 몇 초 더 기다렸는지 식으로 계산해요. ']);
     }
     const [x, y] = draw(
       rng,
@@ -223,7 +224,7 @@ const T14_1 = {
       },
       level === 1 ? [135, 90] : [105, 30],
     );
-    return t141Add(x, y, level);
+    return t141Add(x, y, level, ['집에서 부암역까지 ', ...msText(x), ' 걸었고, 승강장에서 열차를 ', ...msText(y), ' 기다렸어요. 모두 몇 분 몇 초인지 식으로 계산해요. ']);
   },
 };
 
@@ -591,7 +592,7 @@ const T14_F2 = {
 };
 
 // ── 급행 통과 진단 ──
-const D1 = { id: 'G14-D1', node: 'G14', title: '급행 진단: 1분 45초 + 30초', repr: '식', minLevel: 2, maxLevel: 2, diagnostic: true, generate: () => asDiag(t141Add(105, 30, 2)) };
+const D1 = { id: 'G14-D1', node: 'G14', title: '급행 진단: 1분 45초 + 30초', repr: '식', minLevel: 2, maxLevel: 2, diagnostic: true, generate: () => asDiag(t141Add(105, 30, 2, ['부암역까지 ', ...msText(105), ' 걷고 열차를 ', ...msText(30), ' 기다렸어요. '])) };
 const D2 = { id: 'G14-D2', node: 'G14', title: '급행 진단: 이 열차를 탈 수 있을까', repr: '문장', minLevel: 3, maxLevel: 3, diagnostic: true, generate: () => asDiag(t142Level3(110, 205, 5)) };
 const D3 = { id: 'G14-D3', node: 'G14', title: '급행 진단(예비): 출발 시각 거꾸로', repr: '문장', minLevel: 4, maxLevel: 4, diagnostic: true, generate: () => asDiag(t142Level4(7, 12, 5, 220)) };
 

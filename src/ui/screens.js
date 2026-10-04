@@ -58,7 +58,7 @@ export function renderHome(root, app, { onStart, onExpress, onChallenge, onGarag
   const litCount = LINE1_NODES.filter((n) => ['lit', 'passed', 'confirmed'].includes(nodeState(state, n.id).status)).length;
   const parkedSt = state.parked ? stationOf(state.parked.node) : null;
   const tier = tierOf(state.license);
-  const doneToday = runsLeftToday(state, dayNumber()) <= 0;
+  const doneToday = runsLeftToday(state, dayNumber()) <= 0 && state.parked?.day !== dayNumber(); // 같은 날 멈춘 운행은 이어 탈 수 있다(R3)
   const canExpress = dest && diagnosticsFor(dest.id).length > 0 && !doneToday && !ns.inspect;
 
   // 부모가 신고를 확인했으면 한 번 알려 준다(아이의 신고가 닿았다는 고리 닫기).
@@ -83,7 +83,7 @@ export function renderHome(root, app, { onStart, onExpress, onChallenge, onGarag
         : dest
         ? h('section.next',
             h('div.next-dest', h(`span.badge-1${dest.line === 'L2' ? '.badge-2' : ''}`, dest.line === 'L2' ? '2' : '1'), ns.inspect ? ` ${stationOf(dest.id)?.name ?? ''}역 점검` : ` ${stationOf(dest.id)?.name ?? ''}역까지 `, ns.inspect ? null : h('strong', left)),
-            ns.inspect ? h('div.info', `${stationOf(dest.id)?.name ?? ''}역을 한 번 더 살펴봐요. 불은 그대로예요. 혼자 2문제를 맞히면 점검 끝이에요. ① 노선 확인은 봐도 괜찮아요.`) : ns.pending ? h('div.info', pendingText(ns.pending)) : null,
+            ns.inspect ? h('div.info', `${stationOf(dest.id)?.name ?? ''}역을 한 번 더 살펴봐요. 불은 그대로예요. 두 문제를 더 맞히면 점검 끝이에요. ① 노선 확인은 봐도 괜찮아요.`) : ns.pending ? h('div.info', pendingText(ns.pending)) : null,
             h('div.next-btns',
               h('button.primary.big', { type: 'button', onclick: onStart }, icon('depart'), parkedSt ? `${parkedSt.name}역에서 출발` : '출발'),
               canExpress ? h('button.secondary', { type: 'button', onclick: onExpress, title: '급행: 역마다 2문제를 맞히면 통과해요 · 세 번째 역은 1문제 더' }, icon('express'), '급행') : null,
@@ -196,15 +196,33 @@ export function renderSettings(root, app, { onHome }) {
 }
 
 /** 부모 화면: 부모가 정한 4자리 번호로 잠근다(아동 심리 자문 1차 H3 — 곱셈 문제는 아이가 풀 수 있음). */
+let pinFails = 0;
+let pinLockedUntil = 0;
 export function renderParent(root, app, { onHome, onReset }) {
   const hasPin = Boolean(app.state.parentPin);
   let first = null;
   const box = h('input.name-input', { type: 'password', inputmode: 'numeric', maxlength: 4, autocomplete: 'off' });
   const msg = h('p', hasPin ? '부모님 번호 4자리를 넣어 주세요.' : '부모님만 아는 번호 4자리를 정해 주세요.');
+  // 번호를 아이가 먼저 정하지 않도록 안내하고, 3번 틀리면 잠시 막는다(남은 초는 보이지 않음, 아동 심리 자문 04 R1)
+  const help = hasPin ? null : h('p.small', '아이가 보지 않을 때 정해 주세요. 생일이나 1234 같은 번호는 피해 주세요.');
   const go = () => {
     const v = box.value.trim();
     if (!isPin(v)) return (msg.textContent = '숫자 4자리를 넣어 주세요.');
-    if (hasPin) return v === app.state.parentPin ? parentBody(root, app, { onHome, onReset }) : ((msg.textContent = '번호가 달라요.'), (box.value = ''));
+    if (hasPin) {
+      if (Date.now() < pinLockedUntil) return (msg.textContent = '잠시 뒤에 다시 넣어 주세요.'), (box.value = '');
+      if (v === app.state.parentPin) {
+        pinFails = 0;
+        return parentBody(root, app, { onHome, onReset });
+      }
+      pinFails += 1;
+      box.value = '';
+      if (pinFails >= 3) {
+        pinFails = 0;
+        pinLockedUntil = Date.now() + 30000;
+        return (msg.textContent = '잠시 뒤에 다시 넣어 주세요.');
+      }
+      return (msg.textContent = '번호가 달라요.');
+    }
     if (first === null) {
       first = v;
       box.value = '';
@@ -218,7 +236,7 @@ export function renderParent(root, app, { onHome, onReset }) {
     app.save({ ...app.state, parentPin: v });
     parentBody(root, app, { onHome, onReset });
   };
-  clear(root).append(h('main.parent', h('header.page-head', backBtn(onHome), h('h2', '부모 화면')), msg, box, h('button.secondary', { type: 'button', onclick: go }, '확인')));
+  clear(root).append(h('main.parent', h('header.page-head', backBtn(onHome), h('h2', '부모 화면')), msg, help, box, h('button.secondary', { type: 'button', onclick: go }, '확인')));
   box.focus();
 }
 
@@ -262,7 +280,7 @@ function parentBody(root, app, { onHome, onReset }) {
           return total ? h('p', `시승 운행으로 미리 켜진 역 ${total}곳 중 ${inf.length}곳을 아직 확인하고 있어요${insp ? `(그중 ${insp}곳은 다시 연습 중)` : ''}. 운행 중 임시 정차에서 한 역씩 확인해요.`) : null;
         })(),
         state.dateWentBack ? h('p', '기기 날짜가 뒤로 바뀐 적이 있어요. 하루 운행 수는 기기 날짜로 세요.') : null,
-        lateDays ? h('p', `저녁 9시 넘어 운행한 날이 ${lateDays}일 있었어요. 잠자는 시간을 지켜 주세요.`) : null,
+        lateDays ? h('p', `저녁 9시 넘어 운행한 날이 ${lateDays}일 있었어요. 잠들기 1시간 전에는 화면을 쉬는 것이 잠에 좋아요.`) : null,
       ),
       hard.length ? h('section.guide', h('h3', '같이 보면 좋은 곳'), hard.map(({ n, hinted }) => h('p', `${stationOf(n.id).name}역 — ${n.title}. ${hinted ? '힌트를 보고 끝까지 풀었어요. ' : ''}"이 문제 어떻게 풀었는지 보여 줄래?"라고 물어봐 주세요.`))) : null,
       h('details.guide', h('summary', '부모님께 드리는 안내'),
@@ -272,7 +290,7 @@ function parentBody(root, app, { onHome, onReset }) {
         h('p', '정답보다 "어떻게 풀었어?"를 먼저 물어봐 주세요. 수학이 자신 없으시면 아이에게 설명을 부탁해 보세요.'),
         h('p', '아이가 앞서가는 것(학교 진도보다 위)은 괜찮아요. 다른 아이나 형제와 비교하지는 말아 주세요.'),
       ),
-      h('p.guide', '이 화면의 숫자로 꾸짖지 마세요. "이 문제 같이 풀어 볼까?"라고 말해 보세요. 아이가 지쳐 보이면(한숨, 찍기, 화면을 오래 멍하게 봄) 그날은 쉬게 해 주세요.'),
+      h('p.guide', '이 화면의 숫자로 꾸짖지 마세요. "이 문제 같이 풀어 볼까?"라고 말해 보세요. 아이가 지쳐 보이면(한숨, 아무 답이나 빨리 냄, 화면을 오래 멍하게 봄) 그날은 쉬게 해 주세요.'),
       h('section.guide', h('h3', '아이 이름'), (() => { const box = h('input.name-input', { type: 'text', maxlength: 8, value: state.profile.nickname?.trim() ?? '' }); return h('div', box, h('button.secondary', { type: 'button', onclick: () => { if (!box.value.trim()) return; app.save({ ...app.state, profile: { ...app.state.profile, nickname: box.value.trim() } }); parentBody(root, app, { onHome, onReset }); } }, '이름 바꾸기')); })()),
       h('section.guide', h('h3', '하루 운행 수'), h('p', `하루에 ${state.settings.dailyRuns ?? 2}번(한 번에 약 10분). 마지막 운행을 시작할 때만 "오늘의 막차예요"라고 알려요. 못 한 운행은 다음 날로 쌓이지 않아요.`),
         h('div.chips', [1, 2, 3, 4].map((k) => h(`button.chip${(state.settings.dailyRuns ?? 2) === k ? '.chosen' : ''}`, { type: 'button', onclick: () => { app.save({ ...app.state, settings: { ...app.state.settings, dailyRuns: k } }); parentBody(root, app, { onHome, onReset }); } }, `${k}번`))),

@@ -122,11 +122,18 @@ function divExplain(N, d, q) {
 }
 
 // ── T14-1 정비창 점검 (식) — 1~3단계 ──
-function buildDiv(N, d, q) {
+/** 정비창 점검 장면: N명이 d칸에 똑같이 나눠 탐(1호선은 8량이라 d < 8이면 "앞 d칸") */
+function carScene(N, d, level) {
+  const cars = d === 8 ? [L1(), '호선 ', CARS(), '칸에'] : ['앞 ', V(d), '칸에'];
+  return [level >= 3 ? '어느 날 동대신역에서 ' : '동대신역에서 ', V(N), '명이 ', ...cars, ' 똑같이 나눠 탔어요. '];
+}
+
+/** scene = { text: 식 앞 교통 장면 조각, unit } (없으면 식만) */
+function buildDiv(N, d, q, scene = null) {
   return {
-    text: [n(N), ' ÷ ', n(d), ' = ?'],
+    text: [...(scene?.text ?? []), n(N), ' ÷ ', n(d), ' = ?'],
     figure: null,
-    input: { kind: 'number' },
+    input: scene?.unit ? { kind: 'number', unit: scene.unit } : { kind: 'number' },
     answer: q,
     discriminators: divDiscs(N, d, q),
     ...divHints(N, d, q, `${eul(N)} ${ro(d)} 나눈 몫을 물어요.`),
@@ -138,9 +145,9 @@ function buildDiv(N, d, q) {
 }
 
 /** 3단계: 몫과 곱셈 확인식(식 입력) */
-function t141Level3(N, d, q) {
+function t141Level3(N, d, q, scene = null) {
   return {
-    text: [n(N), ' ÷ ', n(d), '의 몫을 구하고, 맞는지 곱셈식으로 확인해요. 확인하는 곱셈식을 써요.'],
+    text: [...(scene?.text ?? []), n(N), ' ÷ ', n(d), '의 몫을 구하고, 맞는지 곱셈식으로 확인해요. 확인하는 곱셈식을 써요.'],
     figure: null,
     input: { kind: 'equation' },
     answer: { left: d, op: '×', right: q, result: N, commutative: true },
@@ -188,7 +195,7 @@ const T14_1 = {
   maxLevel: 3,
   generate(rng, level) {
     const [N, d, q] = pickDiv(rng, level);
-    return level === 3 ? t141Level3(N, d, q) : buildDiv(N, d, q);
+    return level === 3 ? t141Level3(N, d, q, { text: carScene(N, d, level) }) : buildDiv(N, d, q, { text: [...carScene(N, d, level), '한 칸에 몇 명인지 식으로 계산해요. '], unit: '명' });
   },
 };
 
@@ -488,7 +495,7 @@ const D1 = {
   maxLevel: 2,
   diagnostic: true,
   generate() {
-    return { ...buildDiv(72, 4, 18), hints: [], blank: null };
+    return { ...buildDiv(72, 4, 18, { text: ['동대신역에서 ', V(72), '명이 앞 ', V(4), '칸에 똑같이 나눠 탔어요. '], unit: '명' }), hints: [], blank: null };
   },
 };
 const D2 = {

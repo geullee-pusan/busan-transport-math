@@ -122,14 +122,15 @@ function routesHint3(a, b) {
   return `세로: 십의 자리는 10을 받았다가 일의 자리에 10을 빌려 줘서 9가 돼요. / 더해서 세기: ${b} → ${eun(up)} ${up - b}, ${up} → ${eun((hund(b) + 1) * 100)} ${(hund(b) + 1) * 100 - up}이에요. / ${third}.`;
 }
 
-function buildSub(a, b) {
+/** scene = { text: 식 앞 교통 장면 조각, unit } (없으면 식만) */
+function buildSub(a, b, scene = null) {
   const d = a - b;
   const bl = blankAt(d, 1);
   const zero = a % 100 === 0;
   return {
-    text: [n(a), ' − ', n(b), ' = ?'],
+    text: [...(scene?.text ?? []), n(a), ' − ', n(b), ' = ?'],
     figure: { kind: 'vertical', op: '−', a, b },
-    input: { kind: 'number' },
+    input: scene?.unit ? { kind: 'number', unit: scene.unit } : { kind: 'number' },
     answer: d,
     discriminators: subDiscs(a, b),
     hints: [
@@ -178,7 +179,10 @@ const T3_1 = {
   maxLevel: 3,
   generate(rng, level) {
     const [a, b] = pickSub(rng, level);
-    return buildSub(a, b);
+    return buildSub(a, b, {
+      text: [level >= 3 ? '어느 날 낫개역에 선 열차에 ' : '낫개역에 선 열차에 ', V(a), '명이 타 있었어요. 그중 ', V(b), '명이 내렸어요. 남은 사람은 몇 명인지 식으로 계산해요. '],
+      unit: '명',
+    });
   },
 };
 
@@ -409,7 +413,7 @@ const D1 = {
   maxLevel: 3,
   diagnostic: true,
   generate() {
-    return { ...buildSub(400, 237), hints: [], blank: null };
+    return { ...buildSub(400, 237, { text: ['낫개역에서 열차 승객 ', V(400), '명 중 ', V(237), '명이 내렸어요. '], unit: '명' }), hints: [], blank: null };
   },
 };
 const D2 = {

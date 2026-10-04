@@ -99,15 +99,22 @@ function twoByTwoDiscs(x, y) {
 }
 
 // ── T13-1 정비창 점검 (식) — 1~3단계 ──
-function t131Level1(a, b) {
+/** 정비창 점검 장면: 서대신역에 열차가 설 때마다 x명씩, 열차 y대 */
+function trainScene(x, y, level) {
+  return { text: [level >= 3 ? '어느 날 서대신역에 열차가 설 때마다 ' : '서대신역에 열차가 설 때마다 ', V(x), '명씩 탔어요. 열차 ', V(y), '대가 섰을 때 탄 사람은 모두 몇 명인지 식으로 계산해요. '], unit: '명' };
+}
+const numInput = (scene) => (scene?.unit ? { kind: 'number', unit: scene.unit } : { kind: 'number' });
+
+/** scene = { text: 식 앞 교통 장면 조각, unit } (없으면 식만) */
+function t131Level1(a, b, scene = null) {
   const A = a * 10;
   const B = b * 10;
   const P = A * B;
   const bl = blankAt(P, 1);
   return {
-    text: [n(A), ' × ', n(B), ' = ?'],
+    text: [...(scene?.text ?? []), n(A), ' × ', n(B), ' = ?'],
     figure: null,
-    input: { kind: 'number' },
+    input: numInput(scene),
     answer: P,
     discriminators: uniq(
       [
@@ -127,14 +134,14 @@ function t131Level1(a, b) {
   };
 }
 
-function t131Level2(x, b) {
+function t131Level2(x, b, scene = null) {
   const B = b * 10;
   const P = x * B;
   const bl = blankAt(P, 0);
   return {
-    text: [n(x), ' × ', n(B), ' = ?'],
+    text: [...(scene?.text ?? []), n(x), ' × ', n(B), ' = ?'],
     figure: null,
-    input: { kind: 'number' },
+    input: numInput(scene),
     answer: P,
     discriminators: uniq(
       [
@@ -153,7 +160,7 @@ function t131Level2(x, b) {
   };
 }
 
-function buildTwo(x, y) {
+function buildTwo(x, y, scene = null) {
   const t = Math.floor(y / 10);
   const u = y % 10;
   const P = x * y;
@@ -161,9 +168,9 @@ function buildTwo(x, y) {
   const xt = Math.floor(x / 10) * 10;
   const xu = x % 10;
   return {
-    text: [n(x), ' × ', n(y), ' = ?'],
+    text: [...(scene?.text ?? []), n(x), ' × ', n(y), ' = ?'],
     figure: { kind: 'vertical', op: '×', a: x, b: y },
-    input: { kind: 'number' },
+    input: numInput(scene),
     answer: P,
     discriminators: twoByTwoDiscs(x, y),
     hints: [`${wa(x)} ${y}의 곱을 물어요.`, `${eul(y)} ${wa(t * 10)} ${ro(u)} 나눠서 ${x}에 각각 곱해 볼까요?`, `${x} × ${u} = ${x * u}, ${x} × ${t * 10} = ${ieyo(x * t * 10)}.`, `${x * u} + ${x * t * 10} = ${bl.blank}`],
@@ -186,14 +193,14 @@ const T13_1 = {
   generate(rng, level) {
     if (level === 1) {
       const [a, b] = draw(rng, () => [rng.int(2, 9), rng.int(2, 9)], ([p, q]) => p !== q && (p * q) % 10 !== 0, [3, 4]);
-      return t131Level1(a, b);
+      return t131Level1(a, b, trainScene(a * 10, b * 10, level));
     }
     if (level === 2) {
       const [x, b] = draw(rng, () => [rng.int(12, 98), rng.int(2, 9)], ([p, q]) => p % 10 > 1 && p !== q * 10 && (p * q) % 10 !== 0, [23, 4]);
-      return t131Level2(x, b);
+      return t131Level2(x, b, trainScene(x, b * 10, level));
     }
     const [x, y] = draw(rng, () => [rng.int(12, 49), rng.int(12, 39)], ([p, q]) => p % 10 > 1 && q % 10 > 1 && p !== q && (p * q) % 10 !== q % 10, [23, 14]);
-    return buildTwo(x, y);
+    return buildTwo(x, y, trainScene(x, y, level));
   },
 };
 
@@ -534,7 +541,7 @@ const D1 = {
   maxLevel: 3,
   diagnostic: true,
   generate() {
-    return { ...buildTwo(23, 14), hints: [], blank: null };
+    return { ...buildTwo(23, 14, { text: ['서대신역에서 열차 ', V(14), '대에 ', V(23), '명씩 탔어요. '], unit: '명' }), hints: [], blank: null };
   },
 };
 const D2 = {

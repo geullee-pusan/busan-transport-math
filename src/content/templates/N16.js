@@ -84,7 +84,8 @@ const d3 = (v) => [Math.floor(v / 100), Math.floor(v / 10) % 10, v % 10];
 // ── T16-1 정비창 점검 (식) — 1~3단계 ──
 
 /** 몫이 세 자리이고 나머지 없음(1단계: 자리마다 나누어떨어짐, 2단계: 몫 가운데 0) */
-function buildDiv(N, d) {
+/** scene = { text: 식 앞 교통 장면 조각, unit } (없으면 식만) */
+function buildDiv(N, d, scene = null) {
   const q = N / d;
   const H = Math.floor(N / 100) * 100;
   const rest = N - H;
@@ -99,9 +100,9 @@ function buildDiv(N, d) {
   const restQ = rest / d;
   const bl = restQ >= 10 ? blankAt(restQ, 0) : { blank: '☐', blankAnswer: String(restQ) };
   return {
-    text: [n(N), ' ÷ ', n(d), ' = ?'],
+    text: [...(scene?.text ?? []), n(N), ' ÷ ', n(d), ' = ?'],
     figure: null,
-    input: { kind: 'number' },
+    input: scene?.unit ? { kind: 'number', unit: scene.unit } : { kind: 'number' },
     answer: q,
     discriminators: uniq(discs, q),
     hints: [`${eul(N)} ${ro(d)} 나눈 몫을 물어요.`, mid0 ? '백의 자리부터 차례로 나눠 볼까요? 나눌 수 없는 자리에는 몫에 0을 써요.' : `${eul(N)} ${wa(H)} ${ro(rest)} 나눠서 각각 ${ro(d)} 나눠 볼까요?`, `${H} ÷ ${d} = ${ieyo(H / d)}.`, `${rest} ÷ ${d} = ${bl.blank}`],
@@ -116,12 +117,12 @@ function buildDiv(N, d) {
 }
 
 /** 3단계: 나머지 있음 */
-function t161Level3(N, d) {
+function t161Level3(N, d, scene = null) {
   const q = Math.floor(N / d);
   const r = N % d;
   const answer = { q, r };
   return {
-    text: [n(N), ' ÷ ', n(d), ' = ', unknown('□'), ' … ', unknown('□')],
+    text: [...(scene?.text ?? []), n(N), ' ÷ ', n(d), ' = ', unknown('□'), ' … ', unknown('□')],
     figure: null,
     input: { kind: 'compound', fields: [{ key: 'q', label: '몫' }, { key: 'r', label: '나머지' }] },
     answer,
@@ -173,10 +174,10 @@ const T16_1 = {
   generate(rng, level) {
     if (level === 3) {
       const [N, d] = draw(rng, () => [rng.int(300, 999), rng.int(3, 9)], ([NN, dd]) => NN % dd !== 0 && Math.floor(NN / dd) >= 100 && Math.floor(NN / dd) % 10 !== 0, [745, 6]);
-      return t161Level3(N, d);
+      return t161Level3(N, d, { text: ['어느 날 자갈치역에서 승객 ', V(N), '명이 열차 ', V(d), '대에 똑같이 나눠 타고, 남은 사람은 다음 열차를 기다렸어요. 한 대에 몇 명씩 타고 몇 명이 남았는지 식으로 계산해요. '] });
     }
     const [N, d] = pickDiv3(rng, level);
-    return buildDiv(N, d);
+    return buildDiv(N, d, { text: ['자갈치역에서 승객 ', V(N), '명이 열차 ', V(d), '대에 똑같이 나눠 탔어요. 열차 한 대에 몇 명인지 식으로 계산해요. '], unit: '명' });
   },
 };
 
@@ -550,7 +551,7 @@ const D1 = {
   maxLevel: 2,
   diagnostic: true,
   generate() {
-    return { ...buildDiv(624, 6), hints: [], blank: null };
+    return { ...buildDiv(624, 6, { text: ['자갈치역에서 ', V(624), '명이 열차 ', V(6), '대에 똑같이 나눠 탔어요. '], unit: '명' }), hints: [], blank: null };
   },
 };
 const D2 = {

@@ -145,12 +145,21 @@ function mulExplain(a, m, unit = '') {
   };
 }
 
-function buildMul(a, m) {
+/** 정비창 점검 장면: 칸마다 a명씩 m칸(1호선은 8량이라 m < 8이면 "앞 m칸", 9면 열차 9대) */
+function mulScene(a, m, level) {
+  const day = level >= 3 ? '어느 날 ' : '';
+  if (m === 9) return [day + '신평역에 열차가 설 때마다 ', V(a), '명씩 탔어요. 열차 ', V(m), '대가 섰을 때 탄 사람은 모두 몇 명인지 식으로 계산해요. '];
+  const cars = m === 8 ? [L1(), '호선 ', CARS(), '칸에'] : ['앞 ', V(m), '칸에'];
+  return [day + '신평역에서 칸마다 ', V(a), '명씩 탔어요. ', ...cars, ' 탄 사람은 모두 몇 명인지 식으로 계산해요. '];
+}
+
+/** scene = { text: 식 앞 교통 장면 조각, unit } (없으면 식만) */
+function buildMul(a, m, scene = null) {
   const P = a * m;
   return {
-    text: [n(a), ' × ', n(m), ' = ?'],
+    text: [...(scene?.text ?? []), n(a), ' × ', n(m), ' = ?'],
     figure: { kind: 'vertical', op: '×', a, b: m },
-    input: { kind: 'number' },
+    input: scene?.unit ? { kind: 'number', unit: scene.unit } : { kind: 'number' },
     answer: P,
     discriminators: mulDiscs(a, m),
     ...mulHints(a, m, `${wa(a)} ${m}의 곱을 물어요.`),
@@ -184,7 +193,7 @@ const T7_1 = {
       },
       level === 1 ? [32, 3] : level === 2 ? [27, 3] : [68, 7],
     );
-    return buildMul(a, m);
+    return buildMul(a, m, { text: mulScene(a, m, level), unit: '명' });
   },
 };
 
@@ -419,7 +428,7 @@ const D1 = {
   maxLevel: 3,
   diagnostic: true,
   generate() {
-    return { ...buildMul(68, 7), hints: [], blank: null };
+    return { ...buildMul(68, 7, { text: ['신평역에서 앞 ', V(7), '칸에 칸마다 ', V(68), '명씩 탔어요. '], unit: '명' }), hints: [], blank: null };
   },
 };
 const D2 = {

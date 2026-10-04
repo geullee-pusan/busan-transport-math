@@ -298,10 +298,11 @@ const T13_2 = {
 
 // ── T13-3 같은 시간 이어 쓰기 (빈칸) — 1~3단계 + 도전 4~5단계 ──
 // 틀: "[  ]분 [  ]초 = [  ]초". 단계 불변식: 1 몇 분 → 초 / 2 몇 분 몇 초 → 초 / 3 초 → 몇 분 몇 초 / 4 초침 바퀴 수 → 초 / 5 범위에 드는 시간 모두.
-function t133Level1(a) {
+// scene = 틀 앞 교통 장면 조각(없으면 틀만)
+function t133Level1(a, scene = null) {
   const ans = 60 * a;
   return {
-    text: [n(a), '분 = □초'],
+    text: [...(scene ?? []), n(a), '분 = □초'],
     figure: null,
     input: { kind: 'number', unit: '초' },
     answer: ans,
@@ -312,10 +313,10 @@ function t133Level1(a) {
     explain: { why: ['1분은 60초예요.', `${a}분은 60초가 ${a}번이에요.`, `그래서 ${a}분 = ${ans}초예요.`], alt: [`60초씩 ${a}번 이어 세어도 ${ans}초예요.`, `두 방법 모두 ${ans}초예요.`] },
   };
 }
-function t133Level2(a, b) {
+function t133Level2(a, b, scene = null) {
   const ans = 60 * a + b;
   return {
-    text: [n(a), '분 ', n(b), '초 = □초'],
+    text: [...(scene ?? []), n(a), '분 ', n(b), '초 = □초'],
     figure: null,
     input: { kind: 'number', unit: '초' },
     answer: ans,
@@ -326,7 +327,7 @@ function t133Level2(a, b) {
     explain: { why: [`${a}분은 60 × ${a} = ${60 * a}초예요.`, `여기에 ${b}초를 더해요.`, `그래서 ${a}분 ${b}초 = ${ans}초예요.`], alt: [`1분씩 60초, ${a}번이면 ${60 * a}초, 이어서 ${b}초를 세면 ${ans}초예요.`, `두 방법 모두 ${ans}초예요.`] },
   };
 }
-function t133Level3(T) {
+function t133Level3(T, scene = null) {
   const answer = msAns(T);
   const fields = MS_FIELDS;
   const discs = cleanDiscs(
@@ -337,7 +338,7 @@ function t133Level3(T) {
     answer,
   );
   return {
-    text: [unknown('□'), '분 ', unknown('□'), '초 = ', n(T), '초'],
+    text: [...(scene ?? []), unknown('□'), '분 ', unknown('□'), '초 = ', n(T), '초'],
     figure: null,
     input: { kind: 'compound', fields },
     answer,
@@ -400,12 +401,18 @@ const T13_3 = {
   minLevel: 1,
   maxLevel: 5,
   generate(rng, level) {
-    if (level === 1) return t133Level1(rng.int(2, 5));
+    if (level === 1) {
+      const a = rng.int(2, 5);
+      return t133Level1(a, ['서면역에서 갈아타는 데 ', V(a), '분이 걸렸어요. 몇 초일까요? ']);
+    }
     if (level === 2) {
       const [a, b] = draw(rng, () => [rng.int(2, 4), rng.pick([5, 10, 15, 20, 25, 30, 35, 40, 45, 50])], ([x, y]) => 60 * x + y !== y, [3, 10]);
-      return t133Level2(a, b);
+      return t133Level2(a, b, ['서면역 환승 통로를 걷는 데 ', V(a), '분 ', V(b), '초가 걸렸어요. 몇 초일까요? ']);
     }
-    if (level === 3) return t133Level3(draw(rng, () => rng.int(121, 299), (t) => t % 60 >= 5 && t % 100 < 60 && Math.floor(t / 100) !== Math.floor(t / 60), 205));
+    if (level === 3) {
+      const T = draw(rng, () => rng.int(121, 299), (t) => t % 60 >= 5 && t % 100 < 60 && Math.floor(t / 100) !== Math.floor(t / 60), 205);
+      return t133Level3(T, ['어느 날 서면역 승강장에서 열차를 ', V(T), '초 기다렸어요. 몇 분 몇 초일까요? ']);
+    }
     if (level === 4) {
       const [w, a] = rng.pick(TURNS);
       return t133Level4(w, a);
@@ -425,11 +432,11 @@ const D1 = {
   maxLevel: 2,
   diagnostic: true,
   generate() {
-    const p = t133Level2(1, 30);
+    const p = t133Level2(1, 30, ['서면역 환승 통로를 ', V(1), '분 ', V(30), '초 걸었어요. ']);
     return asDiag({ ...p, discriminators: [{ value: 130, category: '개념', kind: 'check', feedback: '1분은 몇 초예요?' }] });
   },
 };
 const D2 = { id: 'G13-D2', node: 'G13', title: '급행 진단: 초침 눈금 읽기', repr: '그림', minLevel: 2, maxLevel: 2, diagnostic: true, generate: () => asDiag(t131Level2(7, 15, 7, 2)) };
-const D3 = { id: 'G13-D3', node: 'G13', title: '급행 진단(예비): 초를 분과 초로', repr: '빈칸', minLevel: 3, maxLevel: 3, diagnostic: true, generate: () => asDiag(t133Level3(205)) };
+const D3 = { id: 'G13-D3', node: 'G13', title: '급행 진단(예비): 초를 분과 초로', repr: '빈칸', minLevel: 3, maxLevel: 3, diagnostic: true, generate: () => asDiag(t133Level3(205, ['서면역에서 열차를 ', V(205), '초 기다렸어요. '])) };
 
 export default [T13_1, T13_2, T13_3, D1, D2, D3];

@@ -129,10 +129,11 @@ const KM_FIELDS = [
 
 // ── T17-1 단위 바꾸기 (식) — 1~3단계 ──
 // 단계 불변식: 1 cm·mm → mm / 2 km·m → m / 3 m → km·m.
-function t171Level1(a, b) {
+// scene = 식 앞 교통 장면 조각(없으면 식만)
+function t171Level1(a, b, scene = null) {
   const ans = 10 * a + b;
   return {
-    text: [n(a), 'cm ', n(b), 'mm = □mm'],
+    text: [...(scene ?? []), n(a), 'cm ', n(b), 'mm = □mm'],
     figure: null,
     input: { kind: 'number', unit: 'mm' },
     answer: ans,
@@ -143,11 +144,11 @@ function t171Level1(a, b) {
     explain: { why: ['1cm는 10mm예요.', `${a}cm는 ${10 * a}mm이고, ${b}mm를 더해요.`, `그래서 ${a}cm ${b}mm = ${ans}mm예요.`], alt: [`자의 작은 눈금을 0부터 세면 ${ans}칸이에요.`, `두 방법 모두 ${ans}mm예요.`] },
   };
 }
-function t171Level2(a, b) {
+function t171Level2(a, b, scene = null) {
   const ans = 1000 * a + b;
   const discs = [100 * a + b / 10, 1000 * a + b / 100].filter((v) => v !== ans && Number.isInteger(v)).map((v) => ({ value: v, category: '개념', kind: 'nudge', feedbackCheck: '답의 자릿수를 다시 볼까요?', feedback: `1km는 1000m예요. ${a}km는요?` }));
   return {
-    text: [n(a), 'km ', n(b), 'm = □m'],
+    text: [...(scene ?? []), n(a), 'km ', n(b), 'm = □m'],
     figure: null,
     input: { kind: 'number', unit: 'm' },
     answer: ans,
@@ -158,11 +159,11 @@ function t171Level2(a, b) {
     explain: { why: ['1km는 1000m예요.', `${a}km는 ${1000 * a}m이고, ${b}m를 더해요.`, `그래서 ${a}km ${b}m = ${ans}m예요.`], alt: [`${ans}m에서 천의 자리 ${a}${jo(a, "은", "는")} ${a}km, 나머지 ${b}${jo(b, "은", "는")} ${b}m예요.`, `두 방법 모두 ${ans}m예요.`] },
   };
 }
-function t171Level3(T) {
+function t171Level3(T, scene = null) {
   const answer = { km: Math.floor(T / 1000), m: T % 1000 };
   const discs = cleanDiscs([{ value: { km: Math.floor(T / 100), m: T % 100 }, category: '개념', kind: 'check', feedback: '1km는 몇 m예요?' }], answer);
   return {
-    text: [n(T), 'm = ', unknown('□'), 'km ', unknown('□'), 'm'],
+    text: [...(scene ?? []), n(T), 'm = ', unknown('□'), 'km ', unknown('□'), 'm'],
     figure: null,
     input: { kind: 'compound', fields: KM_FIELDS },
     answer,
@@ -182,9 +183,16 @@ const T17_1 = {
   minLevel: 1,
   maxLevel: 3,
   generate(rng, level) {
-    if (level === 1) return t171Level1(rng.int(2, 9), rng.int(1, 9));
-    if (level === 2) return t171Level2(rng.int(1, 9), rng.int(1, 9) * 100);
-    return t171Level3(draw(rng, () => rng.int(1101, 8999), (t) => t % 1000 >= 110 && t % 10 !== 0 && t % 100 >= 10, 1450));
+    if (level === 1) {
+      const [a, b] = [rng.int(2, 9), rng.int(1, 9)];
+      return t171Level1(a, b, ['공책에 노선도를 그렸어요. 개금역에서 다음 역까지 그은 선이 ', V(a), 'cm ', V(b), 'mm예요. 몇 mm일까요? ']);
+    }
+    if (level === 2) {
+      const [a, b] = [rng.int(1, 9), rng.int(1, 9) * 100];
+      return t171Level2(a, b, ['개금역 앞에서 버스를 타고 ', V(a), 'km ', V(b), 'm를 갔어요. 몇 m일까요? ']);
+    }
+    const T = draw(rng, () => rng.int(1101, 8999), (t) => t % 1000 >= 110 && t % 10 !== 0 && t % 100 >= 10, 1450);
+    return t171Level3(T, ['어느 날 개금역 앞에서 버스를 타고 ', V(T), 'm를 갔어요. 몇 km 몇 m일까요? ']);
   },
 };
 
@@ -402,7 +410,7 @@ const T17_3 = {
 };
 
 // ── 급행 통과 진단 ──
-const D1 = { id: 'G17-D1', node: 'G17', title: '급행 진단: 2km 300m는 몇 m', repr: '식', minLevel: 2, maxLevel: 2, diagnostic: true, generate: () => asDiag(t171Level2(2, 300)) };
+const D1 = { id: 'G17-D1', node: 'G17', title: '급행 진단: 2km 300m는 몇 m', repr: '식', minLevel: 2, maxLevel: 2, diagnostic: true, generate: () => asDiag(t171Level2(2, 300, ['개금역 앞에서 버스로 ', V(2), 'km ', V(300), 'm를 갔어요. '])) };
 const D2 = { id: 'G17-D2', node: 'G17', title: '급행 진단: 공원과 도서관', repr: '문장', minLevel: 3, maxLevel: 3, diagnostic: true, generate: () => asDiag(t172Level3(2, 1350)) };
 const D3 = { id: 'G17-D3', node: 'G17', title: '급행 진단(예비): m를 km와 m로', repr: '문장', minLevel: 4, maxLevel: 4, diagnostic: true, generate: () => asDiag(t172Level4(3, 50)) };
 

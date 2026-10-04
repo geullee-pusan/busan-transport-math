@@ -186,7 +186,16 @@ function noCarry(a, b) {
   return out;
 }
 
-function addSub(a, b, op) {
+/** 정비창 연습 장면: 열차 한 칸에 a명, 다음 역에서 b명이 타거나 내림 */
+function cabinScene(a, b, op, level) {
+  const head = level >= 3 ? '어느 날 열차 한 칸에 ' : '열차 한 칸에 ';
+  return op === '+'
+    ? [head, V(a), '명이 타 있었는데, 다음 역에서 ', V(b), '명이 더 탔어요. 모두 몇 명인지 식으로 계산해요. ']
+    : [head, V(a), '명이 타 있었는데, 다음 역에서 ', V(b), '명이 내렸어요. 남은 사람은 몇 명인지 식으로 계산해요. '];
+}
+
+/** scene = { text: 식 앞 교통 장면 조각, unit } (없으면 식만) */
+function addSub(a, b, op, scene = null) {
   const ans = op === '+' ? a + b : a - b;
   const bl = blankAt(ans, 1);
   const au = a % 10;
@@ -203,9 +212,9 @@ function addSub(a, b, op) {
         ];
   const carry = op === '+' ? au + bu >= 10 : au < bu;
   return {
-    text: [n(a), ` ${op === '+' ? '+' : '−'} `, n(b), ' = ?'],
+    text: [...(scene?.text ?? []), n(a), ` ${op === '+' ? '+' : '−'} `, n(b), ' = ?'],
     figure: { kind: 'vertical', op: op === '+' ? '+' : '−', a, b },
-    input: { kind: 'number' },
+    input: scene?.unit ? { kind: 'number', unit: scene.unit } : { kind: 'number' },
     answer: ans,
     discriminators: carry ? uniq(discs, ans) : [],
     hints: [
@@ -252,18 +261,19 @@ const B06_P = {
       },
       level === 2 ? [47, 38] : level === 3 ? [62, 27] : [53, 24],
     );
-    return addSub(a, b, op);
+    return addSub(a, b, op, { text: cabinScene(a, b, op, level), unit: '명' });
   },
 };
 
 // ── B11 곱셈구구 ──
-function times(a, b) {
+/** scene = { text: 식 앞 교통 장면 조각, unit } (없으면 식만) */
+function times(a, b, scene = null) {
   const P = a * b;
   const bl = P >= 10 ? blankAt(P, 1) : { blank: '☐', blankAnswer: String(P) };
   return {
-    text: [n(a), ' × ', n(b), ' = ?'],
+    text: [...(scene?.text ?? []), n(a), ' × ', n(b), ' = ?'],
     figure: null,
-    input: { kind: 'number' },
+    input: scene?.unit ? { kind: 'number', unit: scene.unit } : { kind: 'number' },
     answer: P,
     discriminators: uniq(
       [
@@ -297,7 +307,7 @@ const B11_P = {
     const dans = level === 1 ? [2, 5] : level === 2 ? [3, 4, 6] : [7, 8, 9];
     const a = rng.pick(dans);
     const b = draw(rng, () => rng.int(2, 9), (x) => x !== a || level === 3, 7);
-    return times(a, b);
+    return times(a, b, { text: [level >= 3 ? '어느 날 승강장에서 ' : '승강장에서 ', V(a), '명씩 ', V(b), '줄로 서서 열차를 기다렸어요. 모두 몇 명인지 식으로 계산해요. '], unit: '명' });
   },
 };
 
@@ -310,15 +320,15 @@ const B02_D1 = diag('B02-D1', 'B02', '정비창 진단: 0이 있는 자릿값', 
 });
 const B02_D2 = diag('B02-D2', 'B02', '정비창 진단: 가장 큰 세 자리 수', () => cardNumber([4, 0, 9], true));
 const B06_D1 = diag('B06-D1', 'B06', '정비창 진단: 두 자리 덧셈', () => {
-  const p = addSub(47, 38, '+');
+  const p = addSub(47, 38, '+', { text: ['열차 한 칸에 ', V(47), '명이 있었고 ', V(38), '명이 더 탔어요. '], unit: '명' });
   return { ...p, discriminators: [{ value: 75, category: '개념', kind: 'check', feedback: '일의 자리 10은 어디로 갔을까요?' }, { value: 715, category: '개념', kind: 'check', feedback: '한 자리에 숫자가 둘 들어갔나요?' }] };
 });
 const B06_D2 = diag('B06-D2', 'B06', '정비창 진단: 두 자리 뺄셈', () => {
-  const p = addSub(62, 27, '-');
+  const p = addSub(62, 27, '-', { text: ['열차 한 칸에 ', V(62), '명이 있었고 ', V(27), '명이 내렸어요. '], unit: '명' });
   return { ...p, discriminators: [{ value: 45, category: '개념', kind: 'check', feedback: '일의 자리 2에서 7을 뺄 수 있나요?' }, { value: 89, category: '식', kind: 'nudge', feedbackCheck: '답을 처음 수와 견주어 볼까요?', feedback: '빼기 문제예요. 답이 커질까요?' }] };
 });
 const B11_D1 = diag('B11-D1', 'B11', '정비창 진단: 곱셈구구', () => {
-  const p = times(7, 8);
+  const p = times(7, 8, { text: ['승강장에서 ', V(7), '명씩 ', V(8), '줄로 열차를 기다려요. '], unit: '명' });
   return { ...p, discriminators: [{ value: 54, category: '계산', kind: 'nudge', feedbackCheck: '곱하는 두 수를 다시 볼까요?', feedback: '7단을 차례로 외워 볼까요?' }, { value: 48, category: '계산', kind: 'nudge', feedbackCheck: '곱하는 두 수를 다시 볼까요?', feedback: '7단을 차례로 외워 볼까요?' }, { value: 15, category: '식', kind: 'nudge', feedbackCheck: '문제를 다시 읽어 볼까요?', feedback: '곱셈이에요. 몇 번 더하는 셈일까요?' }] };
 });
 const B11_D2 = diag('B11-D2', 'B11', '정비창 진단: 그림으로 곱셈', () => ({

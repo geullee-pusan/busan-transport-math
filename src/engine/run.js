@@ -15,6 +15,17 @@ export function playableNodes(line = 'L1') {
 }
 
 /**
+ * 동해선(도전 노선, 커리큘럼 12 0.2절): 선수 노드가 켜져 있으면(개통·급행 통과·시승 추정) 1호선 진도와 상관없이 열린다.
+ * 선수가 없는 역(X22)은 처음부터 열린다. 도전 운행으로만 탄다(아이가 고름, 자동으로 이어지지 않음).
+ */
+export function donghaeOpen(state, nodeId) {
+  return (NODES.get(nodeId)?.prereqs ?? []).every((p) => DONE.has(nodeState(state, p.node).status));
+}
+export function donghaeDestination(state) {
+  return playableNodes('DH').find((n) => donghaeOpen(state, n.id) && !DONE.has(nodeState(state, n.id).status)) ?? null;
+}
+
+/**
  * 2호선은 지도 규칙으로 연다(개념 잠금이 아님, 커리큘럼 자문 10 1.3절):
  * 1호선 서면(N25)이 켜지면 서면에서 갈아탈 수 있다.
  */
@@ -43,6 +54,7 @@ const needsVisit = (ns) => !DONE.has(ns.status) || ns.inspect === true;
  * 점검: 시승으로 추정해 켠 역을 임시 정차에서 두 번 연달아 못 맞히면 불은 둔 채 다시 들른다(커리큘럼 자문 01 2.4.2절).
  */
 export function destination(state, line = chooseLine(state)) {
+  if (line === 'DH') return donghaeDestination(state); // 동해선은 열린 역만
   const nodes = playableNodes(line);
   return nodes.find((n) => nodeState(state, n.id).inspect) ?? nodes.find((n) => !DONE.has(nodeState(state, n.id).status)) ?? null;
 }
@@ -84,17 +96,23 @@ function reviewDue(state, day, exclude) {
  * 보통 운행을 시작한다.
  * @returns {object|null} run (목적지가 없으면 null — 1호선 완주)
  */
-export function startRun(state, { day, seed, mode = 'normal' }) {
-  const line = chooseLine(state);
-  const dest = destination(state, line);
+export function startRun(state, { day, seed, mode = 'normal', line: wantLine = null }) {
+  // 동해선은 도전 운행으로만(wantLine 'DH')
+  const line = wantLine === 'DH' ? 'DH' : chooseLine(state);
+  if (line === 'DH') mode = 'challenge';
+  const dest = line === 'DH' ? donghaeDestination(state) : destination(state, line);
   if (!dest) return null;
   const ceil = ceilingOf(dest.id);
+  const floor = NODES.get(dest.id)?.floor ?? 1; // 동해선은 4단계부터
   // 점검 중인 역은 3단계 문제로 확인한다.
   const L = nodeState(state, dest.id).inspect ? clamp(Math.max(3, workingLevel(state, dest.id)), 1, ceil) : workingLevel(state, dest.id);
   const slots = [];
   if (state.parked) slots.push({ kind: 'parked', ...state.parked });
   for (const r of state.redo) slots.push({ kind: 'redo', node: r.node, level: r.level, templateId: r.templateId });
-  if (mode === 'challenge') {
+  if (mode === 'challenge' && line === 'DH') {
+    // 동해선 도전: 지금 실력, +1, 마무리(7단계 이상, 창의 서술 마무리가 있으면 그 단계)
+    slots.push({ kind: 'hard', node: dest.id, level: clamp(L, floor, ceil) }, { kind: 'hard', node: dest.id, level: clamp(L + 1, floor, ceil) }, { kind: 'hard', node: dest.id, level: clamp(Math.max(L + 2, 7), floor, ceil) });
+  } else if (mode === 'challenge') {
     slots.push({ kind: 'hard', node: dest.id, level: clamp(L + 1, 1, ceil) }, { kind: 'hard', node: dest.id, level: clamp(L + 1, 1, ceil) }, { kind: 'hard', node: dest.id, level: clamp(L + 2, 1, ceil) });
   } else {
     slots.push(
@@ -205,7 +223,7 @@ export function giveUp(state, run) {
 
 /** 이번 문제의 목표 정답률 종류(L2): 도전 운행 → challenge, 처음 3운행이거나 바로 앞 두 문제를 못 맞혔으면 → gentle */
 function ratingTarget(state, run) {
-  if (run.mode === 'challenge') return 'challenge';
+  if (run.mode === 'challenge' || run.line === 'DH') return 'challenge';
   if ((state.runs ?? 0) < 3 || run.wrongStreak >= 2) return 'gentle';
   return 'normal';
 }
@@ -249,7 +267,7 @@ function finishProblem(state0, run, correct, hint) {
     // 급행 진단은 칸에 넣지 않는다(별도 판정).
     state.nodes[slot.node] = { ...ns, attempts: [...ns.attempts, { c: correct, h: hint, l: level, r: template.repr, x: 1 }].slice(-20) };
   } else {
-    const { node, gained, lit, pending } = applyAttempt(ns.status ? ns : emptyNode(), { correct, hint, opened: run.hint, level, repr: template.repr, counted, target: ratingTarget(state0, run) }, run.day);
+    const { node, gained, lit, pending } = applyAttempt(ns.status ? ns : emptyNode(), { correct, hint, opened: run.hint, level, repr: template.repr, counted, target: ratingTarget(state0, run), finalLevel: NODES.get(slot.node)?.line === 'DH' ? 6 : 3 }, run.day);
     state.nodes[slot.node] = node;
     if (gained > 0) {
       const perHalf = segmentMeters(slot.node) / FULL;

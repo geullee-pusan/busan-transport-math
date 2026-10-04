@@ -35,6 +35,9 @@ export function createState() {
  *   단계 조건이 붙은 선수 역(minLevel)이 추정으로만 켜진 것이 아닐 때만.
  */
 export function startRatingOf(state, id) {
+  const dn = NODES.get(id);
+  // 동해선: 4단계부터. 선수가 모두 확정이면 5(커리큘럼 12 0.3절, '깊이 도장' 조건은 아직 없어 확정만 본다)
+  if (dn?.line === 'DH') return (dn.prereqs ?? []).length && dn.prereqs.every((p) => state.nodes[p.node]?.status === 'confirmed') ? 5 : dn.floor ?? 4;
   const pl = state.placement;
   if (!pl?.any) return 2;
   const node = NODES.get(id);

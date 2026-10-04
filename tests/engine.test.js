@@ -493,3 +493,20 @@ test('한 번이라도 틀리면 더 묻기 없이 끝난다', () => {
   assert.equal(run.placement.extra.length, 0);
   assert.ok(run.index <= 10);
 });
+
+test('동해선(도전 노선): 선수가 켜진 역만 열리고, 도전 운행으로만 4단계 이상에서 탄다', async () => {
+  const { playableNodes, donghaeDestination, donghaeOpen } = await import('../src/engine/run.js');
+  if (!playableNodes('DH').length) return; // 템플릿이 아직 없으면 건너뜀
+  let state = createState();
+  const d0 = donghaeDestination(state);
+  if (d0) assert.ok(donghaeOpen(state, d0.id), '처음에는 선수 없는 역(X22)만 열림');
+  ({ state } = placeAll((cur) => cur.problem.answer));
+  const d = donghaeDestination(state);
+  assert.ok(d, '시승을 잘 본 아이는 동해선이 열린다');
+  const run = startRun(state, { day: 2, seed: 9, line: 'DH' });
+  assert.equal(run.mode, 'challenge');
+  assert.equal(run.line, 'DH');
+  for (const sl of run.slots.filter((x) => x.kind === 'hard')) assert.ok(sl.level >= 4, `동해선 ${sl.level}단계`);
+  const normal = startRun(state, { day: 2, seed: 10 });
+  assert.notEqual(normal.line, 'DH', '보통 운행은 동해선으로 가지 않는다');
+});

@@ -38,7 +38,7 @@ export function applyAttempt(ns, a, day) {
       const room = FULL - node.halves;
       if (add >= room) {
         // 마지막 칸을 채우려는 시도
-        const strict = a.level >= 3 && a.hint === 0;
+        const strict = a.level >= (a.finalLevel ?? 3) && a.hint === 0; // 동해선은 6단계 이상(커리큘럼 12 0.3절)
         const reprsAfter = new Set([...node.reprs, a.repr]);
         const recent = node.attempts.slice(-5);
         const accurate = recent.filter((x) => x.c).length >= 3;

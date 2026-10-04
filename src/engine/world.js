@@ -12,8 +12,9 @@ export const LINE1_NODES = graph.nodes.filter((n) => n.line === 'L1').sort((a, b
 export const LINE_NODES = {
   L1: LINE1_NODES,
   L2: graph.nodes.filter((n) => n.line === 'L2').sort((a, b) => a.order - b.order),
+  DH: graph.nodes.filter((n) => n.line === 'DH').sort((a, b) => a.order - b.order), // 동해선(도전 노선, 커리큘럼 12)
 };
-export const LINE_OF_GRAPH = { L1: '1', L2: '2' };
+export const LINE_OF_GRAPH = { L1: '1', L2: '2', DH: 'DH' };
 
 /** 노드 → 역 정보(이름, 코드, 노선도 좌표). 1호선은 역 순서, 2호선은 개념 그래프의 역 이름으로 찾는다. */
 export function stationOf(nodeId) {
@@ -35,15 +36,16 @@ const linkM = new Map(busan.links.filter((k) => k.line === '1').map((k) => [`${k
 export function segmentMeters(nodeId) {
   const node = NODES.get(nodeId);
   if (!node) return 0;
-  if (node.line === 'L2') {
-    // 2호선: 추천 순서상 앞 노드의 역에서 이 역까지(첫 역 서면은 다음 역까지)
-    const list = LINE_NODES.L2;
+  if (node.line === 'L2' || node.line === 'DH') {
+    // 2호선·동해선: 추천 순서상 앞 노드의 역에서 이 역까지(첫 역은 다음 역까지)
+    const list = LINE_NODES[node.line];
     const i = list.findIndex((n) => n.id === nodeId);
     const a = stationOf(list[Math.max(0, i - 1)].id);
     const b = stationOf(list[Math.max(1, i)]?.id ?? nodeId);
     if (!a || !b) return 0;
-    const all = busan.links.filter((k) => k.line === '2');
-    const line2 = busan.lines.find((l) => l.id === '2').stations.map((s) => s.id);
+    const lid = LINE_OF_GRAPH[node.line];
+    const all = busan.links.filter((k) => k.line === lid);
+    const line2 = busan.lines.find((l) => l.id === lid).stations.map((s) => s.id);
     const [ia, ib] = [line2.indexOf(a.id), line2.indexOf(b.id)].sort((x, y) => x - y);
     let m = 0;
     for (let k = ia; k < ib; k++) m += all.find((x) => (x.from === line2[k] && x.to === line2[k + 1]) || (x.to === line2[k] && x.from === line2[k + 1]))?.distanceM ?? 0;

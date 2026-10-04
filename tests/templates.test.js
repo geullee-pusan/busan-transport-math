@@ -64,6 +64,17 @@ for (const t of allTemplates()) {
         const shownText = [plainText(p.text), ...(p.hints ?? []), JSON.stringify(p.figure ?? null), JSON.stringify(p.explain ?? null)].join(' ');
         assert.ok(!shownText.includes('(가상)'), `"(가상)" 글자 ${where}`);
 
+        // "어느 날"(07 0.4-14): 한 문제에 한 번만. 그 문장의 첫 숫자가 실제 값이면 안 되고, 제원(좌석·정원·배차·간격) 문장에도 쓰지 않는다.
+        const story = plainText(p.text);
+        assert.ok((story.match(/어느 날/g) ?? []).length <= 1, `"어느 날"이 두 번 이상 ${where}`);
+        const at = p.text.findIndex((x) => typeof x === 'string' && x.includes('어느 날'));
+        if (at >= 0) {
+          const firstNum = p.text.slice(at + 1).find((x) => x && typeof x === 'object' && 'num' in x);
+          assert.ok(!firstNum || firstNum.tag !== 'real', `"어느 날" 문장의 첫 숫자가 실제 값 ${where}`);
+          const sentence = story.slice(story.indexOf('어느 날')).split(/[.?]/)[0];
+          assert.ok(!/좌석|정원|배차|간격/.test(sentence), `"어느 날"을 제원 문장에 씀 ${where}: ${sentence}`);
+        }
+
         // 힌트 ④는 빈칸의 값을 다른 표현(자릿값 말, 완성된 답)으로도 알려 주지 않는다(UX 7차 A-2).
         if (!t.diagnostic && typeof p.blank === 'string' && p.blankAnswer != null && p.hints?.[3]) {
           const rest = p.hints[3].split(p.blank).join(' ');

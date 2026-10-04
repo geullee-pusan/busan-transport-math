@@ -60,6 +60,16 @@ for (const t of allTemplates()) {
           if (typeof piece === 'string') assert.ok(!/\d/.test(piece), `문장 조각에 감싸지 않은 숫자 ${where}: "${piece}"`);
         }
 
+        // 힌트 ④는 빈칸의 값을 다른 표현(자릿값 말, 완성된 답)으로도 알려 주지 않는다(UX 7차 A-2).
+        if (!t.diagnostic && typeof p.blank === 'string' && p.blankAnswer != null && p.hints?.[3]) {
+          const rest = p.hints[3].split(p.blank).join(' ');
+          if (typeof p.answer === 'number' && String(p.answer).length >= 2) assert.ok(!new RegExp(`(^|[^\\d])${p.answer}([^\\d]|$)`).test(rest), `힌트 ④에 답이 그대로 있음 ${where}: ${p.hints[3]}`);
+          if (/^[\d☐]+$/.test(p.blank)) {
+            const place = ['일', '십', '백', '천', '만'][p.blank.length - 1 - p.blank.indexOf('☐')];
+            if (place) assert.ok(!new RegExp(`${place}(의 자리| 모형)? ${p.blankAnswer}개`).test(rest), `힌트 ④가 빈칸 자리(${place}) 값을 알려 줌 ${where}: ${p.hints[3]}`);
+          }
+        }
+
         if (!t.diagnostic) {
           assert.equal(p.hints.length, 4, `힌트는 4개 ${where}`);
           assert.ok(!OPS.test(p.hints[0]) || t.repr === '식', `힌트 ①에 연산어 ${where}: ${p.hints[0]}`);

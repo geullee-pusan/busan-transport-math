@@ -58,3 +58,18 @@ export function segmentMeters(nodeId) {
 
 export const TRANSFERS = busan.transfers;
 export const LINES = busan.lines;
+
+/** 노드의 선수 역 전체(개념 그래프를 거슬러 올라감) */
+export function ancestorsOf(id, seen = new Set()) {
+  for (const p of NODES.get(id)?.prereqs ?? []) {
+    if (seen.has(p.node)) continue;
+    seen.add(p.node);
+    ancestorsOf(p.node, seen);
+  }
+  return seen;
+}
+
+/** 시승 추정으로 켜지 않는 역: 판별 오답이 가장 흔하고 뒤 역이 많이 기대는 곳(N03·N08·N15·N16·N19·N20),
+ *  앞 분수 역과 사이가 먼 곳(N17·N18). 커리큘럼 자문 01 2.4.2절 */
+export const MUST_CHECK = new Set(['N03', 'N08', 'N15', 'N16', 'N17', 'N18', 'N19', 'N20']);
+export const FAR_FROM_EVIDENCE = new Set(['N17', 'N18']);

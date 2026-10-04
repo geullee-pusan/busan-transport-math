@@ -13,21 +13,21 @@ import { TIERS, tierOf, goldNeeded } from '../content/vehicles.js';
 import { milestonesCrossed } from '../content/milestones.js';
 import { icon, starPoints } from './icons.js';
 
-// 아이가 고르는 차량 색(시각 자문 1차 결정 1): 빨강·초록(정답·오답 관습)과 1호선 주황을 뺀 6색.
+// 아이가 고르는 차량 색(시각 자문 1차 결정 1): 빨강·초록(정답·오답 관습)과 1호선 주황을 뺀 5색.
 // 예전에 고른 색이 이 목록에 없어도 그대로 쓴다(새로 고를 때만 이 목록).
 const COLORS = [
-  { c: '#1F3342', name: '남색' },
   { c: '#00798C', name: '청록' },
   { c: '#6D597A', name: '자주' },
   { c: '#9C6644', name: '갈색' },
   { c: '#4F5D75', name: '회청' },
   { c: '#B08A2E', name: '겨자' },
 ];
+// 남색(#1F3342)은 선로 테두리와 같아 지도에서 묻혀서 뺐다(UX 7차 A-7). 예전에 고른 기기는 그대로 쓴다.
 const backBtn = (onclick) => h('button.icon-btn', { type: 'button', onclick, 'aria-label': '뒤로' }, icon('back'));
 
 export function renderSetup(root, app, { onDone }) {
   let name = app.state.profile.nickname || '';
-  let color = app.state.profile.color;
+  let color = COLORS.some((x) => x.c === app.state.profile.color) || app.state.profile.nickname ? app.state.profile.color : COLORS[0].c;
   const nameBox = h('input.name-input', { type: 'text', maxlength: 8, placeholder: '이름이나 별명', value: name, autocomplete: 'off', oninput: (e) => { name = e.target.value; syncStart(); } });
   const swatches = COLORS.map(({ c, name: cname }) => h('button.swatch', { type: 'button', style: { background: c }, 'aria-label': `차량 색 ${cname}`, 'aria-pressed': c === color ? 'true' : 'false', onclick: () => { color = c; swatches.forEach((b) => { b.classList.toggle('on', b.dataset.c === c); b.setAttribute('aria-pressed', b.dataset.c === c ? 'true' : 'false'); }); } }));
   swatches.forEach((b, i) => { b.dataset.c = COLORS[i].c; b.classList.toggle('on', COLORS[i].c === color); });
@@ -59,7 +59,7 @@ export function renderHome(root, app, { onStart, onExpress, onChallenge, onGarag
   const parkedSt = state.parked ? stationOf(state.parked.node) : null;
   const tier = tierOf(state.license);
   const doneToday = runsLeftToday(state, dayNumber()) <= 0;
-  const canExpress = dest && diagnosticsFor(dest.id).length > 0 && !doneToday;
+  const canExpress = dest && diagnosticsFor(dest.id).length > 0 && !doneToday && !ns.inspect;
 
   // 부모가 신고를 확인했으면 한 번 알려 준다(아이의 신고가 닿았다는 고리 닫기).
   const returning = typeof state.lastRunDay === 'number' && dayNumber() - state.lastRunDay >= 7 ? h('div.notice', '어서 와요. 켠 역은 그대로예요.') : null;
@@ -82,8 +82,8 @@ export function renderHome(root, app, { onStart, onExpress, onChallenge, onGarag
         ? h('section.next', h('div.next-dest', '오늘 운행은 끝났어요. 차량은 차고에서 쉬어요. 내일 첫차에 만나요.'), h('div.next-btns', h('button.secondary', { type: 'button', onclick: onGarage }, icon('garage'), '차고')))
         : dest
         ? h('section.next',
-            h('div.next-dest', h(`span.badge-1${dest.line === 'L2' ? '.badge-2' : ''}`, dest.line === 'L2' ? '2' : '1'), ` ${stationOf(dest.id)?.name ?? ''}역까지 `, h('strong', left)),
-            ns.pending ? h('div.info', pendingText(ns.pending)) : null,
+            h('div.next-dest', h(`span.badge-1${dest.line === 'L2' ? '.badge-2' : ''}`, dest.line === 'L2' ? '2' : '1'), ns.inspect ? ` ${stationOf(dest.id)?.name ?? ''}역 점검` : ` ${stationOf(dest.id)?.name ?? ''}역까지 `, ns.inspect ? null : h('strong', left)),
+            ns.inspect ? h('div.info', `${stationOf(dest.id)?.name ?? ''}역은 한 번 더 점검하고 지나갈게요. 힌트 없이 2문제를 맞히면 점검 완료예요.`) : ns.pending ? h('div.info', pendingText(ns.pending)) : null,
             h('div.next-btns',
               h('button.primary.big', { type: 'button', onclick: onStart }, icon('depart'), parkedSt ? `${parkedSt.name}역에서 출발` : '출발'),
               canExpress ? h('button.secondary', { type: 'button', onclick: onExpress, title: '급행: 역마다 2문제를 맞히면 통과해요 · 세 번째 역은 1문제 더' }, icon('express'), '급행') : null,
@@ -105,14 +105,19 @@ export function renderLog(root, app, run, { onAgain, onHome }) {
   const startName = run.startDone?.length ? null : null;
   const newly = sm.newlyLit.map((id) => stationOf(id)?.name).filter(Boolean);
   const passed = sm.newlyLit.filter((id) => state.nodes[id]?.status === 'passed');
+  const inspected = run.events.filter((e) => e.type === 'inspected').map((e) => stationOf(e.node)?.name).filter(Boolean);
+  const inspectNew = run.events.filter((e) => e.type === 'inspect').map((e) => stationOf(e.node)?.name).filter(Boolean);
 
   let big = null;
   if (sm.license) big = h('div.big-news.license-card', h('div.small', '면허증'), h('div.big-title', `${tierOf(sm.license).name} 운행 허가`), state.profile.nickname?.trim() ? h('div', `운전사: ${state.profile.nickname.trim()}`) : null, h('div.small', `발급일 ${new Date().toLocaleDateString('ko-KR')}`), sm.licenseEvidence.length ? h('div', `${sm.licenseEvidence.map((id) => stationOf(id)?.name).filter(Boolean).join(' · ')}역에서 이 단계 문제를 풀어서 올랐어요.`) : null, h('div', '새 카드를 받았어요. 차고에서 볼 수 있어요.'));
   else if (sm.line2Opened) big = h('div.big-news', h('div.big-title', '서면역 개통! 2호선으로 갈아탈 수 있어요'), h('div', '이제 운행마다 1호선과 2호선을 번갈아 달려요. 2호선에서는 시간과 길이를 배워요.'));
+  else if (run.mode === 'placement') big = newly.length ? h('div.big-news', h('div.big-title', newly.length > 2 ? `${newly.length}역에 불을 켰어요` : `${newly.join(' · ')}역 통과!`), h('div', newly.length > 2 ? `${newly.slice(0, 3).join(', ')} 같은 역이에요. 켠 역은 운행 중에 한 역씩 다시 들러서 확인해요.` : '켠 역은 운행 중에 한 번 더 들러서 확인해요.')) : null;
+  else if (inspected.length) big = h('div.big-news', h('div.big-title', `${inspected.join(' · ')}역 점검 완료!`));
   else if (newly.length) big = h('div.big-news', h('div.big-title', passed.length === newly.length ? `${newly.join(' · ')}역 통과!` : `${newly.join(' · ')}역 개통!`));
 
   const lines = [];
-  if (newly.length && !big?.textContent.includes(newly[0])) lines.push(`새로 켜진 역: ${newly.join(', ')}`);
+  if (newly.length && run.mode !== 'placement' && !big?.textContent.includes(newly[0])) lines.push(`새로 켜진 역: ${newly.join(', ')}`);
+  if (inspectNew.length) lines.push(`${inspectNew.join(', ')}역은 한 번 더 점검하고 지나갈게요.`);
   const learned = [...new Set(run.slots.slice(0, run.index).filter((x) => x.kind !== 'review' && x.kind !== 'redo').map((x) => NODES.get(x.node)?.title).filter(Boolean))];
   if (learned.length) lines.push(`오늘 푼 생각: ${learned.slice(0, 2).join(', ')}`);
   // 작은 사실들은 한 줄로 묶는다(다섯 줄 규칙)
@@ -126,9 +131,11 @@ export function renderLog(root, app, run, { onAgain, onHome }) {
   const crossed = milestonesCrossed(run.startMeters, state.meters);
   if (crossed.length) lines[lines.length - 1] += ` — ${crossed.at(-1).text}!`;
   const noMoreToday = runsLeftToday(state, dayNumber()) <= 0;
-  if (destName) lines.push(`다음 운행은 ${destName}역 앞에서 출발해요.` + (noMoreToday && sm.redo > 0 ? ' 오늘 넘긴 문제가 첫 문제로 나와요.' : ''));
+  if (destName && run.mode !== 'placement') lines.push(`다음 운행은 ${destName}역 앞에서 출발해요.` + (noMoreToday && sm.redo > 0 ? ' 오늘 넘긴 문제가 첫 문제로 나와요.' : ''));
+  // 시승: 왜 거기서 출발하는지 한 줄(UX 7차 A-3)
+  if (run.mode === 'placement' && destName) lines.push(state.nodes[sm.dest]?.placementMissed ? `다음 운행은 ${destName}역 앞에서 출발해요. 그 역부터 같이 배워요.` : newly.length ? `다음 운행은 ${destName}역 앞에서 출발해요. 시승에서 묻지 않은 역이라 거기서부터 가요.` : `다음 운행은 ${destName}역 앞에서 출발해요. 처음부터 차근차근 가요.`);
   const lineName = (id) => (NODES.get(id)?.line === 'L2' ? '2호선' : '1호선');
-  const title = destName && !newly.length ? `${destName}역 가는 길` : newly.length ? `${lineName(sm.newlyLit.at(-1))} ${newly.at(-1)}역 도착` : '운행 일지';
+  const title = run.mode === 'placement' ? '시승 운행 결과' : destName && !newly.length ? `${destName}역 가는 길` : newly.length ? `${lineName(sm.newlyLit.at(-1))} ${newly.at(-1)}역 도착` : '운행 일지';
 
   if (newly.length) setTimeout(() => chime(state.settings), 200);
   if (sm.license) setTimeout(() => approach(state.settings), 300);
@@ -142,7 +149,7 @@ export function renderLog(root, app, run, { onAgain, onHome }) {
       big,
       // 여섯 줄이 되면 '오늘 푼 생각'을 빼서 다음 출발역 줄이 잘리지 않게 한다
       h('ul.log-lines', (lines.length > 5 ? lines.filter((l) => !l.startsWith('오늘 푼 생각')) : lines).slice(0, 5).map((l) => h('li', l))),
-      h('p.log-end', newly.length || run.mode !== 'placement' ? '끝까지 운행 완료!' : '시승 운행 완료!'),
+      h('p.log-end', run.mode === 'placement' ? '시승 운행 완료!' : '끝까지 운행 완료!'),
       // 끝 단추는 같은 무게로, "오늘은 여기까지"를 먼저 둔다(아동 심리 자문 1차 H1).
       h('div.next-btns.even', h('button.secondary.big', { type: 'button', onclick: onHome }, '오늘은 여기까지'), sm.dest && runsLeftToday(app.state, dayNumber()) > 0 ? h('button.secondary.big', { type: 'button', onclick: onAgain }, '한 번 더 운행') : null),
       sm.dest && runsLeftToday(app.state, dayNumber()) <= 0 ? h('p.info', '오늘 운행은 여기까지예요. 내일 첫차에 만나요.') : null,
@@ -248,6 +255,12 @@ function parentBody(root, app, { onHome, onReset }) {
       h('section.guide',
         h('h3', '이번 주'),
         h('p', week.length ? `이번 주에 ${new Set(week.map((l) => l.at.slice(0, 10))).size}일 운행했고, 지금까지 ${lit.length}개 역을 켰어요.` : '이번 주에는 아직 운행하지 않았어요.'),
+        (() => {
+          const total = state.placement?.inferredCount ?? 0;
+          const inf = Object.values(state.nodes).filter((x) => x.inferred);
+          const insp = inf.filter((x) => x.inspect).length;
+          return total ? h('p', `시승 운행으로 미리 켜진 역 ${total}곳 중 ${inf.length}곳을 아직 확인하고 있어요${insp ? `(그중 ${insp}곳은 다시 연습 중)` : ''}. 운행 중 임시 정차에서 한 역씩 확인해요.`) : null;
+        })(),
         state.dateWentBack ? h('p', '기기 날짜가 뒤로 바뀐 적이 있어요. 하루 운행 수는 기기 날짜로 세요.') : null,
         lateDays ? h('p', `저녁 9시 넘어 운행한 날이 ${lateDays}일 있었어요. 잠자는 시간을 지켜 주세요.`) : null,
       ),

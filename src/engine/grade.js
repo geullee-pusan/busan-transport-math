@@ -48,7 +48,7 @@ export function grade(problem, response) {
     for (const d of problem.discriminators ?? []) {
       if (d.key && same(response?.[d.key], d.value)) return missD(d);
     }
-    return miss(null, `${wrong.map((f) => f.label).join(', ')}을(를) 다시 볼까요?`);
+    return miss(null, wrong.length === 1 ? `"${wrong[0].label}" 칸을 다시 볼까요?` : `다시 볼 칸: ${wrong.map((f) => f.label).join(' · ')}`);
   }
 
   if (kind === 'equation') {

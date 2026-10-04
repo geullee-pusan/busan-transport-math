@@ -18,7 +18,13 @@ const app = {
 
 const seed = () => (Date.now() ^ (app.state.runs * 2654435761)) >>> 0;
 
+let reloadWhenHome = false; // 운행 중에 새 판이 깔리면 홈으로 돌아올 때 새로 연다(UX 7차 A-4)
+
 function home() {
+  if (reloadWhenHome) {
+    location.reload();
+    return;
+  }
   // 이름이 없으면(처음 켰거나 "처음부터 다시") 처음 화면에서 이름부터 받는다.
   if (!app.state.profile.nickname?.trim()) return setup();
   renderHome(root, app, {
@@ -75,7 +81,14 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
   // 운행 중이면 새로 열지 않는다(다음에 열 때 새 판).
   const hadController = Boolean(navigator.serviceWorker.controller);
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (hadController && !document.querySelector('.run-screen')) location.reload();
+    if (!hadController) return;
+    if (document.querySelector('.run-screen')) reloadWhenHome = true;
+    else location.reload();
   });
-  navigator.serviceWorker.register('./sw.js').catch(() => {});
+  navigator.serviceWorker.register('./sw.js').then((reg) => {
+    // 태블릿에서 앱을 며칠씩 열어 두어도 새 판을 찾도록, 다시 화면에 나올 때마다 확인한다.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') reg.update().catch(() => {});
+    });
+  }).catch(() => {});
 }

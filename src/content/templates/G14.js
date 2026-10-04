@@ -234,7 +234,7 @@ function t142Level1(x, y) {
   const answer = msAns(sum);
   return {
     text: ['부암역에서 서면역까지 ', ...msText(x), ', 서면역에서 갈아타는 데 ', ...msText(y), '가 걸렸어요. 모두 몇 분 몇 초예요?'],
-    figure: { kind: 'stations', stations: ['부암', '서면'] },
+    figure: { kind: 'stations', line: '2', stations: ['부암', '서면'] },
     input: { kind: 'compound', fields: MS_FIELDS },
     answer,
     discriminators: [],

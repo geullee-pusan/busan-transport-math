@@ -1,13 +1,15 @@
 // 학습 상태: 만들기, 저장, 불러오기, 백업. localStorage는 늘 try/catch로 감싼다.
 import { emptyNode } from './mastery.js';
+import { NODES, FAR_FROM_EVIDENCE } from './world.js';
 
 const KEY = 'busan-transport-math:v1';
 
 export function createState() {
   return {
     version: 1,
-    profile: { nickname: '', color: '#F7941D', homeStation: null },
+    profile: { nickname: '', color: '#00798C', homeStation: null },
     placementDone: false,
+    placement: null, // 시승 결과 { passes, misses, farthest(줄기별), any } — 처음 보는 역의 시작 실력에 쓴다
     license: 1,
     goldTotal: 0,
     cardGold: {}, // 차량 단계 → 그 카드에 모은 금 도장
@@ -26,8 +28,26 @@ export function createState() {
   };
 }
 
+/**
+ * 처음 보는 역의 시작 실력(커리큘럼 자문 01 2.4.2절).
+ *   시승에서 통과가 없으면 2, 있으면 3(개통 판정 단계).
+ *   3.5(4단계부터)는 같은 줄기에서 틀림 없이 2번 이상 통과했고, 통과한 가장 먼 역에서 6역 안이고,
+ *   단계 조건이 붙은 선수 역(minLevel)이 추정으로만 켜진 것이 아닐 때만.
+ */
+export function startRatingOf(state, id) {
+  const pl = state.placement;
+  if (!pl?.any) return 2;
+  const node = NODES.get(id);
+  if (!node || node.line !== 'L1' || FAR_FROM_EVIDENCE.has(id)) return 3;
+  const s = node.strand;
+  const near = node.order - (pl.farthest[s] ?? -99) <= 6;
+  const weakPrereq = (node.prereqs ?? []).some((p) => p.minLevel && state.nodes[p.node]?.inferred);
+  return (pl.passes[s] ?? 0) >= 2 && !pl.misses[s] && near && !weakPrereq ? 3.5 : 3;
+}
+
+/** 처음 보는 역은 시승 결과로 정한 시작 실력에서 출발한다. */
 export function nodeState(state, id) {
-  return state.nodes[id] ?? emptyNode();
+  return state.nodes[id] ?? { ...emptyNode(), rating: startRatingOf(state, id) };
 }
 
 export function load(storage = globalThis.localStorage) {

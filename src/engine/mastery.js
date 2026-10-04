@@ -93,6 +93,7 @@ export function applyReview(ns, correct, hint, day) {
   if (correct && hint <= 1 && ns.litDay !== null && day > ns.litDay && ns.status !== 'confirmed') {
     node.status = 'confirmed';
     node.confirmedDay = day;
+    node.inferred = false; // 시승으로 추정해 켠 역도 여기서 확인된다
     node.longStage = 0;
     node.reviewDay = day + LONG_GAPS[0];
   } else if (ns.status === 'confirmed') {

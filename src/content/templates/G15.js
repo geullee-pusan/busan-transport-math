@@ -230,7 +230,7 @@ function t152Level12(h, m, g) {
     : [];
   return {
     text: ['가야역에서 서면역까지 열차로 ', V(g), '분 걸려요. ', ...hmsText(h, m), ' 열차를 타면 서면역에 몇 시 몇 분에 도착해요?'],
-    figure: { kind: 'stations', stations: ['가야', '부암', '서면'] },
+    figure: { kind: 'stations', line: '2', stations: ['가야', '부암', '서면'] },
     input: { kind: 'compound', fields: HM_FIELDS },
     answer,
     discriminators: discs,
@@ -356,7 +356,7 @@ const T15_2 = {
 function t153Level1(a, b) {
   return {
     text: ['노선 그림에 역 사이마다 걸리는 시간이 적혀 있어요. 가야–부암 ', V(a), '분, 부암–서면 ', V(b), '분이에요. 가야역에서 서면역까지 몇 분 걸려요?'],
-    figure: { kind: 'stations', stations: ['가야', '부암', '서면'], times: [`${a}분`, `${b}분`] },
+    figure: { kind: 'stations', line: '2', stations: ['가야', '부암', '서면'], times: [`${a}분`, `${b}분`] },
     input: { kind: 'number', unit: '분' },
     answer: a + b,
     discriminators: [],
@@ -373,7 +373,7 @@ function t153Level2(x, y) {
   const discs = cleanDiscs([{ value: raw, category: '개념', kind: 'check', feedback: `${raw.s}초는 1분보다 길지 않나요?` }], answer);
   return {
     text: ['노선 그림에 가야–부암 ', ...msText(x), ', 부암–서면 ', ...msText(y), '가 적혀 있어요. 가야역에서 서면역까지 몇 분 몇 초 걸려요?'],
-    figure: { kind: 'stations', stations: ['가야', '부암', '서면'], times: [ms(x), ms(y)] },
+    figure: { kind: 'stations', line: '2', stations: ['가야', '부암', '서면'], times: [ms(x), ms(y)] },
     input: { kind: 'compound', fields: MS_FIELDS },
     answer,
     discriminators: discs,
@@ -398,7 +398,7 @@ function t153Level3(x, y, z, p) {
   );
   return {
     text: ['노선 그림에 가야–부암 ', ...msText(x), ', 부암–서면 ', ...msText(y), ', 서면–전포 ', ...msText(z), '가 적혀 있어요. 열차는 서면역에서 ', V(p), '초 멈춰요. 가야역에서 전포역까지 몇 분 몇 초 걸려요?'],
-    figure: { kind: 'stations', stations: ['가야', '부암', '서면', '전포'], times: [ms(x), ms(y), ms(z)], stop: { at: '서면', time: `${p}초` } },
+    figure: { kind: 'stations', line: '2', stations: ['가야', '부암', '서면', '전포'], times: [ms(x), ms(y), ms(z)], stop: { at: '서면', time: `${p}초` } },
     input: { kind: 'compound', fields: MS_FIELDS },
     answer,
     discriminators: discs,

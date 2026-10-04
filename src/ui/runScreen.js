@@ -142,7 +142,7 @@ export function renderRun(root, app, run, { onFinish }) {
       h('button.tool', { type: 'button', onclick: () => speak(plainText(p.text)) }, icon('read'), '읽어 주기'),
       h('button.tool', { type: 'button', onclick: () => pad.classList.toggle('open') }, icon('pad'), '연습장'),
       !isDiag && p.hints?.length ? h('button.tool.tool-hint', { type: 'button', onclick: () => { drawer.classList.add('open'); drawer.setAttribute('aria-hidden', 'false'); } }, icon('hint'), '힌트') : null,
-      isDiag ? h('button.tool', { type: 'button', onclick: () => onAnswer(UNKNOWN) }, '아직 몰라요') : null,
+      isDiag ? h('button.tool.unknown-btn', { type: 'button', onclick: () => { if (!input.el.classList.contains('done')) onAnswer(UNKNOWN); } }, '아직 몰라요') : null, // 채점 뒤에는 눌리지 않는다(시각 3차)
       h('button.tool.quiet', { type: 'button', onclick: () => report() }, icon('report'), '이 문제 이상해요'),
     );
 
@@ -174,10 +174,12 @@ export function renderRun(root, app, run, { onFinish }) {
         blankDone = true;
         input.clearBlank();
         if (typeof p.answer === 'number' && input.fill) input.fill(String(p.answer));
-        clear(feedback).append(fbLine('info', 'info', p.blankThen || '이제 답을 써요.'));
+        // 답이 이미 채워졌으면 '이제 답을 써요'가 아니라 낼지 묻는다(UX 7차 A-6)
+        clear(feedback).append(fbLine('info', 'info', p.blankThen || (typeof p.answer === 'number' && input.fill ? '빈칸이 맞아요. 이 답으로 낼까요?' : '이제 답을 써요.')));
         return;
       }
       const fn = run.mode === 'express' ? submitExpress : run.mode === 'placement' ? submitPlacement : submit;
+      const evBefore = run.events?.length ?? 0;
       const out = fn(state, run, response);
       run = out.run;
       if (out.state !== state) setState(out.state);
@@ -189,15 +191,18 @@ export function renderRun(root, app, run, { onFinish }) {
       }
       if (out.outcome === 'correct') {
         correctTone(state.settings);
-        input.lock(true);
-        const ev = run.events?.at(-1);
-        const tick = run.events?.filter((e) => e.type === 'tick').at(-1);
-        const step = tick && tick === ev ? (tick.gained >= 2 ? ' · 한 칸 앞으로' : ' · 반 칸 앞으로') : '';
+        input.lock(true); input.el.classList.add('done'); screen.querySelector('.unknown-btn')?.setAttribute('disabled', '');
+        // 이번 문제에서 생긴 사건만 본다(금 도장이 뒤에 붙어도 칸 소식이 사라지지 않게)
+        const evs = run.events?.slice(evBefore) ?? [];
+        const ev = evs.find((e) => e.type === 'lit') ?? evs.find((e) => e.type === 'inspected') ?? evs.at(-1);
+        const tick = evs.find((e) => e.type === 'tick');
+        const step = tick ? (tick.gained >= 2 ? ' · 한 칸 앞으로' : ' · 반 칸 앞으로') : evs.some((e) => e.type === 'prep') ? ' · 몸풀기 문제라 칸은 그대로예요' : '';
         if (out.passed) feedback.append(fbLine('right', 'pass', `${stationOf(out.passed)?.name}역 통과!`));
         else if (ev?.type === 'lit') feedback.append(fbLine('right', 'check', `${stationOf(ev.node)?.name}역 개통!`));
+        else if (ev?.type === 'inspected') feedback.append(fbLine('right', 'check', `${stationOf(ev.node)?.name}역 점검 완료!`));
         else feedback.append(fbLine('right', 'check', `맞았어요${step}`));
-        const pend = run.events?.filter((e) => e.type === 'pending').at(-1);
-        if (pend && pend === ev) feedback.append(h('div.info', pendingText(pend.code)));
+        const pend = evs.find((e) => e.type === 'pending');
+        if (pend) feedback.append(h('div.info', pendingText(pend.code)));
         nextButtons(true, out);
         return;
       }
@@ -208,7 +213,7 @@ export function renderRun(root, app, run, { onFinish }) {
       if (r.feedback) feedback.append(h('div.wrong-detail', r.feedback));
       input.reset();
       if (isDiag) {
-        input.lock(true);
+        input.lock(true); input.el.classList.add('done'); screen.querySelector('.unknown-btn')?.setAttribute('disabled', '');
         if (out.stoppedAt) feedback.append(h('div.info', `${stationOf(out.stoppedAt)?.name}역에 내려요.`));
         nextButtons(false, out);
         return;
@@ -216,7 +221,7 @@ export function renderRun(root, app, run, { onFinish }) {
       if (out.outcome === 'giveup-offer') {
         clear(after).append(
           h('button.secondary', { type: 'button', onclick: () => { clear(after); } }, '다시 해 볼래요'),
-          h('button.secondary', { type: 'button', onclick: () => { const g = giveUp(state, run); run = g.run; run.givenUp = (run.givenUp ?? 0) + 1; setState(g.state); input.lock(true); clear(after); nextButtons(false, g, p.answer); } }, '임시 정차로 넘기기'),
+          h('button.secondary', { type: 'button', onclick: () => { const g = giveUp(state, run); run = g.run; run.givenUp = (run.givenUp ?? 0) + 1; setState(g.state); input.lock(true); input.el.classList.add('done'); screen.querySelector('.unknown-btn')?.setAttribute('disabled', ''); clear(after); nextButtons(false, g, p.answer); } }, '임시 정차로 넘기기'),
         );
       }
     }

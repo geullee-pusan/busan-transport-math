@@ -2,6 +2,7 @@
 // 그림이 판단을 대신하지 않게 한다(SPEC 9.5c): 합계나 답을 그림에 쓰지 않는다.
 // 'vertical'(세로셈)은 그리지 않는다. 세로셈 틀은 연습장에서 빈 채로 쓴다(한 길만 밀어주지 않게).
 import { h, s } from './dom.js';
+import { LINES } from '../engine/world.js';
 
 const INK = '#1F3342';
 const SHADE = '#9FB3C1';
@@ -155,8 +156,12 @@ function numberline({ from, to, ticks, shaded, mark, marks, origin, unit }) {
   return wrap(svg);
 }
 
-/** 노선 그림. times: 역 사이마다 걸리는 시간 글자(선 위), stop: { at, time } 그 역에서 멈추는 시간(⏸ 표시 + 글자) */
-function stations({ stations: names, times, stop }) {
+/**
+ * 노선 그림. times: 역 사이마다 걸리는 시간 글자(선 위), stop: { at, time } 그 역에서 멈추는 시간([정차 30초] 꼬리표),
+ * line: 노선 id('1', '2' …, 없으면 1호선) — 노선 공식 색(docs/FACTS.md, src/data/busan.json)
+ */
+function stations({ stations: names, times, stop, line = '1' }) {
+  const lineColor = LINES.find((l) => l.id === String(line))?.color ?? '#F7941D';
   const hasTimes = Array.isArray(times) && times.length > 0;
   const stopIdx = stop ? names.indexOf(stop.at) : -1;
   const W = Math.max(220, names.length * (hasTimes ? 110 : 90));
@@ -166,17 +171,18 @@ function stations({ stations: names, times, stop }) {
   const svg = s('svg', { viewBox: `0 0 ${W} ${H}`, class: 'figure' });
   const step = (W - 40) / Math.max(1, names.length - 1);
   const sx = (i) => 20 + step * i;
-  svg.append(s('line', { x1: 20, y1: ly, x2: sx(names.length - 1), y2: ly, stroke: INK, 'stroke-width': 8, 'stroke-linecap': 'round' }), s('line', { x1: 20, y1: ly, x2: sx(names.length - 1), y2: ly, stroke: '#F7941D', 'stroke-width': 4, 'stroke-linecap': 'round' }));
+  svg.append(s('line', { x1: 20, y1: ly, x2: sx(names.length - 1), y2: ly, stroke: INK, 'stroke-width': 8, 'stroke-linecap': 'round' }), s('line', { x1: 20, y1: ly, x2: sx(names.length - 1), y2: ly, stroke: lineColor, 'stroke-width': 4, 'stroke-linecap': 'round' }));
   if (hasTimes) times.forEach((tx, i) => { if (tx != null && i < names.length - 1) svg.append(s('text', { x: (sx(i) + sx(i + 1)) / 2, y: ly - 10, 'text-anchor': 'middle', class: 'fig-label fig-strong' }, String(tx))); });
   names.forEach((nm, i) => svg.append(s('circle', { cx: sx(i), cy: ly, r: 6, fill: '#fff', stroke: INK, 'stroke-width': 2.5 }), s('text', { x: sx(i), y: ly + 26, 'text-anchor': 'middle', class: 'fig-label' }, nm)));
   if (stopIdx >= 0) {
-    // 멈춤 표시 = 피드백의 ⏸와 같은 모양(원 + 두 막대) + 멈추는 시간
-    const cx = sx(stopIdx) - 26;
+    // 정차 꼬리표. ⏸는 오답 신호와 같은 모양이라 그림에 쓰지 않는다(시각 3차)
+    const label = `정차 ${stop.time}`;
+    const w = 20 + label.length * 13;
+    const cx = Math.min(Math.max(sx(stopIdx), w / 2 + 2), W - w / 2 - 2);
     const cy = ly + 46;
     svg.append(
-      s('circle', { cx, cy, r: 8, fill: '#fff', stroke: INK, 'stroke-width': FIG.outline }),
-      s('path', { d: `M ${cx - 2.5} ${cy - 4} v 8 M ${cx + 2.5} ${cy - 4} v 8`, stroke: INK, 'stroke-width': FIG.outline, 'stroke-linecap': 'round' }),
-      s('text', { x: cx + 14, y: cy + 5, class: 'fig-label fig-strong' }, `${stop.time} 멈춤`),
+      s('rect', { x: cx - w / 2, y: cy - 14, width: w, height: 26, rx: 6, fill: '#fff', stroke: INK, 'stroke-width': FIG.outline }),
+      s('text', { x: cx, y: cy + 5, 'text-anchor': 'middle', class: 'fig-label fig-strong' }, label),
     );
   }
   return wrap(svg);
@@ -254,9 +260,9 @@ function timeband({ from = 0, to = 360, marks = 10, bars = [] }) {
     const a = x(b.from);
     const w = Math.max(0, x(b.to) - a);
     svg.append(s('rect', b.unknown
-      ? { x: a, y: 14, width: w, height: 28, rx: 4, fill: '#fff', stroke: INK, 'stroke-width': FIG.outline, 'stroke-dasharray': '6 4' }
+      ? { x: a, y: 14, width: w, height: 28, rx: 4, fill: 'var(--unknown-bg)', stroke: INK, 'stroke-width': FIG.outline } // 모르는 수 = 회색 실선 □(점선은 '아직·채울 칸', 시각 3차)
       : { x: a, y: 14, width: w, height: 28, rx: 4, fill: FIG.fill, stroke: INK, 'stroke-width': FIG.outline }));
-    if (b.unknown) svg.append(s('text', { x: a + w / 2, y: 34, 'text-anchor': 'middle', class: 'fig-label fig-strong' }, '?'));
+    if (b.unknown) svg.append(s('text', { x: a + w / 2, y: 34, 'text-anchor': 'middle', class: 'fig-label fig-strong' }, '□'));
   }
   svg.append(s('line', { x1: x(from), y1: AY, x2: x(to), y2: AY, stroke: INK, 'stroke-width': FIG.outline }));
   const step = Math.max(1, marks);

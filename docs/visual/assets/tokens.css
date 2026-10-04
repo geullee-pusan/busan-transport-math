@@ -121,7 +121,8 @@
    src/ui/style.css의 "기준 기기" 절과 같은 문턱(1300px). 1 CSS px ≈ 0.21mm.
    이 화면에서 48px = 10mm, 64px = 13.5mm, 72px = 15mm → 초3 손가락(약 10~12mm) 기준을 넉넉히 넘는다.
    글자 밀도가 보통 태블릿과 비슷해서 글자 크기는 2단계만 올리고, 넓어진 폭은 여백과 그림에 준다. */
-@media (min-width: 1300px) {
+/* 세로(924×1480)도 같은 기기다 → 폭만 보지 않고 긴 변으로도 잡는다(3차 검토: 세로에서 키 64·아이콘 24로 떨어짐) */
+@media (min-width: 1300px), (min-width: 900px) and (min-height: 1300px) {
   :root {
     --fs-problem: 26px;     /* style.css 기준 기기 절과 같음 */
     --fs-problem-hi: 24px;

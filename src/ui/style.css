@@ -75,6 +75,12 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus
 }
 .choices.locked .choice.chosen::after, .input.locked .chosen::after { background-color: var(--ink-3); }
 .choices.locked, .input.locked { pointer-events: none; }
+/* 채점 끝남(.done): 점선(= 아직)으로 바꾸지 않는다. 실선 그대로, 고른 칸은 4px + 진한 ✓, 답 내기·키패드는 숨김(시각 3차 1-1) */
+.input.done { pointer-events: none; }
+.input.done .choice, .input.done .chip, .input.done .key, .input.done .op, .input.done .paint-cell { background: var(--paper); color: var(--ink-2); border: 1.5px solid var(--line-mute); transform: none; }
+.input.done .chosen { color: var(--ink); border: 4px solid var(--ink); }
+.input.done .chosen::after { background-color: var(--ink); }
+.input.done .submit, .input.done .keypad { display: none; }
 /* 비활성에는 늘 이유 한 줄(자물쇠 아이콘 금지) */
 .why-off { font-size: var(--fs-label); color: var(--ink-2); margin: 0; }
 
@@ -114,6 +120,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus
 .next { display: grid; gap: 10px; }
 .next-dest { font-size: 22px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .next-btns { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.home .next-btns > .primary.big { flex: 1 0 100%; } /* 출발은 오른쪽 칸 전체 폭 한 줄(시각 3차 1-6) */
 .badge-1 { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--line1); color: var(--on-line1); font-weight: var(--fw-heavy); border: var(--bw-hair) solid var(--ink); flex: none; }
 .badge-2 { background: var(--line2); color: var(--on-line2); }
 
@@ -169,7 +176,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus
 .unit { font-size: 22px; }
 /* 힌트 ④ 빈칸: 흰 바탕 + 점선(= 아직, 여기 채워요) */
 .blank-slot { display: inline-block; min-width: 1em; border: var(--bw) dashed var(--ink); border-radius: var(--r-sm); margin: 0 2px; padding: 0 4px; background: var(--paper); }
-.keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-2); }
+.keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-2); width: 100%; max-width: 480px; margin: 0 auto; }
+.keypad.mini { max-width: none; }
 .keypad.mini { grid-template-columns: repeat(6, 1fr); }
 .key { min-height: var(--btn); font-size: 26px; font-weight: var(--fw-bold); padding: 0; }
 .key .icon { width: 28px; height: 28px; }
@@ -325,7 +333,7 @@ details summary { min-height: var(--hit); display: flex; align-items: center; fo
 /* ── 기준 기기: 갤럭시 탭 S8 울트라 (14.6", CSS 1480×924 가로 / 924×1480 세로, 2배율) ──
    글자 밀도는 약 120 CSS px/인치로 보통 태블릿과 비슷하므로 글자는 두 단계만 올리고(tokens.css),
    넓은 화면을 쓰도록 폭과 배치를 넓힌다. 작은 기기는 위의 기본 규칙을 따른다. */
-@media (min-width: 1300px) {
+@media (min-width: 1300px), (min-width: 900px) and (min-height: 1300px) {
   .setup { max-width: 860px; padding-top: 64px; gap: 22px; }
   .setup h1 { font-size: var(--fs-hero); }
   .lead { font-size: 22px; }

@@ -3,7 +3,7 @@
 import { templatesFor, diagnosticsFor } from '../content/index.js';
 import { createRng, hashSeed } from './rng.js';
 import { grade } from './grade.js';
-import { applyAttempt, applyReview, emptyNode, FULL } from './mastery.js';
+import { applyAttempt, applyReview, emptyNode, FULL, nextRating, LONG_GAPS } from './mastery.js';
 import { nodeState } from './state.js';
 import { LINE_NODES, NODES, segmentMeters } from './world.js';
 
@@ -27,7 +27,7 @@ export function line2Open(state) {
  * 고른 노선에 갈 역이 없으면 다른 노선.
  */
 export function chooseLine(state) {
-  const has = (line) => playableNodes(line).some((n) => !DONE.has(nodeState(state, n.id).status));
+  const has = (line) => playableNodes(line).some((n) => needsVisit(nodeState(state, n.id)));
   const want = line2Open(state) && state.runs % 3 === 2 ? 'L2' : 'L1';
   if (has(want)) return want;
   const other = want === 'L1' ? 'L2' : 'L1';
@@ -35,9 +35,16 @@ export function chooseLine(state) {
   return has(other) ? other : want;
 }
 
-/** 목적지 = 그 노선의 추천 순서상 가장 앞의 꺼진 역(템플릿이 있는 역만) */
+/** 갈 역: 꺼진 역, 또는 점검 중인 추정 역 */
+const needsVisit = (ns) => !DONE.has(ns.status) || ns.inspect === true;
+
+/**
+ * 목적지 = 점검 중인 역이 있으면 그 역, 없으면 그 노선의 추천 순서상 가장 앞의 꺼진 역(템플릿이 있는 역만).
+ * 점검: 시승으로 추정해 켠 역을 임시 정차에서 두 번 연달아 못 맞히면 불은 둔 채 다시 들른다(커리큘럼 자문 01 2.4.2절).
+ */
 export function destination(state, line = chooseLine(state)) {
-  return playableNodes(line).find((n) => !DONE.has(nodeState(state, n.id).status)) ?? null;
+  const nodes = playableNodes(line);
+  return nodes.find((n) => nodeState(state, n.id).inspect) ?? nodes.find((n) => !DONE.has(nodeState(state, n.id).status)) ?? null;
 }
 
 const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
@@ -75,8 +82,9 @@ export function startRun(state, { day, seed, mode = 'normal' }) {
   const line = chooseLine(state);
   const dest = destination(state, line);
   if (!dest) return null;
-  const L = workingLevel(state, dest.id);
   const ceil = ceilingOf(dest.id);
+  // 점검 중인 역은 3단계 문제로 확인한다.
+  const L = nodeState(state, dest.id).inspect ? clamp(Math.max(3, workingLevel(state, dest.id)), 1, ceil) : workingLevel(state, dest.id);
   const slots = [];
   if (state.parked) slots.push({ kind: 'parked', ...state.parked });
   for (const r of state.redo) slots.push({ kind: 'redo', node: r.node, level: r.level, templateId: r.templateId });
@@ -173,6 +181,7 @@ export function submit(state, run, response) {
     return { ...next, result, outcome: 'correct' };
   }
   run.tries += 1;
+  if (run.tries === 1) run.firstCategory = result.category ?? null;
   // 첫 오답에는 점검(check)만 보여준다. 도움(nudge) 문구는 같은 문제의 두 번째 오답부터.
   // 그래야 두 번째 정답이 "스스로 고친 것"이 되어 금 도장을 줄 수 있다(커리큘럼 자문 10 2절).
   if (run.tries === 1 && result.kind === 'nudge') {
@@ -195,12 +204,32 @@ function finishProblem(state0, run, correct, hint) {
   const ns = nodeState(state, slot.node);
   const before = ns.status;
 
-  if (slot.kind === 'review' && DONE.has(before)) {
-    state.nodes[slot.node] = applyReview(ns, correct, hint, run.day);
+  if (ns.inspect && slot.kind !== 'diag') {
+    // 점검 중인 추정 역: 3단계 이상을 힌트 ① 이하로 2문제 맞히면 확정. 칸과 거리는 이미 있으므로 늘지 않는다.
+    const right = (ns.inspectRight ?? 0) + (correct && hint <= 1 && level >= 3 ? 1 : 0);
+    const node = { ...ns, attempts: [...ns.attempts, { c: correct, h: hint, l: level, r: template.repr, d: run.day }].slice(-20), rating: nextRating(ns.rating, { correct, hint }), inspectRight: right };
+    if (right >= 2) {
+      Object.assign(node, { status: 'confirmed', inspect: false, inferred: false, confirmedDay: run.day, longStage: 0, reviewDay: run.day + LONG_GAPS[0] });
+      run.events.push({ type: 'inspected', node: slot.node });
+    }
+    state.nodes[slot.node] = node;
+  } else if (slot.kind === 'review' && DONE.has(before)) {
+    let next = applyReview(ns, correct, hint, run.day);
+    if (ns.inferred && next.status !== 'confirmed') {
+      // 추정 역을 임시 정차에서 두 번 연달아 못 맞히면 점검으로 돌린다. 첫 실패가 계산 실수면 한 번 더 기회.
+      const strikes = (ns.inferStrikes ?? 0) + (correct ? 0 : 1);
+      const grace = !correct && strikes === 1 ? run.firstCategory === '계산' : ns.inferGrace ?? false;
+      next = { ...next, inferStrikes: strikes, inferGrace: grace };
+      if (strikes >= (grace ? 3 : 2)) {
+        next = { ...next, inspect: true, inspectRight: 0 };
+        run.events.push({ type: 'inspect', node: slot.node });
+      }
+    }
+    state.nodes[slot.node] = next;
     if (correct) state.meters += Math.round(segmentMeters(slot.node) / 16); // 다시 달린 구간은 절반(한 칸 몫의 절반)
   } else if (slot.kind === 'diag') {
     // 급행 진단은 칸에 넣지 않는다(별도 판정).
-    state.nodes[slot.node] = { ...ns, attempts: [...ns.attempts, { c: correct, h: hint, l: level, r: template.repr }].slice(-20) };
+    state.nodes[slot.node] = { ...ns, attempts: [...ns.attempts, { c: correct, h: hint, l: level, r: template.repr, x: 1 }].slice(-20) };
   } else {
     const { node, gained, lit, pending } = applyAttempt(ns.status ? ns : emptyNode(), { correct, hint, level, repr: template.repr, counted }, run.day);
     state.nodes[slot.node] = node;
@@ -211,6 +240,7 @@ function finishProblem(state0, run, correct, hint) {
     }
     if (correct && gained === 0) state.meters += Math.round(segmentMeters(slot.node) / 16);
     if (lit) run.events.push({ type: 'lit', node: slot.node });
+    if (correct && counted && level < 2 && before === 'open') run.events.push({ type: 'prep', node: slot.node }); // 1단계 정답: 준비 구간(칸은 그대로)
     if (pending) run.events.push({ type: 'pending', node: slot.node, code: pending });
   }
 
@@ -239,13 +269,14 @@ function finishProblem(state0, run, correct, hint) {
   if (slot.kind === 'parked') state.parked = null;
 
   // 면허(차량 등급): 혼자 맞힌 문제가 3개 이상인 가장 높은 단계
-  const lic = licenseOf(state);
+  // 혼자 맞힌 문제에서만 오른다. 넘긴 문제 뒤에 축하가 나오지 않게(UX 7차 A-1).
+  const lic = correct && hint <= 1 && slot.kind !== 'easy' ? licenseOf(state) : state.license;
   if (lic > state.license) {
     // 아이가 따로 고르지 않았으면(지금 면허 차량을 타고 있었으면) 새 차량으로 바꿔 탄다.
     if ((state.activeCard ?? state.license) === state.license) state.activeCard = lic;
     state.license = lic;
     if (!state.cards.includes(lic)) state.cards = [...state.cards, lic];
-    const evidence = Object.entries(state.nodes).filter(([, ns]) => ns.attempts.some((a) => a.c && a.h <= 1 && a.l >= lic)).map(([id]) => id).slice(0, 3);
+    const evidence = Object.entries(state.nodes).filter(([, ns]) => ns.attempts.some((a) => a.c && a.h <= 1 && a.l >= lic && !a.x)).map(([id]) => id).slice(0, 3);
     run.events.push({ type: 'license', tier: lic, evidence });
   }
 
@@ -272,9 +303,10 @@ function advance(state, run, correct) {
   run.tries = 0;
   run.hint = 0;
   run.nudged = false;
+  run.firstCategory = null;
   run.current = null;
   // 목적지에 도착(점등)하면 남은 목적지 문제는 다음 역 문제로 바꾼다.
-  if (run.events.some((e) => e.type === 'lit' && e.node === run.dest)) {
+  if (run.events.some((e) => (e.type === 'lit' || e.type === 'inspected') && e.node === run.dest)) {
     const nd = destination(state, run.line ?? 'L1');
     if (nd && nd.id !== run.dest) {
       for (let i = run.index; i < run.slots.length; i++) {
@@ -290,7 +322,7 @@ export function licenseOf(state) {
   // 단계 L 이상 문제를 혼자 맞힌 역의 수
   let best = 1;
   for (let l = 11; l >= 2; l--) {
-    const stations = Object.values(state.nodes).filter((ns) => ns.attempts.some((a) => a.c && a.h <= 1 && a.l >= l)).length;
+    const stations = Object.values(state.nodes).filter((ns) => ns.attempts.some((a) => a.c && a.h <= 1 && a.l >= l && !a.x)).length; // 진단(시승·급행) 문제는 세지 않는다
     if (stations >= 3) {
       best = l;
       break;
@@ -310,7 +342,7 @@ export function park(state, run) {
 /** 운행 일지 */
 export function summary(state, run) {
   const nowDone = Object.entries(state.nodes).filter(([, ns]) => DONE.has(ns.status)).map(([id]) => id);
-  const newly = nowDone.filter((id) => !run.startDone.includes(id));
+  const newly = nowDone.filter((id) => !run.startDone.includes(id)).sort((a, b) => (NODES.get(a)?.order ?? 0) - (NODES.get(b)?.order ?? 0)); // 역 순서대로
   return {
     newlyLit: newly,
     meters: state.meters - run.startMeters,
@@ -318,9 +350,9 @@ export function summary(state, run) {
     gold: run.events.filter((e) => e.type === 'gold').length,
     hinted: run.events.filter((e) => e.type === 'hinted').length,
     retried: run.events.filter((e) => e.type === 'retried').length,
-    licenseEvidence: run.events.find((e) => e.type === 'license')?.evidence ?? [],
+    licenseEvidence: run.events.findLast((e) => e.type === 'license')?.evidence ?? [],
     grewAt: run.events.find((e) => e.type === 'grew')?.node ?? null,
-    license: run.events.find((e) => e.type === 'license')?.tier ?? null,
+    license: run.events.findLast((e) => e.type === 'license')?.tier ?? null, // 두 단계 오르면 도착 단계 하나로 알린다
     pending: run.events.filter((e) => e.type === 'pending').at(-1) ?? null,
     redo: state.redo.length,
     dest: destination(state, run.line ?? 'L1')?.id ?? null,

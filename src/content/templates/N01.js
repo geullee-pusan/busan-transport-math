@@ -466,7 +466,7 @@ function t14(a, b, level) {
     input: { kind: 'number', unit: '명' },
     answer: sum,
     discriminators: discs,
-    hints: [`다대포해수욕장역에서 ${a}명, 다대포항역에서 ${b}명이 탔어요. 모두 몇 명인지 물어요.`, hint2, hint3, `백 ${S.hundreds}개, 십 ${S.tens}개, 일 ${S.ones}개 → ${bl.blank}`],
+    hints: [`다대포해수욕장역에서 ${a}명, 다대포항역에서 ${b}명이 탔어요. 모두 몇 명인지 물어요.`, hint2, hint3, `백 ${S.hundreds}개, 일 ${S.ones}개예요. 십 모형은 몇 개일까요? → ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     explain: {

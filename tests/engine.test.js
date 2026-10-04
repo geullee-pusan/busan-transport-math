@@ -1,9 +1,10 @@
 // 엔진 검사: 칸·개통 규칙, 운행 진행, 급행·시승, 결정론.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createState } from '../src/engine/state.js';
-import { applyAttempt, emptyNode, FULL } from '../src/engine/mastery.js';
-import { startRun, currentProblem, submit, giveUp, destination, summary, openHint } from '../src/engine/run.js';
+import { createState, startRatingOf } from '../src/engine/state.js';
+import { LINE1_NODES, NODES, MUST_CHECK, ancestorsOf } from '../src/engine/world.js';
+import { applyAttempt, applyReview, emptyNode, FULL } from '../src/engine/mastery.js';
+import { startRun, currentProblem, submit, giveUp, destination, summary, openHint, ceilingOf, licenseOf } from '../src/engine/run.js';
 import { startExpress, submitExpress, startPlacement, submitPlacement } from '../src/engine/express.js';
 
 test('칸: 혼자 = 한 칸, 힌트 ②~④ = 반 칸, 1단계는 준비 구간', () => {
@@ -266,3 +267,141 @@ test('출제 조건(requires): 필요한 역을 켜지 않았으면 그 문제�
   }
 });
 import { createRng as createRngLocal } from '../src/engine/rng.js';
+
+function placeAll(answerFn) {
+  let state = createState();
+  let run = startPlacement(state, { day: 1, seed: 5 });
+  let guard = 0;
+  while (!run.finished && guard++ < 30) {
+    const cur = currentProblem(run);
+    ({ state, run } = submitPlacement(state, run, answerFn(cur, run)));
+  }
+  return { state, run };
+}
+
+test('시승 운행: 줄기마다 이분 탐색, 모두 5역 이하(10문제 이하)', () => {
+  const { run } = placeAll((cur) => cur.problem.answer);
+  assert.ok(run.placement.tested <= 5);
+  assert.ok(run.index <= 10);
+});
+
+test('시승 운행: 모두 맞히면 앞 역이 통과역(추정)으로 켜지고, 필수 확인 역은 켜지지 않는다', () => {
+  const { state, run } = placeAll((cur) => cur.problem.answer);
+  const inferred = Object.entries(state.nodes).filter(([, ns]) => ns.inferred);
+  assert.ok(inferred.length > 0, '추정 통과역이 있어야 한다');
+  for (const [id, ns] of inferred) {
+    assert.equal(ns.status, 'passed');
+    assert.equal(ns.reviewDay, 2, '다음 날부터 임시 정차로 확인');
+    assert.ok(!MUST_CHECK.has(id), `필수 확인 역 ${id}은 추정으로 켜지 않는다`);
+  }
+  assert.equal(state.nodes.N01?.status, 'passed', '첫 역에서 다시 시작하지 않는다');
+  assert.notEqual(destination(state).id, 'N01');
+  assert.equal(run.dest, destination(state, 'L1').id);
+});
+
+test('시작 실력: 같은 줄기 틀림 없이 2번 이상 통과 + 6역 안이면 3.5, 다른 줄기·먼 역·N17은 3', () => {
+  const { state } = placeAll((cur) => cur.problem.answer);
+  const pl = state.placement;
+  assert.ok(pl.passes.whole >= 2 && !pl.misses.whole);
+  const near = LINE1_NODES.find((n) => n.strand === 'whole' && !state.nodes[n.id] && n.order - pl.farthest.whole <= 6 && !(n.prereqs ?? []).some((p) => p.minLevel && state.nodes[p.node]?.inferred));
+  if (near) assert.equal(startRatingOf(state, near.id), 3.5, near.id);
+  const far = LINE1_NODES.find((n) => n.strand === 'whole' && n.order - pl.farthest.whole > 6);
+  if (far) assert.equal(startRatingOf(state, far.id), 3, far.id);
+  assert.equal(startRatingOf(state, 'N17'), 3);
+  const dest = destination(state);
+  if (dest && !state.nodes[dest.id] && startRatingOf(state, dest.id) === 3.5) {
+    const r = startRun(state, { day: 2, seed: 3 });
+    const warm = r.slots.find((x) => x.kind === 'warm' && x.node === dest.id);
+    assert.equal(warm.level, Math.min(3, ceilingOf(dest.id)), '준비 문제는 3단계');
+  }
+});
+
+test('시승 운행: 모두 틀리면 아무 역도 켜지지 않고 시작 실력은 2', () => {
+  const { state } = placeAll(() => -12345);
+  assert.equal(Object.values(state.nodes).filter((ns) => ns.status === 'passed').length, 0);
+  assert.equal(startRatingOf(state, 'N05'), 2);
+  assert.equal(destination(state).id, 'N01');
+});
+
+test('시승에서 틀린 역과 그 역을 선수로 둔 역은 추정으로 켜지지 않는다', () => {
+  let missed = null;
+  const { state } = placeAll((cur, run) => {
+    if (!missed) missed = run.dest;
+    return run.dest === missed ? -12345 : cur.problem.answer;
+  });
+  assert.notEqual(state.nodes[missed].status, 'passed');
+  for (const [id, ns] of Object.entries(state.nodes)) if (ns.inferred) assert.ok(!ancestorsOf(id).has(missed), `${id}의 선수에 틀린 역 ${missed}`);
+  const strand = NODES.get(missed).strand;
+  const fresh = LINE1_NODES.find((n) => n.strand === strand && !state.nodes[n.id]);
+  if (fresh) assert.equal(startRatingOf(state, fresh.id), 3, '그 줄기에서 틀렸으면 3');
+});
+
+test('추정 통과역은 임시 정차에서 맞히면 확인되고 추정 표시가 지워진다', () => {
+  const { state } = placeAll((cur) => cur.problem.answer);
+  const [id, ns] = Object.entries(state.nodes).find(([, x]) => x.inferred);
+  const after = applyReview(ns, true, 0, 2);
+  assert.equal(after.status, 'confirmed', id);
+  assert.equal(after.inferred, false);
+});
+
+/** 임시 정차 칸까지 건너뛰고 그 문제를 못 맞힌 채 넘긴다 */
+function failReview(state, day, seed) {
+  let run = startRun(state, { day, seed });
+  run.index = run.slots.findIndex((x) => x.kind === 'review');
+  assert.ok(run.index >= 0, '임시 정차 칸이 있어야 한다');
+  currentProblem(run);
+  ({ state, run } = submit(state, run, -12345));
+  ({ state, run } = submit(state, run, -12346));
+  ({ state, run } = giveUp(state, run));
+  return { state, run };
+}
+
+test('추정 역을 임시 정차에서 두 번 연달아 못 맞히면 불은 둔 채 점검 목적지가 되고, 3단계 두 문제로 확정된다', () => {
+  let { state } = placeAll((cur) => cur.problem.answer);
+  const ids = Object.keys(state.nodes).filter((id) => state.nodes[id].inferred);
+  const x = ids[0];
+  for (const id of ids.slice(1)) state.nodes[id] = { ...state.nodes[id], reviewDay: 999 };
+  for (const id of Object.keys(state.nodes)) if (!state.nodes[id].inferred && state.nodes[id].status === 'passed') state.nodes[id] = { ...state.nodes[id], reviewDay: 999 };
+  let r = failReview(state, 2, 21);
+  state = r.state;
+  assert.equal(state.nodes[x].status, 'passed', '불은 꺼지지 않는다');
+  if (!state.nodes[x].inspect) {
+    // 첫 실패가 계산 실수였으면 한 번 더 기회
+    state = failReview(state, 3, 22).state;
+    if (!state.nodes[x].inspect) ({ state, run: r.run } = failReview(state, 4, 23));
+  }
+  assert.equal(state.nodes[x].inspect, true);
+  assert.equal(state.nodes[x].status, 'passed');
+  assert.equal(destination(state, 'L1').id, x, '점검 역이 목적지');
+  assert.equal(startExpress(state, { day: 5, seed: 1 }), null, '점검 역은 급행으로 지나가지 않는다');
+  let run = startRun(state, { day: 5, seed: 31 });
+  assert.ok(run.slots.some((x2) => x2.kind === 'hard' && x2.node === x && x2.level >= Math.min(3, ceilingOf(x))));
+  let guard = 0;
+  let inspected = false;
+  while (!run.finished && guard++ < 20) {
+    const cur = currentProblem(run);
+    ({ state, run } = submit(state, run, cur.problem.answer));
+    if (run.events.some((e) => e.type === 'inspected' && e.node === x)) inspected = true;
+  }
+  if (ceilingOf(x) >= 3) {
+    assert.ok(inspected, '점검 완료');
+    assert.equal(state.nodes[x].status, 'confirmed');
+    assert.equal(state.nodes[x].inspect, false);
+    assert.equal(state.nodes[x].inferred, false);
+  }
+});
+
+test('시승에서 맞힌 진단 문제는 면허를 올리지 않고, 넘긴 문제 뒤에는 면허가 오르지 않는다(UX 7차 A-1)', () => {
+  let { state } = placeAll((cur) => cur.problem.answer);
+  assert.equal(licenseOf(state), 1, '진단 정답만으로는 1단계');
+  let run = startRun(state, { day: 2, seed: 41 });
+  let guard = 0;
+  while (!run.finished && guard++ < 20) {
+    currentProblem(run);
+    ({ state, run } = submit(state, run, -12345));
+    if (run.current) ({ state, run } = submit(state, run, -12346));
+    if (run.current) ({ state, run } = giveUp(state, run));
+  }
+  assert.equal(state.license, 1);
+  assert.ok(!run.events.some((e) => e.type === 'license'));
+});

@@ -104,15 +104,12 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus
 .swatch.on { padding: 0; }
 
 /* 홈 */
-.home { display: grid; grid-template-rows: auto 1fr auto; min-height: 100vh; padding: var(--sp-3) var(--sp-4) 20px; gap: 10px; }
 .home-head { display: flex; align-items: center; gap: var(--sp-4); flex-wrap: wrap; }
 .license { display: flex; flex-direction: column; background: var(--paper); border-radius: var(--r-md); padding: var(--sp-2) 14px; border: var(--bw) solid var(--ink); }
 .license-tier { font-weight: var(--fw-heavy); font-size: var(--fs-ui); }
 .license-sub, .km-sub { font-size: var(--fs-label); font-weight: var(--fw-regular); color: var(--ink-2); }
 .km { display: flex; flex-direction: column; font-size: 22px; font-weight: var(--fw-heavy); }
 .head-btns { margin-left: auto; display: flex; gap: var(--sp-2); align-items: center; }
-.map-wrap { background: var(--paper); border-radius: var(--r-lg); overflow: auto; min-height: 280px; display: flex; }
-.map { width: 100%; height: 100%; min-height: 280px; max-height: 70vh; }
 .st-name { font-size: 13px; fill: var(--ink-2); }
 .st-name.bold { font-weight: var(--fw-heavy); fill: var(--ink); }
 .pass-mark { font-size: 14px; font-weight: var(--fw-heavy); fill: var(--ink); }
@@ -120,7 +117,6 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus
 .next { display: grid; gap: 10px; }
 .next-dest { font-size: 22px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .next-btns { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-.home .next-btns > .primary.big { flex: 1 0 100%; } /* 출발은 오른쪽 칸 전체 폭 한 줄(시각 3차 1-6) */
 .badge-1 { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--line1); color: var(--on-line1); font-weight: var(--fw-heavy); border: var(--bw-hair) solid var(--ink); flex: none; }
 .badge-2 { background: var(--line2); color: var(--on-line2); }
 
@@ -302,15 +298,7 @@ details summary { min-height: var(--hit); display: flex; align-items: center; fo
 /* 면허증: 이중선 = 기록 */
 .license-card { border-style: double; border-width: 6px; display: grid; gap: var(--sp-1); }
 .num.plain { font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
-/* P0-4 가로 태블릿: 왼쪽 노선도, 오른쪽 정보와 출발 단추(출발 단추가 화면 아래로 잘리지 않게) */
-@media (orientation: landscape) and (min-width: 900px) {
-  .home { grid-template-columns: 1.4fr 1fr; grid-template-rows: auto 1fr; height: 100vh; }
-  .home-head { grid-column: 1 / -1; }
-  .home > .notice { grid-column: 2; }
-  .home .map-wrap { grid-column: 1; grid-row: 2 / span 3; min-height: 0; }
-  .home .map { max-height: calc(100vh - 110px); }
-  .home > p.small, .home > .next { grid-column: 2; align-self: start; }
-}
+/* 홈 배치는 v2.css(.v2-home) */
 .pin-sheet { height: auto; grid-template-rows: auto auto auto auto; max-width: 520px; margin: 0 auto; }
 
 /* ── 기준 기기: 갤럭시 탭 S8 울트라 (14.6", CSS 1480×924 가로 / 924×1480 세로, 2배율) ──
@@ -333,21 +321,10 @@ details summary { min-height: var(--hit); display: flex; align-items: center; fo
   .hint-drawer { width: 480px; }
   .sheet { max-width: 1100px; margin: 0 auto; }
 }
-@media (min-width: 1300px) and (orientation: landscape) {
-  .home { grid-template-columns: 1.6fr 1fr; padding: var(--sp-4) var(--sp-5) 20px; }
-}
 /* 세로 큰 태블릿(924×1480): 노선도를 크게, 아래에 정보와 단추 */
 @media (min-width: 880px) and (orientation: portrait) {
-  .home .map { max-height: 62vh; }
   .run-body { grid-template-columns: 1fr; max-width: 880px; margin: 0 auto; width: 100%; }
   .problem-text { font-size: var(--fs-problem); }
-}
-@media (orientation: landscape) and (min-width: 900px) {
-  .home { grid-template-rows: auto auto auto auto 1fr; align-content: start; }
-  .home .map-wrap { grid-row: 2 / span 4; }
-  .home > .notice { grid-row: 2; }
-  .home > .next { grid-row: 3; }
-  .home > p.small { grid-row: 4; }
 }
 
 /* 문제 그림 글자: 숫자·시간 글자는 굵게, 시계 숫자는 조금 크게 */

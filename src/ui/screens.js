@@ -13,7 +13,8 @@ import { TIERS, tierOf, goldNeeded } from '../content/vehicles.js';
 import { milestonesCrossed } from '../content/milestones.js';
 import { icon, starPoints } from './icons.js';
 import { vehicleArt } from './art/vehicles.js';
-import { CAR_COLORS, pickerBus } from './art/scenes.js';
+import { CAR_COLORS, pickerBus, stationSign } from './art/scenes.js';
+import { neighborNames } from './band.js';
 
 // 아이가 고르는 차량 색(시각 4차 3.4): art/scenes.js CAR_COLORS 6색. 색은 지붕 띠에만 칠한다(지도 위 차량은 흰 몸통이라 남색도 묻히지 않음).
 // 예전에 고른 색이 이 목록에 없어도 그대로 쓴다(새로 고를 때만 이 목록).
@@ -23,25 +24,29 @@ const backBtn = (onclick) => h('button.icon-btn', { type: 'button', onclick, 'ar
 export function renderSetup(root, app, { onDone }) {
   let name = app.state.profile.nickname || '';
   let color = COLORS.some((x) => x.c === app.state.profile.color) || app.state.profile.nickname ? app.state.profile.color : COLORS[1].c;
+  // 처음 화면(UX 8차 4.1): 왼쪽에 꺼진 노선도(지형), 오른쪽에 이름·차량·출발. 차량 색을 고르면 지도 위 내 차량 지붕 띠가 바로 바뀐다
+  const map = drawMap(app.state, { off: true, carColor: color });
   const nameBox = h('input.name-input', { type: 'text', maxlength: 8, placeholder: '이름이나 별명', value: name, autocomplete: 'off', oninput: (e) => { name = e.target.value; syncStart(); } });
-  const swatches = COLORS.map(({ c, name: cname }) => h('button.pick', { type: 'button', role: 'radio', 'aria-label': '내 차량 ' + cname, onclick: () => { color = c; syncPick(); onColor?.(c); } }, h('span', { html: pickerBus(c) }), cname));
+  const swatches = COLORS.map(({ c, name: cname }) => h('button.pick', { type: 'button', role: 'radio', 'aria-label': '내 차량 ' + cname, onclick: () => { color = c; syncPick(); map.setCarColor(c); } }, h('span', { html: pickerBus(c) }), cname));
   const syncPick = () => swatches.forEach((b, i) => { b.classList.toggle('chosen', COLORS[i].c === color); b.setAttribute('aria-checked', COLORS[i].c === color ? 'true' : 'false'); });
-  let onColor = null;
   syncPick();
   const startBtn = h('button.primary.big', { type: 'button', onclick: () => name.trim() && onDone({ nickname: name.trim(), color }) }, icon('depart'), '시승 운행 출발');
   const startWhy = h('p.why-off', '이름을 먼저 써요');
   const syncStart = () => { startBtn.disabled = !name.trim(); startWhy.hidden = Boolean(name.trim()); };
   syncStart();
   clear(root).append(
-    h('main.setup',
-      h('h1', '부산 교통 수학'),
-      h('p.lead', '불이 꺼진 1호선을 문제를 풀며 하나씩 켜요.'),
-      h('label', '내 이름', nameBox),
-      h('p.small', '이름은 이 기기에만 저장돼요.'),
-      h('div', h('div.label', '내 차량'), h('div.v2-picker', { role: 'radiogroup', 'aria-label': '내 차량 색' }, swatches)),
-      h('div.notice', h('p', '부모님도 이 앱을 볼 수 있어요.'), h('p', '어떤 역을 켰는지, 어디가 어려웠는지 봐요.'), h('p', '같이 이야기하려고 보는 거예요. 맞힌 개수로 혼내려는 게 아니에요.')),
-      h('div', startBtn, startWhy),
-      h('p.small', '시승 운행은 어느 역에서 출발할지 정하는 짧은 운행이에요. 모르는 문제는 "아직 몰라요"를 눌러도 돼요.'),
+    h('main.setup.v2-setup',
+      h('div.setup-map', map),
+      h('section.setup-panel',
+        h('h1', '부산 교통 수학'),
+        h('p.lead', '불이 꺼진 1호선을 문제를 풀며 하나씩 켜요.'),
+        h('label', '내 이름', nameBox),
+        h('p.small', '이름은 이 기기에만 저장돼요.'),
+        h('div', h('div.label', '내 차량'), h('div.v2-picker', { role: 'radiogroup', 'aria-label': '내 차량 색' }, swatches)),
+        h('div', startBtn, startWhy),
+        h('p.small', '시승 운행은 어느 역에서 출발할지 정하는 짧은 운행이에요. 모르는 문제는 "아직 몰라요"를 눌러도 돼요.'),
+        h('div.notice', h('p', '부모님도 이 앱을 볼 수 있어요.'), h('p', '어떤 역을 켰는지, 어디가 어려웠는지 봐요.'), h('p', '같이 이야기하려고 보는 거예요. 맞힌 개수로 혼내려는 게 아니에요.')),
+      ),
     ),
   );
 }
@@ -55,7 +60,8 @@ export function renderHome(root, app, { onStart, onExpress, onChallenge, onGarag
   const litCount = LINE1_NODES.filter((n) => ['lit', 'passed', 'confirmed'].includes(nodeState(state, n.id).status)).length;
   const parkedSt = state.parked ? stationOf(state.parked.node) : null;
   const tier = tierOf(state.license);
-  const doneToday = runsLeftToday(state, dayNumber()) <= 0 && state.parked?.day !== dayNumber(); // 같은 날 멈춘 운행은 이어 탈 수 있다(R3)
+  const today = dayNumber();
+  const doneToday = runsLeftToday(state, today) <= 0 && state.parked?.day !== today; // 같은 날 멈춘 운행은 이어 탈 수 있다(R3)
   const canExpress = dest && diagnosticsFor(dest.id).length > 0 && !doneToday && !ns.inspect;
 
   // 내 차량 카드(UX 8차 4.2-4): 지금 운행 차량 그림 + 이름 + 금 도장 칸. 누르면 차고
@@ -65,39 +71,54 @@ export function renderHome(root, app, { onStart, onExpress, onChallenge, onGarag
     const gold = Math.min(state.cardGold[at] ?? 0, need);
     return h('button.my-car', { type: 'button', onclick: onGarage, 'aria-label': '내 차량 ' + tierOf(at).name + ', 차고 열기' }, h('span.my-car-art', { html: vehicleArt({ tier: at, shown: 2 }) }), h('span.my-car-body', h('span.small', '내 차량'), h('b', tierOf(at).name), h('span.gold-track', { 'aria-hidden': 'true' }, Array.from({ length: need }, (_, i) => h('i' + (i < gold ? '.on' : ''))))));
   };
+  // 역명판 카드(다음 역, 시각 4차 3.3). 목적지 뒤에 미리 켠 역이 있으면 "미리 켠 역 다음" 꼬리표
+  const sign = () => {
+    const st = stationOf(dest.id);
+    const nb = neighborNames(dest.id);
+    const island = nb.list.slice(nb.index + 1).some((n) => ['lit', 'passed', 'confirmed'].includes(nodeState(state, n.id).status));
+    const isL2 = dest.line === 'L2';
+    return h('div', { html: stationSign({ name: st?.name ?? '', nameEn: st?.nameEn, code: st?.code, prev: nb.prev, next: nb.next, line: isL2 ? '2' : '1', lineColor: isL2 ? '#AFD46B' : '#F7941D', halves: ns.halves, island: island && !ns.inspect, kicker: ns.inspect ? '점검할 역' : '다음 역', cells: !ns.inspect }) }).firstElementChild;
+  };
+  const dailyTotal = (state.settings.dailyRuns ?? 2) + (state.extraToday === today ? 1 : 0);
+  const runsDone = Math.max(0, dailyTotal - runsLeftToday(state, today));
   // 부모가 신고를 확인했으면 한 번 알려 준다(아이의 신고가 닿았다는 고리 닫기).
-  const returning = typeof state.lastRunDay === 'number' && dayNumber() - state.lastRunDay >= 7 ? h('div.notice', '어서 와요. 켠 역은 그대로예요.') : null;
+  const returning = typeof state.lastRunDay === 'number' && today - state.lastRunDay >= 7 ? h('div.notice', '어서 와요. 켠 역은 그대로예요.') : null;
   const ackNote = state.reportAck ? h('div.notice', '부모님이 "이 문제 이상해요" 신고를 확인했어요. 고마워요!') : null;
   if (state.reportAck) app.save({ ...state, reportAck: false });
+  const map = drawMap(state, { destId: dest?.id, onAnyStation: (id) => root.querySelector('.home')?.append(stationSheet(id, null, (() => { const n = LINE1_NODES.find((x) => stationOf(x.id)?.id === id); const ns2 = n ? nodeState(state, n.id) : {}; return { inspect: !!ns2.inspect, inferred: !!ns2.inferred }; })())) });
   clear(root).append(
-    h('main.home',
+    h('main.home.v2-home',
       h('header.home-head',
         h('div.license', state.profile.nickname?.trim() ? h('span.license-sub', `${state.profile.nickname.trim()} 기관사`) : null, h('span.license-tier', tier.name), h('span.license-sub', '면허')),
         h('div.km', kmText(state.meters), h('span.km-sub', `40역 중 ${litCount}역 켜짐`)),
         h('div.head-btns', h('button.parent-btn', { type: 'button', onclick: onSettings }, icon('settings'), '설정'), h('button.parent-btn', { type: 'button', onclick: onParent }, icon('parent'), '부모')),
       ),
-      ackNote,
-      returning,
-      h('div.map-wrap', drawMap(state, { destId: dest?.id, onAnyStation: (id) => root.querySelector('.home')?.append(stationSheet(id, null, (() => { const n = LINE1_NODES.find((x) => stationOf(x.id)?.id === id); const ns2 = n ? nodeState(state, n.id) : {}; return { inspect: !!ns2.inspect, inferred: !!ns2.inferred }; })())) })),
-      h('p.small', '역을 누르면 그 역 이야기를 볼 수 있어요.'),
-      !state.placementDone && onPlacement
-        ? h('section.next', h('div.next-dest', '먼저 시승 운행으로 어느 역에서 출발할지 정해요.'), h('div.next-btns', h('button.primary.big', { type: 'button', onclick: onPlacement }, icon('depart'), '시승 운행 출발'), h('button.secondary', { type: 'button', onclick: onStart }, '그냥 처음 역부터 출발')))
-        : dest && doneToday
-        ? h('section.next', h('div.next-dest', '오늘 운행은 끝났어요. 차량은 차고에서 쉬어요. 내일 첫차에 만나요.'), h('div.next-btns', h('button.secondary', { type: 'button', onclick: onGarage }, icon('garage'), '차고')))
-        : dest
-        ? h('section.next',
-            h('div.next-dest', h(`span.badge-1${dest.line === 'L2' ? '.badge-2' : ''}`, dest.line === 'L2' ? '2' : '1'), ns.inspect ? ` ${stationOf(dest.id)?.name ?? ''}역 점검` : ` ${stationOf(dest.id)?.name ?? ''}역까지 `, ns.inspect ? null : h('strong', left)),
-            ns.inspect ? h('div.info', `${stationOf(dest.id)?.name ?? ''}역을 한 번 더 살펴봐요. 불은 그대로예요. 두 문제를 더 맞히면 점검 끝이에요. ① 노선 확인은 봐도 괜찮아요.`) : ns.pending ? h('div.info', pendingText(ns.pending)) : null,
-            h('div.next-btns',
-              h('button.primary.big', { type: 'button', onclick: onStart }, icon('depart'), parkedSt ? `${parkedSt.name}역에서 출발` : '출발'),
-              canExpress ? h('button.secondary', { type: 'button', onclick: onExpress, title: '급행: 역마다 2문제를 맞히면 통과해요 · 세 번째 역은 1문제 더' }, icon('express'), '급행') : null,
-              h('button.secondary', { type: 'button', onclick: onChallenge }, icon('challenge'), '도전 운행'),
-              h('button.secondary', { type: 'button', onclick: onGarage }, icon('garage'), '차고'),
-            ),
-            canExpress ? h('p.small', '급행: 역마다 2문제를 맞히면 통과해요 · 세 번째 역은 1문제 더') : null,
-            myCar(),
-          )
-        : h('section.next', h('div.next-dest', '지금 열린 역을 모두 켰어요. 다음 역은 준비 중이에요.'), h('button.secondary', { type: 'button', onclick: onGarage }, icon('garage'), '차고')),
+      h('div.map-wrap', map),
+      h('section.home-side',
+        ackNote,
+        returning,
+        !state.placementDone && onPlacement
+          ? h('section.next', h('div.next-dest', '먼저 시승 운행으로 어느 역에서 출발할지 정해요.'), h('div.next-btns', h('button.primary.big.go', { type: 'button', onclick: onPlacement }, icon('depart'), '시승 운행 출발'), h('button.secondary', { type: 'button', onclick: onStart }, '그냥 처음 역부터 출발')))
+          : dest && doneToday
+          ? h('section.next', sign(), h('div.next-dest', '오늘 운행은 끝났어요. 차량은 차고에서 쉬어요. 내일 첫차에 만나요.'), myCar())
+          : dest
+          ? h('section.next',
+              sign(),
+              h('div.next-dest', ns.inspect ? `${stationOf(dest.id)?.name ?? ''}역 점검` : `${stationOf(dest.id)?.name ?? ''}역까지 `, ns.inspect ? null : h('strong', left)),
+              ns.inspect ? h('div.info', `${stationOf(dest.id)?.name ?? ''}역을 한 번 더 살펴봐요. 불은 그대로예요. 두 문제를 더 맞히면 점검 끝이에요. ① 노선 확인은 봐도 괜찮아요.`) : ns.pending ? h('div.info', pendingText(ns.pending)) : null,
+              h('button.primary.big.go', { type: 'button', onclick: onStart }, icon('depart'), parkedSt ? `${parkedSt.name}역에서 출발` : '출발'),
+              h('div.next-btns.even.home-row',
+                canExpress ? h('button.secondary', { type: 'button', onclick: onExpress, title: '급행: 역마다 2문제를 맞히면 통과해요 · 세 번째 역은 1문제 더' }, icon('express'), '급행') : null,
+                h('button.secondary', { type: 'button', onclick: onChallenge }, icon('challenge'), '도전 운행'),
+                h('button.secondary', { type: 'button', onclick: onGarage }, icon('garage'), '차고'),
+              ),
+              canExpress ? h('p.small', '급행: 역마다 2문제를 맞히면 통과해요 · 세 번째 역은 1문제 더') : null,
+              myCar(),
+              h('p.small', `오늘 ${dailyTotal}번 중 ${Math.min(runsDone, dailyTotal)}번 했어요.`),
+            )
+          : h('section.next', h('div.next-dest', '지금 열린 역을 모두 켰어요. 다음 역은 준비 중이에요.'), myCar()),
+        h('p.small', '역을 누르면 그 역 이야기를 볼 수 있어요.'),
+      ),
     ),
   );
 }
@@ -316,6 +337,12 @@ function parentBody(root, app, { onHome, onReset }) {
         h('button.secondary', { type: 'button', onclick: () => { app.save({ ...app.state, extraToday: dayNumber() }); parentBody(root, app, { onHome, onReset }); } }, state.extraToday === dayNumber() ? '오늘 한 번 더 허락함' : '오늘만 한 번 더 허락하기')),
       h('section', h('h3', `"이 문제 이상해요" 신고 ${state.reports.length}건`), h('ul', state.reports.slice(-20).map((r, k, arr) => h('li', `${r.at.slice(0, 10)} ${stationOf(r.node)?.name ?? r.node} ${r.template} 단계 ${r.level}: ${r.reason} — ${r.text} `, r.numbers?.length ? h('span.small', ` [실제 값: ${r.numbers.filter((x) => x.real).map((x) => x.v).join(', ') || '없음'} / 만든 숫자: ${r.numbers.filter((x) => !x.real).map((x) => x.v).join(', ') || '없음'}] `) : null, r.seen ? '(확인함)' : h('button.chip', { type: 'button', onclick: () => ack(state.reports.length - arr.length + k) }, '확인했어요'))))),
       h('details', h('summary', '자세히(역별 숫자, 성취기준)'), h('table.grid', h('tr', ['역', '개념', '성취기준', '상태', '맞힘/푼 수', '힌트 ②~④'].map((x) => h('th', x))), rows), h('p.small', '성취기준 코드는 2022 개정 교육과정(교육부 고시 제2022-33호)이에요. 학년은 아이 화면에 보이지 않아요. 아이가 학교 진도보다 앞서가면 담임 선생님과 이야기해 보세요.')),
+      h('details.guide', h('summary', '자료 출처'), h('ul.explore-list',
+        h('li', '노선·역·역 사이 거리·역 번호: 부산교통공사, 공공데이터포털(3033564 등)'),
+        h('li', '역 위치(노선도 모양): 공공데이터포털 15043686'),
+        h('li', '지형: SRTM · © OpenStreetMap contributors (ODbL)'),
+        h('li', '소리: ' + SOUND_SOURCE),
+      )),
       h('section', h('h3', '백업'),
         h('p.small', '백업 파일을 저장해 두면, 기기를 바꾸거나 브라우저 기록이 지워져도 이어서 할 수 있어요. 파일은 이 기기에만 저장되고 어디로도 보내지 않아요.'),
         h('div.next-btns',

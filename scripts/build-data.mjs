@@ -4,6 +4,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { buildTerrain } from './lib/terrain.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SG = process.env.SUBWAY_GAME_DATA ?? 'C:/Subway game/data/build';
@@ -29,7 +30,8 @@ const outLines = lines.map((l) => ({
   stations: l.stations.map((id) => {
     const s = byId.get(id);
     const p = positions[id] ?? { x: s.x, y: s.y };
-    return { id, name: s.name, nameEn: s.nameEn, code: s.code, x: p.x, y: p.y };
+    // x, y = 노선도 좌표(schematic), gx, gy = 실제 좌표(공공데이터 15043686, 같은 격자 칸 단위) — 홈 노선도는 실제 모양 + 지형(2026-10-04 결정)
+    return { id, name: s.name, nameEn: s.nameEn, code: s.code, x: p.x, y: p.y, gx: s.x, gy: s.y };
   }),
 }));
 
@@ -37,7 +39,7 @@ const outLinks = links.map((k) => ({ line: k.line, from: k.from, to: k.to, dista
 
 const data = {
   _설명: 'scripts/build-data.mjs가 Subway game/data/build에서 뽑았다. 손으로 고치지 않는다.',
-  sourceNote: '노선·역·역간거리: 공공데이터포털 3033564 등(Subway game data/SOURCES.md). 노선도 좌표: Subway game schematic.json. 노선 색: 부산교통공사 노선도 그림(15054957)에서 뽑음.',
+  sourceNote: '노선·역·역간거리: 공공데이터포털 3033564 등(Subway game data/SOURCES.md). 노선도 좌표(x, y): Subway game schematic.json. 실제 좌표(gx, gy): 공공데이터 15043686(Subway game stations.json). 노선 색: 부산교통공사 노선도 그림(15054957)에서 뽑음.',
   lines: outLines,
   links: outLinks,
   transfers: transfers.map((t) => ({ name: t.name, stations: t.stations })),
@@ -53,6 +55,10 @@ const outSounds = {
   approach: Object.fromEntries(Object.entries(sounds.approach).filter(([k]) => k.startsWith('1|'))),
 };
 writeFileSync(resolve(OUT, 'sounds.json'), JSON.stringify(outSounds));
+
+// 지형(홈 노선도 바탕): 바다·강·언덕·산·높은 산 윤곽. 출처 표시가 필요하다(ODbL) — 홈 지도와 부모 화면 출처 목록
+const terrain = buildTerrain(read('grid.json'));
+writeFileSync(resolve(OUT, 'terrain.json'), JSON.stringify({ _설명: 'scripts/build-data.mjs가 Subway game/data/build/grid.json에서 뽑았다. 손으로 고치지 않는다.', source: '지형: SRTM · © OpenStreetMap contributors', ...terrain }));
 
 const km = outLinks.filter((k) => k.line === '1').reduce((s, k) => s + k.distanceM, 0) / 1000;
 console.log(`노선 ${outLines.length}개, 1호선 ${outLines[0].stations.length}역 ${km}km, 소리 ${Object.keys(outSounds.approach).length + 2}개`);

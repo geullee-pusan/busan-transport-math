@@ -103,3 +103,60 @@
 .my-car-art svg { width: 100%; height: 76px; }
 .my-car-body { display: grid; gap: 4px; } .my-car-body b { font-size: var(--fs-lead); font-weight: var(--fw-heavy); }
 .my-car:active { transform: translateY(1px); }
+
+/* ── 홈 노선도 v2(지형 + 실제 모양) ── */
+.hmap { position: relative; width: 100%; height: 100%; min-height: 320px; border-radius: var(--r-lg); overflow: hidden; border: 1.5px solid var(--ink); background: #EDF1EC; }
+.hmap-svg { position: absolute; inset: 0; }
+.hmap-svg svg { display: block; }
+.hmap-toggle { position: absolute; left: 12px; top: 12px; min-height: 48px; padding: 0 16px; border-radius: 999px; border: 2px solid var(--ink); background: var(--paper); font-size: 16px; font-weight: 700; color: var(--ink); }
+.hmap-mini { position: absolute; left: 12px; bottom: 12px; width: 140px; height: 140px; padding: 0; border: 0; background: none; line-height: 0; }
+.hmap-mini[hidden] { display: none; }
+.hmap.off { border: 0; border-radius: 0; }
+
+/* ── 역명판 카드 ── */
+.v2-sign { background: #fff; border: 2px solid var(--ink); border-radius: 16px; overflow: hidden; }
+.v2-sign::before { content: ''; display: block; height: 8px; background: var(--lc); border-bottom: 2px solid var(--ink); }
+.sign-top { display: flex; justify-content: space-between; gap: 8px; padding: 10px 18px 0; }
+.sign-kicker { font-size: 16px; font-weight: 700; color: var(--ink-2); }
+.sign-tag { border: 1.5px solid var(--ink); border-radius: 999px; padding: 0 10px; color: var(--ink); }
+.sign-main { display: flex; align-items: center; gap: 16px; padding: 4px 18px 8px; min-width: 0; }
+.sign-badge { width: 64px; height: 64px; border-radius: 50%; background: var(--lc); border: 2.5px solid var(--ink); color: var(--ink); font-weight: 800; font-size: 28px; display: grid; place-items: center; align-content: center; line-height: 1; flex: none; }
+.sign-badge small { font-size: 13px; font-weight: 700; margin-top: 2px; }
+.sign-name { min-width: 0; } .sign-name b { display: block; font-size: 40px; font-weight: 800; line-height: 1.15; overflow-wrap: anywhere; }
+.sign-name small { font-size: 16px; color: var(--ink-2); }
+.sign-arrows { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 18px 14px; border-top: 1.5px solid var(--soft); font-size: 18px; font-weight: 700; flex-wrap: wrap; }
+.sign-cells { display: flex; gap: 5px; }
+.v2-sign .cell { width: 40px; height: 18px; border: 2px solid var(--ink); border-radius: 3px; background: #fff; }
+.v2-sign .cell.full { background: var(--fig-fill); }
+.v2-sign .cell.half { background: repeating-linear-gradient(-45deg, var(--ink) 0 2px, #fff 2px 6px); }
+@media (max-width: 520px) { .sign-name b { font-size: 32px; } .sign-badge { width: 52px; height: 52px; font-size: 22px; } .v2-sign .cell { width: 30px; } }
+
+/* ── 홈 배치(UX 8차 4.2): 왼쪽 노선도 62%, 오른쪽 38% 위에서부터 역명판 → 출발 → [급행·도전·차고] → 내 차량 → 오늘 운행 ── */
+.v2-home { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "map" "side"; gap: 12px; padding: 12px 16px 20px; min-height: 100vh; }
+.v2-home .home-head { grid-area: head; }
+.v2-home .map-wrap { grid-area: map; height: 58vh; min-height: 360px; }
+.v2-home .home-side { grid-area: side; display: grid; gap: 12px; align-content: start; min-width: 0; }
+.v2-home .next { display: grid; gap: 12px; }
+.v2-home .next-dest { font-size: 20px; }
+.v2-home .go { width: 100%; min-height: 88px; font-size: 26px; }
+.v2-home .home-row > button { flex: 1 1 0; min-width: 0; padding: 0 10px; }
+@media (orientation: landscape) and (min-width: 900px) {
+  .v2-home { grid-template-columns: minmax(0, 62fr) minmax(360px, 38fr); grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "map head" "map side"; height: 100vh; min-height: 0; gap: 14px 20px; padding: 16px 20px; }
+  .v2-home .map-wrap { height: auto; min-height: 0; }
+  .v2-home .home-side { overflow: auto; padding-bottom: 8px; }
+}
+@media (max-width: 520px) { .v2-home .map-wrap { height: 62vh; min-height: 320px; } .v2-home { padding: 10px 12px 20px; } }
+
+/* ── 처음 화면(UX 8차 4.1): 꺼진 노선도를 배경으로, 그 위(옆)에 이름 칸 ── */
+.v2-setup { max-width: none; padding: 0; margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; min-height: 100vh; }
+.v2-setup .setup-map { height: 45vh; min-height: 300px; }
+.v2-setup .setup-panel { display: grid; gap: 16px; align-content: start; padding: 24px 20px 32px; background: var(--bg); }
+.v2-setup h1 { margin: 0; font-size: 34px; font-weight: var(--fw-heavy); }
+.v2-setup .primary.big { width: 100%; min-height: 88px; font-size: 24px; }
+@media (orientation: landscape) and (min-width: 900px) {
+  .v2-setup { grid-template-columns: minmax(0, 62fr) minmax(420px, 38fr); height: 100vh; }
+  .v2-setup .setup-map { height: 100vh; }
+  .v2-setup .setup-panel { overflow: auto; padding: 40px 36px; border-left: 2px solid var(--ink); }
+  .v2-setup h1 { font-size: var(--fs-hero); }
+}
+@media (min-width: 880px) and (orientation: portrait) { .v2-setup .setup-map { height: 55vh; } .v2-setup .setup-panel { padding: 28px 40px 40px; } }

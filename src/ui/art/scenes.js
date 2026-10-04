@@ -21,3 +21,20 @@ export const CAR_COLORS = [
 export function pickerBus(color) {
   return `<svg viewBox="0 0 64 40" aria-hidden="true"><path d="M5 6H50Q61 6 62 16V31Q62 34 59 34H5Q2 34 2 31V9Q2 6 5 6Z" fill="#F6F8F9" stroke="${INK}" stroke-width="2"/><rect x="5" y="8" width="44" height="5" rx="1.5" fill="${color}"/><rect x="7" y="16" width="34" height="9" rx="2" fill="#2F4252"/><path d="M46 15H54Q59 16 60 23H46Z" fill="#2F4252"/><circle cx="15" cy="34" r="5" fill="#3A4650" stroke="${INK}" stroke-width="1.5"/><circle cx="50" cy="34" r="5" fill="#3A4650" stroke="${INK}" stroke-width="1.5"/></svg>`;
 }
+
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
+/**
+ * 역명판 카드(홈 오른쪽, 다음 역 — 시각 4차 3.3). 이 앱만의 모양: 위 노선 색 띠 + 왼쪽 노선 원과 역 번호 + 큰 역 이름(40) + 영문(16)
+ * + 아랫줄 "← 앞 역 · 칸 4개 · 다음 역 →". 실제 부산교통공사 역명판의 배치·비율은 따르지 않는다. 역 번호는 공공데이터 역 코드(095~134).
+ * island: 목적지 뒤에 미리 켠 역이 있음 → "미리 켠 역 다음" 꼬리표. kicker: 위 왼쪽 글자(다음 역 / 점검할 역)
+ */
+export function stationSign({ name, nameEn, code, prev, next, line = '1', lineColor = '#F7941D', halves = 0, island = false, kicker = '다음 역', cells = true }) {
+  const cellsHtml = Array.from({ length: 4 }, (_, i) => { const hv = halves - i * 2; return `<i class="cell ${hv >= 2 ? 'full' : hv === 1 ? 'half' : 'empty'}"></i>`; }).join('');
+  const num = code && /^\d+$/.test(code) ? String(code).padStart(3, '0') : '';
+  return `<section class="v2-sign" style="--lc:${lineColor}" aria-label="${esc(kicker)} ${esc(name)}">
+  <div class="sign-top"><span class="sign-kicker">${esc(kicker)}</span>${island ? '<span class="sign-kicker sign-tag">미리 켠 역 다음</span>' : ''}</div>
+  <div class="sign-main"><span class="sign-badge${line.length > 1 ? ' wide' : ''}">${esc(line)}${num ? `<small>${num}</small>` : ''}</span><div class="sign-name"><b>${esc(name)}</b>${nameEn ? `<small lang="en">${esc(nameEn)}</small>` : ''}</div></div>
+  <div class="sign-arrows"><span>${prev ? `← ${esc(prev)}` : ''}</span>${cells ? `<span class="sign-cells" aria-label="4칸 중 ${Math.floor(halves / 2)}칸${halves % 2 ? ' 반' : ''} 채움">${cellsHtml}</span>` : ''}<span>${next ? `${esc(next)} →` : ''}</span></div>
+</section>`;
+}

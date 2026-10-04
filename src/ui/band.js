@@ -95,3 +95,11 @@ export function makeBand({ state, run, cur, tag, trial, onExit, onRest, restNote
     },
   };
 }
+
+/** 노드의 앞·뒤 역 이름(그 노선 순서) */
+export function neighborNames(node) {
+  const n = NODES.get(node);
+  const list = LINE_NODES[n?.line] ?? [];
+  const i = list.findIndex((x) => x.id === node);
+  return { prev: i > 0 ? stationOf(list[i - 1].id)?.name ?? null : null, next: i >= 0 && i < list.length - 1 ? stationOf(list[i + 1].id)?.name ?? null : null, list, index: i };
+}

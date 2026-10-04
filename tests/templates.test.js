@@ -64,7 +64,7 @@ for (const t of allTemplates()) {
         const shownText = [plainText(p.text), ...(p.hints ?? []), JSON.stringify(p.figure ?? null), JSON.stringify(p.explain ?? null)].join(' ');
         assert.ok(!shownText.includes('(가상)'), `"(가상)" 글자 ${where}`);
 
-        // "어느 날"(07 0.4-14): 한 문제에 한 번만. 그 문장의 첫 숫자가 실제 값이면 안 되고, 제원(좌석·정원·배차·간격) 문장에도 쓰지 않는다.
+        // "어느 날"(07 0.4-14): 한 문제에 한 번만. 그 문장의 첫 숫자가 실제 값이면 안 되고, 제원(배차, 좌석 수, 정원) 문장에도 쓰지 않는다. "정거장 간격"·"앉아 있던 사람" 같은 상황 말은 걸리지 않게 붙은 말로 본다.
         const story = plainText(p.text);
         assert.ok((story.match(/어느 날/g) ?? []).length <= 1, `"어느 날"이 두 번 이상 ${where}`);
         const at = p.text.findIndex((x) => typeof x === 'string' && x.includes('어느 날'));
@@ -72,7 +72,7 @@ for (const t of allTemplates()) {
           const firstNum = p.text.slice(at + 1).find((x) => x && typeof x === 'object' && 'num' in x);
           assert.ok(!firstNum || firstNum.tag !== 'real', `"어느 날" 문장의 첫 숫자가 실제 값 ${where}`);
           const sentence = story.slice(story.indexOf('어느 날')).split(/[.?]/)[0];
-          assert.ok(!/좌석|정원|배차|간격/.test(sentence), `"어느 날"을 제원 문장에 씀 ${where}: ${sentence}`);
+          assert.ok(!/배차|좌석 수|좌석은|좌석이 모두|정원은|정원이|칸 정원/.test(sentence), `"어느 날"을 제원 문장에 씀 ${where}: ${sentence}`);
         }
 
         // 힌트 ④는 빈칸의 값을 다른 표현(자릿값 말, 완성된 답)으로도 알려 주지 않는다(UX 7차 A-2).

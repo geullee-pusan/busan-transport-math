@@ -45,6 +45,7 @@ function lineDemo(g, y = 40) {
 }
 const markSvg = () => [37, 26, 15].map((g) => `<p class="small">g = ${g}px (${g >= 32 ? '확대 보기' : g >= 20 ? '중간' : '1호선 전체, 촘촘한 구간'}) — 켜짐 · 켜짐 · 확정 · 통과 · 켜짐 · 목적지(진행 2/4, 내 차량) · 갈 수 있음 · 못 감 … · 혼자 켜진 역(꼬리) · 못 감</p>${lineDemo(g, 52)}`).join('')
   + `<svg viewBox="0 0 760 50" class="mapdemo" style="background:#EDF1EC">${[['locked', '꺼짐'], ['lit', '켜짐'], ['confirmed', '확정'], ['dest', '목적지']].map(([s, n], i) => `${transferMark(40 + i * 150, 25, s, L1)}<text x="${64 + i * 150}" y="30" font-size="14" fill="#1F3342">환승 ${n}</text>`).join('')}${lineBadge(640, 25, '2', '#AFD46B', 24)}${lineBadge(672, 25, '동해', '#0065B3', 24)}</svg>`;
+const checkSvg = '<p class="small">점검 상태(불은 그대로 + 바깥 점선 고리) — 왼쪽부터 g = 37 · 26 · 15에서 개통 / 점검 나란히</p><svg viewBox="0 0 600 70" class="mapdemo" style="background:#EDF1EC;max-width:600px">' + [[37, 40], [26, 240], [15, 430]].map(([g, x0]) => { const tier = sizeTier(g); return trackPath('M' + (x0 - 10) + ' 35H' + (x0 + 3 * g + 10), 'lit', L1) + stationMark(x0, 35, 'lit', L1, tier) + stationMark(x0 + g, 35, 'check', L1, tier) + stationMark(x0 + 2 * g, 35, 'lit', L1, tier) + stationMark(x0 + 3 * g, 35, 'check', L1, tier); }).join('') + '</svg>';
 const trackSvg = `<svg viewBox="0 0 760 220" class="mapdemo" style="background:#EDF1EC">
   <rect x="0" y="120" width="760" height="100" fill="#B9D4E6"/>
   ${trackPath('M40 40H330', 'lit', L1)}<text x="350" y="46" font-size="15" fill="#1F3342">켜진 구간: 테두리 10 + 노선 색 7</text>
@@ -135,7 +136,7 @@ ${iconHtml}
 </div>
 
 <h2>4. 노선도 표지</h2>
-<h3>역 상태 6가지 — 역 간격 g에 따른 세 단계 (ux-review-06 2.2)</h3>${markSvg()}
+<h3>역 상태 6가지 — 역 간격 g에 따른 세 단계 (ux-review-06 2.2)</h3>${markSvg()}${checkSvg}
 <h3>노선 선 네 가지 (육지·바다 위)</h3>${trackSvg}
 <h3>미니맵</h3>${markerSvg}
 <h3>노선 배지 32px</h3>${badges}

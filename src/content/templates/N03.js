@@ -505,7 +505,7 @@ function t34(a, b, level) {
     input: { kind: 'compound', fields },
     answer,
     discriminators: [...extra, ...left],
-    hints: [hint1, hint2, hint3, `백 ${H} − ${bh}, 십 ${T} − ${bt}, 일 ${O} − ${bu} → ${bl.blank}`],
+    hints: [hint1, hint2, hint3, `${a} − ${b} = ${bl.blank}`],
     blank: bl.blank,
     blankAnswer: bl.blankAnswer,
     blankThen: '나머지 칸도 채워요.',

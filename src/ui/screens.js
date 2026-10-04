@@ -74,7 +74,7 @@ export function renderHome(root, app, { onStart, onExpress, onChallenge, onGarag
       ),
       ackNote,
       returning,
-      h('div.map-wrap', drawMap(state, { destId: dest?.id, onAnyStation: (id) => root.querySelector('.home')?.append(stationSheet(id)) })),
+      h('div.map-wrap', drawMap(state, { destId: dest?.id, onAnyStation: (id) => root.querySelector('.home')?.append(stationSheet(id, null, { inspect: LINE1_NODES.some((n) => stationOf(n.id)?.id === id && nodeState(state, n.id).inspect) })) })),
       h('p.small', '역을 누르면 그 역 이야기를 볼 수 있어요.'),
       !state.placementDone && onPlacement
         ? h('section.next', h('div.next-dest', '먼저 시승 운행으로 어느 역에서 출발할지 정해요.'), h('div.next-btns', h('button.primary.big', { type: 'button', onclick: onPlacement }, icon('depart'), '시승 운행 출발'), h('button.secondary', { type: 'button', onclick: onStart }, '그냥 처음 역부터 출발')))
@@ -83,7 +83,7 @@ export function renderHome(root, app, { onStart, onExpress, onChallenge, onGarag
         : dest
         ? h('section.next',
             h('div.next-dest', h(`span.badge-1${dest.line === 'L2' ? '.badge-2' : ''}`, dest.line === 'L2' ? '2' : '1'), ns.inspect ? ` ${stationOf(dest.id)?.name ?? ''}역 점검` : ` ${stationOf(dest.id)?.name ?? ''}역까지 `, ns.inspect ? null : h('strong', left)),
-            ns.inspect ? h('div.info', `${stationOf(dest.id)?.name ?? ''}역은 한 번 더 점검하고 지나갈게요. 힌트 없이 2문제를 맞히면 점검 완료예요.`) : ns.pending ? h('div.info', pendingText(ns.pending)) : null,
+            ns.inspect ? h('div.info', `${stationOf(dest.id)?.name ?? ''}역을 한 번 더 살펴봐요. 불은 그대로예요. 힌트 없이 2문제를 맞히면 점검 완료예요.`) : ns.pending ? h('div.info', pendingText(ns.pending)) : null,
             h('div.next-btns',
               h('button.primary.big', { type: 'button', onclick: onStart }, icon('depart'), parkedSt ? `${parkedSt.name}역에서 출발` : '출발'),
               canExpress ? h('button.secondary', { type: 'button', onclick: onExpress, title: '급행: 역마다 2문제를 맞히면 통과해요 · 세 번째 역은 1문제 더' }, icon('express'), '급행') : null,
@@ -117,7 +117,7 @@ export function renderLog(root, app, run, { onAgain, onHome }) {
 
   const lines = [];
   if (newly.length && run.mode !== 'placement' && !big?.textContent.includes(newly[0])) lines.push(`새로 켜진 역: ${newly.join(', ')}`);
-  if (inspectNew.length) lines.push(`${inspectNew.join(', ')}역은 한 번 더 점검하고 지나갈게요.`);
+  if (inspectNew.length) lines.push(`다음 운행에서 ${inspectNew.join(', ')}역을 한 번 더 살펴봐요. 불은 그대로예요.`);
   const learned = [...new Set(run.slots.slice(0, run.index).filter((x) => x.kind !== 'review' && x.kind !== 'redo').map((x) => NODES.get(x.node)?.title).filter(Boolean))];
   if (learned.length) lines.push(`오늘 푼 생각: ${learned.slice(0, 2).join(', ')}`);
   // 작은 사실들은 한 줄로 묶는다(다섯 줄 규칙)

@@ -7,7 +7,8 @@ import busan from '../data/busan.json' with { type: 'json' };
 
 const lineOf = (stationId) => LINES.find((l) => l.stations.some((s) => s.id === stationId));
 
-export function stationSheet(stationId, onClose) {
+/** inspect: 시승으로 추정해 켠 역을 점검 중이면 제목 옆 [점검] 꼬리표와 안내 한 줄(시각 3차 5절) */
+export function stationSheet(stationId, onClose, { inspect = false } = {}) {
   const line = lineOf(stationId);
   const idx = line.stations.findIndex((s) => s.id === stationId);
   const st = line.stations[idx];
@@ -20,7 +21,7 @@ export function stationSheet(stationId, onClose) {
   const km = (m) => (m >= 1000 ? `${Math.floor(m / 1000)} km${m % 1000 ? ` ${m % 1000} m` : ""}` : `${m} m`);
   const lines = [
     `${line.name} ${idx + 1}번째 역 (모두 ${line.stations.length}역)`,
-    st.code && /^d+$/.test(st.code) ? `역 번호 ${st.code}` : null,
+    st.code && /^\d+$/.test(st.code) ? `역 번호 ${st.code}` : null,
     st.nameEn ? `영어 이름 ${st.nameEn}` : null,
     others.length ? `갈아탈 수 있어요: ${others.join(', ')}` : null,
     prev && link(prev.id, stationId) ? `${prev.name}역까지 ${km(link(prev.id, stationId).distanceM)}` : null,
@@ -28,7 +29,8 @@ export function stationSheet(stationId, onClose) {
     line.carsPerTrain ? `열차 한 대는 ${line.carsPerTrain}량` : null,
   ].filter(Boolean);
   const sheet = h('div.sheet.explore',
-    h('div.sheet-tabs', h('strong', `${st.name}역`), h('button.icon-btn', { type: 'button', 'aria-label': '닫기', onclick: () => { sheet.remove(); onClose?.(); } }, icon('close'))),
+    h('div.sheet-tabs', h('strong', `${st.name}역`, inspect ? h('span.check-tag', '점검') : null), h('button.icon-btn', { type: 'button', 'aria-label': '닫기', onclick: () => { sheet.remove(); onClose?.(); } }, icon('close'))),
+    inspect ? h('p.info', '불은 켜진 채로 있어요. 다음에 이 역 문제를 한 번 더 풀어 봐요.') : null,
     h('ul.explore-list', lines.map((l) => h('li', l))),
     h('p.small', '출처: 부산교통공사·공공데이터포털 자료(역 순서, 역 사이 거리, 역 번호)'),
   );

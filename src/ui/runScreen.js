@@ -56,7 +56,6 @@ export function renderRun(root, app, run, { onFinish }) {
     );
   }
 
-  let labelUsed = false;
   let stallTimer = null;
   function numSpan(piece) {
     if (typeof piece === 'string') return piece;
@@ -64,18 +63,12 @@ export function renderRun(root, app, run, { onFinish }) {
     if (piece.unknown) return h('span.unknown-num', [...piece.unknown].map((ch) => (ch === '□' ? h('span.unknown-box', ' ') : ch)));
     const virtual = piece.tag === 'virtual';
     if (piece.tag !== 'real' && !virtual) return h('span.num.plain', String(piece.num)); // 맨 계산 수: 표시·말풍선 없음
-    const shown = state.settings.virtualShown ?? 0;
     const el = h(`button.num${virtual ? '.virtual' : ''}`, { type: 'button' }, String(piece.num));
     el.addEventListener('click', () => {
       const tip = h('span.num-tip', virtual ? '이 문제를 위해 만든 숫자예요' : `출처: ${piece.source}`);
       el.append(tip);
       setTimeout(() => tip.remove(), 2600);
     });
-    // "만든 숫자" 글자는 처음 세 문제에서, 그 문제의 첫 번째 지어낸 숫자에만 붙인다.
-    if (virtual && shown <= 3 && !labelUsed) {
-      labelUsed = true;
-      return h('span.virtual-wrap', el, h('span.virtual-label', '만든 숫자'));
-    }
     return el;
   }
 
@@ -83,7 +76,6 @@ export function renderRun(root, app, run, { onFinish }) {
     const cur = currentProblem(run);
     if (!cur) return finish();
     const p = cur.problem;
-    labelUsed = false;
     const isDiag = run.mode === 'express' || run.mode === 'placement';
     if (p.text.some((x) => typeof x === 'object' && x && x.tag === 'virtual')) {
       state = { ...state, settings: { ...state.settings, virtualShown: (state.settings.virtualShown ?? 0) + 1 } };
@@ -108,7 +100,10 @@ export function renderRun(root, app, run, { onFinish }) {
         })()
       : null;
 
-    const problemEl = h('section.problem', h('p.problem-text', p.text.map(numSpan)), drawFigure(p.figure), p.challenge ? h('div.challenge-tag', '도전 문제') : null);
+    // 만든 숫자 안내는 숫자 밑이 아니라 문제 위 한 줄에(줄 사이에 작은 글자가 끼지 않게, UX 7차 결정). 처음 세 문제에만.
+    const hasVirtual = p.text.some((x) => typeof x === 'object' && x && x.tag === 'virtual');
+    const numNote = hasVirtual && (state.settings.virtualShown ?? 0) <= 3 ? h('p.num-note', { 'aria-hidden': 'true' }, '숫자 아래 점선', h('span.num.virtual.sample', '24'), '= 만든 숫자예요') : null;
+    const problemEl = h('section.problem', numNote, h('p.problem-text', p.text.map(numSpan)), drawFigure(p.figure), p.challenge ? h('div.challenge-tag', '도전 문제') : null);
 
     // 힌트 서랍
     const drawer = h('aside.hint-drawer', { 'aria-hidden': 'true' });

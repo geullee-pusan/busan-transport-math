@@ -146,8 +146,9 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus
 .num { font: inherit; color: inherit; background: none; border: 0; padding: 0 1px; position: relative; min-height: 0; font-variant-numeric: tabular-nums; font-weight: var(--fw-bold); }
 /* 만든 숫자: 점점이 밑줄(이 뜻에만 쓴다). 글자 흐름 밖에 그려 숫자와 단위 사이를 벌리지 않는다 */
 .num.virtual { border-bottom: 0; background: radial-gradient(circle, var(--ink-2) 1.2px, transparent 1.4px) 0 100% / 5px 4px repeat-x; padding-bottom: 4px; }
-.virtual-wrap { display: inline-flex; flex-direction: column; align-items: center; vertical-align: top; line-height: 1.2; }
-.virtual-label { font-size: var(--fs-label); color: var(--ink-2); }
+/* 만든 숫자 안내: 문제 문장 위 회색 한 줄(UX 7차 결정) */
+.num-note { margin: 0 0 var(--sp-2); font-size: var(--fs-label); color: var(--ink-2); display: flex; align-items: baseline; gap: 6px; }
+.num-note .sample { font-weight: var(--fw-heavy); color: var(--ink); pointer-events: none; }
 .num-tip { position: absolute; left: 0; top: 110%; white-space: nowrap; background: var(--ink); color: var(--paper); font-size: var(--fs-label); font-weight: var(--fw-regular); border-radius: var(--r-sm); padding: 6px 10px; z-index: 5; }
 .unknown-num { font-weight: var(--fw-bold); }
 /* 문제 속 모르는 수 □: 실선 + 회색 바탕, 누를 수 없음(힌트 ④ 빈칸과 반대 모양) */
@@ -371,3 +372,6 @@ details summary { min-height: var(--hit); display: flex; align-items: center; fo
 .fig-strong { font-weight: var(--fw-bold); fill: var(--ink); }
 .clock-num { font-size: 22px; font-weight: var(--fw-bold); fill: var(--ink); }
 .clock-fig { max-height: 220px; }
+
+/* 역 시트의 점검 꼬리표(시각 3차 5절): 테 1.5px, 16px, 색 없음 */
+.check-tag { display: inline-block; margin-left: 8px; padding: 0 6px; border: 1.5px solid var(--ink); border-radius: 4px; font-size: 16px; font-weight: var(--fw-heavy); vertical-align: middle; }

@@ -107,7 +107,6 @@ function mismatch(N, d, q, nameOf = '이 식은 어떤 상황이에요?') {
 /** T5-1 1단계: 그림에서 똑같이 나눠 타기(톡-톡 놓기) */
 function t51Level1(q) {
   const total = 8 * q;
-  const seq = Array.from({ length: q + 1 }, (_, i) => total - 8 * i);
   return {
     text: [L1(), '호선 ', CARS(), '량 열차에 ', V(total), '명이 똑같이 나눠 타요. 한 칸에 몇 명이에요?'],
     figure: { kind: 'groups', items: total, groups: 8, train: true },
@@ -121,7 +120,7 @@ function t51Level1(q) {
       ],
       q,
     ),
-    hints: [`사람은 ${total}명, 칸은 8개예요. 칸마다 같은 수만큼 타요. 한 칸에 몇 명인지 물어요.`, '칸마다 한 명씩 차례로 놓아 볼까요? 다 놓을 때까지 몇 바퀴인지 세어 봐요.', `한 바퀴에 8명씩 놓여요. ${seq.join(', ')}으로 줄어요.`, `8 × ☐ = ${total}`],
+    hints: [`사람은 ${total}명, 칸은 8개예요. 칸마다 같은 수만큼 타요. 한 칸에 몇 명인지 물어요.`, '칸마다 한 명씩 차례로 놓아 볼까요? 다 놓을 때까지 몇 바퀴인지 세어 봐요.', `한 바퀴에 8명씩 놓여요. ${total}에서 8씩 줄여 봐요.`, `8 × ☐ = ${total}`],
     blank: `8 × ☐ = ${total}`,
     blankAnswer: String(q),
     explain: {

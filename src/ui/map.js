@@ -84,7 +84,9 @@ function badge(x, y, label, color) {
 /** 한 노선(또는 시범 구간)의 선로·역·진행을 그린다. 목적지가 이 노선에 있으면 차량 자리를 돌려준다. */
 function drawTrack(svg, { nodes, stations, color, label }, { state, destId, P, onStation, onAnyStation }) {
   const pos = stations.map(P);
-      const status = nodes.map((n) => nodeState(state, n.id).status);
+      const nss = nodes.map((n) => nodeState(state, n.id));
+  const ns = (i) => nss[i];
+  const status = nss.map((x) => x.status);
   svg.append(s('polyline', { points: pos.map((p) => p.join(',')).join(' '), fill: 'none', stroke: INK, 'stroke-width': 13, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
   for (let i = 0; i < pos.length - 1; i++) {
     const on = DONE.has(status[i]) && DONE.has(status[i + 1]);
@@ -107,9 +109,13 @@ function drawTrack(svg, { nodes, stations, color, label }, { state, destId, P, o
     const isDest = n.id === destId;
     if (st === 'confirmed') g.append(s('circle', { cx: x, cy: y, r: 7, fill: INK, stroke: INK, 'stroke-width': 3 }));
     else if (st === 'lit') g.append(s('circle', { cx: x, cy: y, r: 8, fill: '#fff', stroke: INK, 'stroke-width': 1.5 }), s('circle', { cx: x, cy: y, r: 6, fill: '#fff', stroke: color, 'stroke-width': 4 }));
-    else if (st === 'passed') {
-      g.append(s('circle', { cx: x, cy: y, r: 7, fill: '#fff', stroke: INK, 'stroke-width': 3 }));
-      g.append(s('text', { x: x + 9, y: y - 8, class: 'pass-mark' }, nodeState(state, n.id).inspect ? '점검' : '≫')); // 점검 중인 추정 역은 불을 둔 채 표시만 바꾼다
+    else if (st === 'passed' && ns(i).inspect) {
+      // 점검 중인 추정 역: 켜진 역 모양 그대로 + 바깥 점선 고리(점선 = 아직). 글자·≫·공구 없음(시각 3차 5절)
+      g.append(s('circle', { cx: x, cy: y, r: 7, fill: '#fff', stroke: INK, 'stroke-width': 3 }), s('circle', { cx: x, cy: y, r: 12, fill: 'none', stroke: INK, 'stroke-width': 1.8, 'stroke-dasharray': '3 2.6' }));
+    } else if (st === 'passed') {
+      // 시승으로 추정해 켠 역은 아직 확인 전이라 테두리를 점선으로(선 문법: 점선 = 아직). 임시 정차에서 확인되면 실선
+      g.append(s('circle', { cx: x, cy: y, r: 7, fill: '#fff', stroke: INK, 'stroke-width': 3, 'stroke-dasharray': ns(i).inferred ? '3 2.5' : undefined }));
+      g.append(s('text', { x: x + 9, y: y - 8, class: 'pass-mark' }, '≫'));
     } else if (isDest) {
       g.append(s('circle', { cx: x, cy: y, r: 10, fill: '#fff', stroke: INK, 'stroke-width': 2.5 }));
       g.append(s('circle', { cx: x, cy: y, r: 5, fill: '#fff', stroke: INK, 'stroke-width': 2.5 }));

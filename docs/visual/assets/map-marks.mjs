@@ -43,6 +43,7 @@ export const STATION = {
   dest: '목적지(= 다음 역): 이중 고리, 늘 맨 위에',
   lit: '개통: 흰 원 + 굵은 진한 테 + 양옆 노선 색 꼬리',
   passed: '통과역: 개통 + ≫',
+  check: '점검: 개통 모양(불은 그대로) + 바깥 점선 고리 = 아직 확인할 것이 남음. 공구·느낌표·색 없음',
   confirmed: '확정: 진한 꽉 찬 원(+ 넓을 때 가운데 노선 색 점) + 꼬리',
 };
 
@@ -63,7 +64,7 @@ export function stationTail(x, y, prev, next, color, tier, { u = 1 } = {}) {
 
 /** 역 점 하나. state: STATION 키. tier: sizeTier(g). u: 화면 px → 사용자 단위. 그리지 않는 상태면 '' */
 export function stationMark(x, y, state, color, tier = TIERS.zoom, { u = 1, terminal = false, angle = 0 } = {}) {
-  const key = state === 'passed' ? 'lit' : state;
+  const key = state === 'passed' || state === 'check' ? 'lit' : state;
   const S = tier[key];
   if (!S) return '';
   const r = S.r * u, sw = (S.sw ?? 0) * u;
@@ -81,6 +82,8 @@ export function stationMark(x, y, state, color, tier = TIERS.zoom, { u = 1, term
     // lit, passed: 흰 원 + 굵은 진한 테. 노선 색 고리는 같은 색 선로에 묻혀서 쓰지 않는다
     out.push(`<circle cx="${x}" cy="${y}" r="${r}" fill="${PAPER}" stroke="${INK}" stroke-width="${sw}"/>`);
     if (state === 'passed' && tier.pass) out.push(passMark(x + (r + 3 * u), y - (r + 6 * u), u * (tier.pass / 10)));
+    // 점검: 바깥에 점선 고리(선 문법: 점선 = 아직). 촘촘하면(dense) 고리를 그리지 않고 개통과 같게 — 역 시트에서 알림
+    if (state === 'check' && tier !== TIERS.dense) out.push(`<circle cx="${x}" cy="${y}" r="${r + (tier === TIERS.zoom ? 5 : 3.5) * u}" fill="none" stroke="${INK}" stroke-width="${1.8 * u}" stroke-dasharray="${3 * u} ${2.6 * u}" stroke-linecap="round"/>`);
   }
   return out.join('');
 }

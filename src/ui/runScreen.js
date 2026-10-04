@@ -19,6 +19,50 @@ const fbLine = (cls, name, ...text) => h(`div.${cls}.fb-line`, icon(name), h('sp
 
 const MODE_LABEL = { placement: '시승 운행', express: '급행', challenge: '도전 운행', normal: null };
 
+/**
+ * 컴퓨터 키보드로도 풀 수 있게(학생 #1: PC에서 숫자가 안 써지고 Enter도 안 됨).
+ * 키를 화면의 같은 단추 누르기로 바꾼다 — 채점·입력 흐름은 단추와 똑같다.
+ *   숫자 . / + - * → 숫자판 단추, Backspace → ⌫, Enter → 답 내기(채점 뒤면 다음 문제), Tab → 다음 칸(여러 칸 문제)
+ */
+let keyHandler = null;
+function bindKeyboard(inputEl) {
+  if (keyHandler) document.removeEventListener('keydown', keyHandler);
+  keyHandler = (e) => {
+    if (!inputEl.isConnected) return;
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+    if (document.querySelector('.sheet, .hint-drawer.open') && e.key !== 'Escape') return;
+    const map = { Backspace: '하나 지우기', '-': '−', '*': '×', x: '×' }; // ⌫ 단추는 aria-label로 찾는다
+    const label = map[e.key] ?? e.key;
+    const done = inputEl.classList.contains('done') || inputEl.classList.contains('locked');
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (done) {
+        [...document.querySelectorAll('.after button')].find((b) => /다음 문제|운행 일지 보기/.test(b.textContent))?.click();
+      } else {
+        const sub = inputEl.querySelector('.submit');
+        if (sub && !sub.disabled) sub.click();
+      }
+      return;
+    }
+    if (done) return;
+    if (e.key === 'Tab') {
+      const boxes = [...inputEl.querySelectorAll('.field-box')];
+      if (boxes.length > 1) {
+        e.preventDefault();
+        const i = boxes.findIndex((b) => b.classList.contains('active'));
+        boxes[(i + (e.shiftKey ? boxes.length - 1 : 1)) % boxes.length].click();
+      }
+      return;
+    }
+    const key = [...inputEl.querySelectorAll('.key, .op')].find((b) => (b.getAttribute('aria-label') ?? b.textContent.trim()) === label || b.textContent.trim() === label);
+    if (key && !key.disabled) {
+      e.preventDefault();
+      key.click();
+    }
+  };
+  document.addEventListener('keydown', keyHandler);
+}
+
 export function renderRun(root, app, run, { onFinish }) {
   let state = app.state;
   const setState = (s) => {
@@ -86,6 +130,7 @@ export function renderRun(root, app, run, { onFinish }) {
     let blankDone = false;
 
     const input = makeInput(p.input, { onSubmit: () => onAnswer() });
+    bindKeyboard(input.el);
     if (!estimateOk) input.lock(true);
 
     const estimate = p.estimateFirst
@@ -200,7 +245,7 @@ export function renderRun(root, app, run, { onFinish }) {
       // 오답(같은 문제에서 두 번째 오답이면 소리를 생략한다)
       if (run.tries !== 2) brake(state.settings);
       if (response !== UNKNOWN) feedback.append(h('div.wrong', h('s.my-answer', typeof response === 'object' ? Object.values(response).join(', ') : String(response))), fbLine('wrong', 'pause', '버스가 잠깐 멈췄어요.'));
-      else feedback.append(h('div.info', '괜찮아요. 이 역에서 같이 배워요.'));
+      else feedback.append(h('div.info', '괜찮아요. 이건 운행하면서 배워요.')); // 시승에서는 바로 다음 문제로 가므로 "같이 배워요"라고 약속하지 않는다(학생 #1)
       if (r.feedback) feedback.append(h('div.wrong-detail', r.feedback));
       input.reset();
       if (isDiag) {

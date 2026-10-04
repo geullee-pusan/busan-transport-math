@@ -43,6 +43,7 @@ export const STATION = {
   dest: '목적지(= 다음 역): 이중 고리, 늘 맨 위에',
   lit: '개통: 흰 원 + 굵은 진한 테 + 양옆 노선 색 꼬리',
   passed: '통과역: 개통 + ≫',
+  'check-dest': '점검 역이 목적지일 때: 목적지 이중 고리의 바깥 고리만 점선(한 점에 고리 둘을 겹치지 않음). 촘촘하면 보통 목적지',
   check: '점검: 개통 모양(불은 그대로) + 바깥 점선 고리 = 아직 확인할 것이 남음. 공구·느낌표·색 없음',
   confirmed: '확정: 진한 꽉 찬 원(+ 넓을 때 가운데 노선 색 점) + 꼬리',
 };
@@ -64,7 +65,7 @@ export function stationTail(x, y, prev, next, color, tier, { u = 1 } = {}) {
 
 /** 역 점 하나. state: STATION 키. tier: sizeTier(g). u: 화면 px → 사용자 단위. 그리지 않는 상태면 '' */
 export function stationMark(x, y, state, color, tier = TIERS.zoom, { u = 1, terminal = false, angle = 0 } = {}) {
-  const key = state === 'passed' || state === 'check' ? 'lit' : state;
+  const key = state === 'passed' || state === 'check' ? 'lit' : state === 'check-dest' ? 'dest' : state;
   const S = tier[key];
   if (!S) return '';
   const r = S.r * u, sw = (S.sw ?? 0) * u;
@@ -72,8 +73,10 @@ export function stationMark(x, y, state, color, tier = TIERS.zoom, { u = 1, term
   if (terminal) out.push(`<line x1="${x - 11 * u}" y1="${y}" x2="${x + 11 * u}" y2="${y}" transform="rotate(${angle} ${x} ${y})" stroke="${INK}" stroke-width="${4 * u}" stroke-linecap="round"/>`);
   if (state === 'locked') out.push(`<circle cx="${x}" cy="${y}" r="${r}" fill="${PAPER}" stroke="${MUTE}" stroke-width="${sw}"/>`);
   else if (state === 'reachable') out.push(`<circle cx="${x}" cy="${y}" r="${r}" fill="${PAPER}" stroke="${INK}" stroke-width="${sw}"/>`);
-  else if (state === 'dest') {
-    out.push(`<circle cx="${x}" cy="${y}" r="${r}" fill="${PAPER}" stroke="${INK}" stroke-width="${sw}"/>`);
+  else if (state === 'dest' || state === 'check-dest') {
+    // 점검 + 목적지: 바깥 고리만 점선(butt 끝 — 둥근 끝이면 틈이 메워져 실선처럼 보인다). 촘촘(dense)이면 보통 목적지
+    const dashed = state === 'check-dest' && tier !== TIERS.dense ? ` stroke-dasharray="${3.5 * u} ${2.6 * u}" stroke-linecap="butt"` : '';
+    out.push(`<circle cx="${x}" cy="${y}" r="${r}" fill="${PAPER}" stroke="${INK}" stroke-width="${sw}"${dashed}/>`);
     out.push(`<circle cx="${x}" cy="${y}" r="${S.inner * u}" fill="${PAPER}" stroke="${INK}" stroke-width="${sw}"/>`);
   } else if (state === 'confirmed') {
     out.push(`<circle cx="${x}" cy="${y}" r="${r}" fill="${INK}" stroke="${PAPER}" stroke-width="${1.5 * u}"/>`);
@@ -83,7 +86,7 @@ export function stationMark(x, y, state, color, tier = TIERS.zoom, { u = 1, term
     out.push(`<circle cx="${x}" cy="${y}" r="${r}" fill="${PAPER}" stroke="${INK}" stroke-width="${sw}"/>`);
     if (state === 'passed' && tier.pass) out.push(passMark(x + (r + 3 * u), y - (r + 6 * u), u * (tier.pass / 10)));
     // 점검: 바깥에 점선 고리(선 문법: 점선 = 아직). 촘촘하면(dense) 고리를 그리지 않고 개통과 같게 — 역 시트에서 알림
-    if (state === 'check' && tier !== TIERS.dense) out.push(`<circle cx="${x}" cy="${y}" r="${r + (tier === TIERS.zoom ? 5 : 3.5) * u}" fill="none" stroke="${INK}" stroke-width="${1.8 * u}" stroke-dasharray="${3 * u} ${2.6 * u}" stroke-linecap="round"/>`);
+    if (state === 'check' && tier !== TIERS.dense) out.push(`<circle cx="${x}" cy="${y}" r="${r + (tier === TIERS.zoom ? 5 : 3.5) * u}" fill="none" stroke="${INK}" stroke-width="${1.8 * u}" stroke-dasharray="${3 * u} ${2.6 * u}" stroke-linecap="butt"/>`);
   }
   return out.join('');
 }

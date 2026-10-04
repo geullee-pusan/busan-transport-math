@@ -61,11 +61,13 @@ export function renderRun(root, app, run, { onFinish }) {
     if (typeof piece === 'string') return piece;
     if (piece.label !== undefined) return piece.label;
     if (piece.unknown) return h('span.unknown-num', [...piece.unknown].map((ch) => (ch === '□' ? h('span.unknown-box', ' ') : ch)));
-    // 만든 숫자·맨 계산 수는 표시 없이 그대로(부모 결정 2026-10-04: 표시가 오히려 헷갈림). 실제 값만 누르면 출처가 뜬다.
-    if (piece.tag !== 'real') return h('span.num.plain', String(piece.num));
+    // 겉으로 보이는 표시는 없다(부모 결정 2026-10-04). 맨 계산 수는 그냥 글자.
+    // 실제 값은 누르면 출처, 만든 숫자는 누르면 '문제를 위해 만든 숫자예요'("진짜야?" 하고 눌러 보는 아이를 위해, UX 확인).
+    if (piece.tag !== 'real' && piece.tag !== 'virtual') return h('span.num.plain', String(piece.num));
+    const virtual = piece.tag === 'virtual';
     const el = h('button.num', { type: 'button' }, String(piece.num));
     el.addEventListener('click', () => {
-      const tip = h('span.num-tip', `출처: ${piece.source}`);
+      const tip = h('span.num-tip', virtual ? '문제를 위해 만든 숫자예요' : `출처: ${piece.source}`);
       el.append(tip);
       setTimeout(() => tip.remove(), 2600);
     });
@@ -148,7 +150,7 @@ export function renderRun(root, app, run, { onFinish }) {
 
     function report() {
       const reasons = ['부산 이야기가 틀린 것 같아요', '숫자가 이상해요', '문장이 헷갈려요', '답이 틀린 것 같아요', '그림이 이상해요'];
-      clear(after).append(h('div.report', h('div', '무엇이 이상해요?'), h('div.chips', reasons.map((r) => h('button.chip', { type: 'button', onclick: () => { setState({ ...state, reports: [...state.reports, { at: new Date().toISOString(), node: cur.slot.node, template: cur.template.id, level: cur.level, seed: cur.seed, text: plainText(p.text), reason: r }] }); clear(after).append(fbLine('info', 'info', '고마워요. 부모님 화면에 남겨 둘게요.')); } }, r)))));
+      clear(after).append(h('div.report', h('div', '무엇이 이상해요?'), h('div.chips', reasons.map((r) => h('button.chip', { type: 'button', onclick: () => { setState({ ...state, reports: [...state.reports, { at: new Date().toISOString(), node: cur.slot.node, template: cur.template.id, level: cur.level, seed: cur.seed, text: plainText(p.text), reason: r, numbers: p.text.filter((x) => x && typeof x === 'object' && (x.tag === 'real' || x.tag === 'virtual')).map((x) => ({ v: x.num, real: x.tag === 'real' })) }] }); clear(after).append(fbLine('info', 'info', '고마워요. 부모님 화면에 남겨 둘게요.')); } }, r)))));
     }
 
     function onAnswer(forced) {

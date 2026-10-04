@@ -67,10 +67,10 @@
 .unknown-box { background: var(--unknown-bg); border: var(--bw) solid var(--ink); border-radius: 3px; }
 /* 끝남(채점 뒤): 맞은 칸 = 오른쪽에 ✓ 아이콘, 틀린 답 = 흐린 글자 + 취소선(색 없음) */
 .my-answer { color: var(--ink-3); text-decoration: line-through 2px; }
-/* 다시 묻기(형식만 다른 맞는 답): 답은 그대로, 테두리 점점이 아님(만든 숫자와 헷갈림) → 실선 그대로 + ⓘ 줄 */
+/* 다시 묻기(형식만 다른 맞는 답): 답은 그대로, 테두리 실선 그대로 → 실선 그대로 + ⓘ 줄 */
 
-/* ── 3. 만든 숫자(가상) ─────────────────────────── */
-/* 점점이 밑줄은 이 뜻 하나에만 쓴다. 숫자와 단위 사이를 벌리지 않게 글자 흐름 밖에 그린다(ux-review-05 P1-5) */
+/* ── 3. 만든 숫자(가상) — 쓰지 않음(부모 결정 66f962e: 아이 화면에서 뺌). 기록으로만 남긴다. 점점이 모양은 다른 뜻으로 다시 쓰지 않는다 ── */
+/* (옛 규칙) 점점이 밑줄은 이 뜻 하나에만 쓴다. 숫자와 단위 사이를 벌리지 않게 글자 흐름 밖에 그린다(ux-review-05 P1-5) */
 .num.virtual { border-bottom: 0; background: radial-gradient(circle, var(--ink-2) 1.2px, transparent 1.4px) 0 100% / 5px 4px repeat-x; padding-bottom: 4px; }
 .num { position: relative; }
 .num::before { content: ''; position: absolute; inset: -12px -8px; } /* 누르는 영역 48px 안팎 */

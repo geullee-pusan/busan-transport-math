@@ -21,7 +21,7 @@ export function stationSheet(stationId, onClose, { inspect = false, inferred = f
   const km = (m) => (m >= 1000 ? `${Math.floor(m / 1000)} km${m % 1000 ? ` ${m % 1000} m` : ""}` : `${m} m`);
   const lines = [
     `${line.name} ${idx + 1}번째 역 (모두 ${line.stations.length}역)`,
-    st.code && /^\d+$/.test(st.code) ? `역 번호 ${st.code}` : null,
+    st.code && /^\d+$/.test(st.code) ? `역 번호 ${String(st.code).padStart(3, '0')}` : null, // 공식 표기 095(학생 #3)
     st.nameEn ? `영어 이름 ${st.nameEn}` : null,
     others.length ? `갈아탈 수 있어요: ${others.join(', ')}` : null,
     prev && link(prev.id, stationId) ? `${prev.name}역까지 ${km(link(prev.id, stationId).distanceM)}` : null,

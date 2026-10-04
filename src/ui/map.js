@@ -31,7 +31,7 @@ export function drawMap(state, { destId, onStation, onAnyStation } = {}) {
     const pts = line.stations.map(P).map(([x, y]) => `${x},${y}`).join(' ');
     svg.append(s('polyline', { points: pts, fill: 'none', stroke: '#5E6B76', 'stroke-width': 3, 'stroke-dasharray': '6 4', 'stroke-linecap': 'round' }));
     const [bx, by] = P(line.stations.at(-1));
-    svg.append(badge(bx, by - 26, line.label, line.color));
+    svg.append(badge(bx, by - 26, { BGL: '김해', DH: '동해' }[line.label] ?? line.label, line.color)); // 'BGL'은 아이가 모르는 말(학생 #3)
     if (onAnyStation) for (const st of line.stations) {
       const [x, y] = P(st);
       (svg.__targets ??= []).push({ x, y, id: st.id, node: null, other: true });

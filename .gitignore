@@ -1,0 +1,6 @@
+node_modules/
+dist/
+
+# 교육부 원문(별책 HWP·PDF와 zip)은 git에 넣지 않는다. 받는 곳은 docs/sources/README.md에 있다.
+docs/sources/*
+!docs/sources/README.md

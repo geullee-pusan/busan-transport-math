@@ -1,0 +1,69 @@
+// 앱 시작점: 상태를 불러오고 화면을 오간다.
+import './ui/style.css';
+import { load, save, createState, dayNumber, runsLeftToday, countRun } from './engine/state.js';
+import { startRun } from './engine/run.js';
+import { startExpress, startPlacement } from './engine/express.js';
+import { renderRun } from './ui/runScreen.js';
+import { renderSetup, renderHome, renderLog, renderGarage, renderParent, renderSettings } from './ui/screens.js';
+
+const root = document.getElementById('app');
+
+const app = {
+  state: load(),
+  save(s) {
+    this.state = s;
+    save(s);
+  },
+};
+
+const seed = () => (Date.now() ^ (app.state.runs * 2654435761)) >>> 0;
+
+function home() {
+  if (!app.state.placementDone && app.state.runs === 0 && !app.state.profile.nickname && Object.keys(app.state.nodes).length === 0) return setup();
+  renderHome(root, app, {
+    onStart: () => go(startRun(app.state, { day: dayNumber(), seed: seed() })),
+    onExpress: () => go(startExpress(app.state, { day: dayNumber(), seed: seed() })),
+    onChallenge: () => go(startRun(app.state, { day: dayNumber(), seed: seed(), mode: 'challenge' })),
+    onGarage: () => renderGarage(root, app, { onHome: home }),
+    onParent: () => renderParent(root, app, { onHome: home, onReset: () => { app.save({ ...createState(), parentPin: app.state.parentPin }); home(); } }),
+    onSettings: () => renderSettings(root, app, { onHome: home }),
+  });
+}
+
+function setup() {
+  renderSetup(root, app, {
+    onDone: ({ nickname, color }) => {
+      app.save({ ...app.state, profile: { ...app.state.profile, nickname: nickname || ' ', color } });
+      const run = startPlacement(app.state, { day: dayNumber(), seed: seed() });
+      if (run) go(run);
+      else home();
+    },
+  });
+}
+
+function go(run) {
+  if (!run) return home();
+  if (run.mode !== 'placement') {
+    const day = dayNumber();
+    if (runsLeftToday(app.state, day) <= 0) return home();
+    run.lastRun = runsLeftToday(app.state, day) === 1; // 오늘의 막차
+    app.save(countRun(app.state, day));
+  }
+  renderRun(root, app, run, {
+    onFinish: (finished, state) => {
+      app.save(state);
+      if (!finished) return home();
+      renderLog(root, app, finished, {
+        onAgain: () => go(startRun(app.state, { day: dayNumber(), seed: seed() })),
+        onHome: home,
+      });
+    },
+  });
+}
+
+home();
+
+// 홈 화면 설치·오프라인(서비스 워커). 개발 서버에서는 등록하지 않는다.
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}

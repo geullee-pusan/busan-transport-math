@@ -1,0 +1,24 @@
+{
+  "name": "busan-transport-math",
+  "version": "0.0.0",
+  "private": true,
+  "description": "부산 교통 수학 — 부산 도시철도 노선도를 따라가며 배우는 수학",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && node scripts/check-dist.mjs",
+    "test": "node --test \"tests/**/*.test.js\"",
+    "data": "node scripts/build-data.mjs",
+    "graph": "node docs/curriculum/tools/validate-graph.mjs",
+    "preview": "vite preview --port 4174 --strictPort",
+    "tablet": "vite preview --port 4174 --strictPort --host",
+    "icons": "node scripts/make-icons.mjs"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "devDependencies": {
+    "vite": "8.3.0",
+    "vite-plugin-singlefile": "2.3.3"
+  }
+}

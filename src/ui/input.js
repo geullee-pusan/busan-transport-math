@@ -1,0 +1,190 @@
+// 답 입력. 시스템 키보드 대신 전화기 배열 키패드를 쓴다(SPEC 9.4). 채점은 "답 내기"를 눌러야만 한다.
+import { h, clear } from './dom.js';
+
+/**
+ * @returns {{ el: HTMLElement, value: () => any, reset: () => void, setBlank: (pattern) => void, lock: (on) => void }}
+ */
+export function makeInput(input, { onSubmit }) {
+  const kind = input?.kind ?? 'number';
+  if (kind === 'choice') return input.howLabel ? withHow(choiceInput(input, onSubmit), input.howLabel) : choiceInput(input, onSubmit);
+  if (kind === 'multi') return multiInput(input, onSubmit);
+  if (kind === 'order') return orderInput(input, onSubmit);
+  if (kind === 'paint') return paintInput(input, onSubmit);
+  if (kind === 'compound') return compoundInput(input, onSubmit);
+  if (kind === 'equation') return equationInput(onSubmit);
+  return numberInput(input, onSubmit);
+}
+
+function keypad(onKey, extra = []) {
+  const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', ...extra, '0', '⌫'];
+  return h('div.keypad', keys.map((k) => h('button.key', { type: 'button', onclick: () => onKey(k), 'aria-label': k === '⌫' ? '지우기' : k }, k)));
+}
+
+function numberInput(input, onSubmit) {
+  let text = '';
+  let blank = null; // 힌트 ④의 빈칸 틀: { pattern: '7☐2', filled: '' }
+  const box = h('div.answer-box', { 'aria-live': 'polite' });
+  const unit = input?.unit ? h('span.unit', input.unit) : null;
+  const allowDot = input?.kind === 'decimal';
+  const allowSlash = input?.kind === 'fraction';
+  const render = () => {
+    clear(box);
+    if (blank) {
+      for (const ch of blank.pattern) box.append(ch === '☐' ? h('span.blank-slot', blank.filled || ' ') : h('span.blank-fixed', ch));
+    } else box.append(h('span.answer-text', text || ' '));
+  };
+  const onKey = (k) => {
+    if (blank) {
+      if (k === '⌫') blank.filled = '';
+      else if (/\d/.test(k)) blank.filled = k;
+    } else if (k === '⌫') text = text.slice(0, -1);
+    else if (text.length < 8) text += k;
+    render();
+    syncBtn();
+  };
+  const submitBtn = h('button.submit', { type: 'button', onclick: () => onSubmit() }, '답 내기');
+  const syncBtn = () => (submitBtn.textContent = text && !blank ? `${text}${input?.unit ?? ''} — 답 내기` : '답 내기');
+  const el = h('div.input', h('div.answer-row', box, unit), keypad(onKey, [allowDot ? '.' : null, allowSlash ? '/' : null].filter(Boolean)), submitBtn);
+  render();
+  return {
+    el,
+    value: () => (blank ? { blank: blank.filled } : text),
+    reset: () => {
+      text = '';
+      render();
+      syncBtn();
+    },
+    setBlank: (pattern) => {
+      blank = { pattern, filled: '' };
+      render();
+    },
+    clearBlank: () => {
+      blank = null;
+      render();
+    },
+    lock: (on) => el.classList.toggle('locked', on),
+  };
+}
+
+function choiceInput(input, onSubmit) {
+  let chosen = null;
+  const btns = input.options.map((o) =>
+    h('button.choice', {
+      type: 'button',
+      onclick: () => {
+        chosen = o;
+        btns.forEach((b) => b.classList.toggle('chosen', b.textContent === o));
+      },
+    }, o),
+  );
+  const el = h('div.input', h('div.choices', btns), h('button.submit', { type: 'button', onclick: () => onSubmit() }, '답 내기'));
+  return { el, value: () => chosen, reset: () => { chosen = null; btns.forEach((b) => b.classList.remove('chosen')); }, setBlank() {}, clearBlank() {}, lock: (on) => el.classList.toggle('locked', on) };
+}
+
+function compoundInput(input, onSubmit) {
+  const vals = {};
+  let active = input.fields.find((f) => !f.options)?.key ?? null;
+  const rows = input.fields.map((f) => {
+    if (f.options) {
+      const btns = f.options.map((o) => h('button.choice.small', { type: 'button', onclick: () => { vals[f.key] = o; btns.forEach((b) => b.classList.toggle('chosen', b.textContent === o)); } }, o));
+      return h('div.field', h('label', f.label), h('div.choices', btns));
+    }
+    const box = h('div.answer-box.field-box', { onclick: () => { active = f.key; paint(); } });
+    box.dataset.key = f.key;
+    return h('div.field', h('label', f.label), box);
+  });
+  const paint = () => {
+    for (const r of rows) {
+      const box = r.querySelector('.field-box');
+      if (!box) continue;
+      box.textContent = vals[box.dataset.key] ?? ' ';
+      box.classList.toggle('active', box.dataset.key === active);
+    }
+  };
+  const onKey = (k) => {
+    if (!active) return;
+    const cur = vals[active] ?? '';
+    vals[active] = k === '⌫' ? cur.slice(0, -1) : (cur + k).slice(0, 8);
+    paint();
+  };
+  const hasNumber = input.fields.some((f) => !f.options);
+  const extra = [input.fields.some((f) => f.kind === 'decimal' || f.kind === 'numberline') ? '.' : null, input.fields.some((f) => f.kind === 'fraction') ? '/' : null].filter(Boolean);
+  const el = h('div.input', rows, hasNumber ? keypad(onKey, extra) : null, h('button.submit', { type: 'button', onclick: () => onSubmit() }, '답 내기'));
+  paint();
+  return { el, value: () => ({ ...vals }), reset: () => { for (const k of Object.keys(vals)) delete vals[k]; paint(); }, setBlank() {}, clearBlank() {}, lock: (on) => el.classList.toggle('locked', on) };
+}
+
+function equationInput(onSubmit) {
+  const v = { left: '', op: '', right: '', result: '' };
+  let active = 'left';
+  const slot = (key) => {
+    const b = h('div.answer-box.eq-box', { onclick: () => { active = key; paint(); } });
+    b.dataset.key = key;
+    return b;
+  };
+  const left = slot('left');
+  const right = slot('right');
+  const result = slot('result');
+  const ops = ['+', '-', '×', '÷'].map((o) => h('button.op', { type: 'button', onclick: () => { v.op = o; paint(); } }, o === '-' ? '−' : o));
+  const opShow = h('span.eq-op');
+  const paint = () => {
+    for (const b of [left, right, result]) {
+      b.textContent = v[b.dataset.key] || ' ';
+      b.classList.toggle('active', b.dataset.key === active);
+    }
+    opShow.textContent = v.op === '-' ? '−' : v.op || '○';
+  };
+  const onKey = (k) => {
+    v[active] = k === '⌫' ? v[active].slice(0, -1) : (v[active] + k).slice(0, 6);
+    paint();
+  };
+  const el = h('div.input', h('div.equation', left, opShow, right, h('span', '='), result), h('div.ops', ops), keypad(onKey), h('button.submit', { type: 'button', onclick: () => onSubmit() }, '답 내기'));
+  paint();
+  return { el, value: () => ({ ...v }), reset: () => { Object.assign(v, { left: '', op: '', right: '', result: '' }); active = 'left'; paint(); }, setBlank() {}, clearBlank() {}, lock: (on) => el.classList.toggle('locked', on) };
+}
+
+const noop = () => {};
+const api = (el, value, reset) => ({ el, value, reset, setBlank: noop, clearBlank: noop, lock: (on) => el.classList.toggle('locked', on) });
+
+/** 여럿 고르기: 고른 값 배열(작은 차례) */
+function multiInput(input, onSubmit) {
+  const chosen = new Set();
+  const btns = input.options.map((o) => {
+    const b = h('button.choice.small', { type: 'button', onclick: () => { chosen.has(o) ? chosen.delete(o) : chosen.add(o); b.classList.toggle('chosen', chosen.has(o)); } }, String(o));
+    return b;
+  });
+  const el = h('div.input', h('div.small', '맞는 것을 모두 골라요.'), h('div.choices', btns), h('button.submit', { type: 'button', onclick: () => onSubmit() }, '답 내기'));
+  return api(el, () => input.options.filter((o) => chosen.has(o)), () => { chosen.clear(); btns.forEach((b) => b.classList.remove('chosen')); });
+}
+
+/** 순서 정하기: 누른 차례대로 배열 */
+function orderInput(input, onSubmit) {
+  let seq = [];
+  const shown = h('div.answer-box.order-box');
+  const paint = () => { shown.textContent = seq.length ? seq.join('  →  ') : ' '; btns.forEach((b, i) => b.classList.toggle('chosen', seq.includes(input.items[i]))); };
+  const btns = input.items.map((o) => h('button.choice.small', { type: 'button', onclick: () => { if (!seq.includes(o)) seq.push(o); paint(); } }, String(o)));
+  const el = h('div.input', h('div.small', '차례대로 눌러요.'), shown, h('div.choices', btns), h('div.choices', h('button.secondary', { type: 'button', onclick: () => { seq.pop(); paint(); } }, '하나 지우기')), h('button.submit', { type: 'button', onclick: () => onSubmit() }, '답 내기'));
+  paint();
+  return api(el, () => seq.slice(), () => { seq = []; paint(); });
+}
+
+/** 칸 색칠: 칠한 칸 수(화면에 칠한 칸 수는 쓰지 않는다, SPEC 9.4) */
+function paintInput(input, onSubmit) {
+  const on = new Set();
+  const cells = Array.from({ length: input.cells }, (_, i) => {
+    const c = h('button.paint-cell', { type: 'button', 'aria-label': `${i + 1}번째 칸`, onclick: () => { on.has(i) ? on.delete(i) : on.add(i); c.classList.toggle('on', on.has(i)); } });
+    return c;
+  });
+  const el = h('div.input', h('div.small', '칸을 눌러 색칠해요.'), h('div.paint-row', cells), h('button.submit', { type: 'button', onclick: () => onSubmit() }, '답 내기'));
+  return api(el, () => on.size, () => { on.clear(); cells.forEach((c) => c.classList.remove('on')); });
+}
+
+/** 고르기 문제의 "어떻게 어림했어요?" 칸: 채워야 선택지를 누를 수 있다(SPEC 4절). 내용은 채점하지 않는다. */
+function withHow(inner, labelText) {
+  let how = '';
+  const box = h('div.answer-box.how-box', ' ');
+  const keys = h('div.keypad.mini', ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '+', '−', '⌫'].map((k) => h('button.key', { type: 'button', onclick: () => { how = k === '⌫' ? how.slice(0, -1) : (how + k).slice(0, 16); box.textContent = how || ' '; inner.el.querySelector('.choices')?.classList.toggle('locked', !how); } }, k)));
+  inner.el.querySelector('.choices')?.classList.add('locked');
+  inner.el.prepend(h('div.how', h('div.small', labelText), box, keys));
+  return { ...inner, value: () => (how ? inner.value() : null) };
+}

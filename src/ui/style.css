@@ -142,7 +142,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus
 .run-body { display: grid; grid-template-columns: 3fr 2fr; gap: var(--sp-4); padding: var(--sp-4); align-items: start; align-content: start; }
 .col-b, .col-c { display: grid; gap: 14px; min-width: 0; }
 .problem { background: var(--paper); border-radius: var(--r-lg); padding: 20px 22px; }
-.problem-text { font-size: var(--fs-problem); line-height: var(--lh-problem); margin: 0 0 var(--sp-3); max-width: 26em; }
+.problem-text { font-size: var(--fs-problem); line-height: var(--lh-problem); margin: 0 0 var(--sp-3); max-width: 26em; white-space: pre-line; } /* 문장 조각의 
+은 줄바꿈(장면 한 문장 ⏎ 식, 문제은행 04) */
 .num { font: inherit; color: inherit; background: none; border: 0; padding: 0 1px; position: relative; min-height: 0; font-variant-numeric: tabular-nums; font-weight: var(--fw-bold); }
 .num-tip { position: absolute; left: 0; top: 110%; white-space: nowrap; background: var(--ink); color: var(--paper); font-size: var(--fs-label); font-weight: var(--fw-regular); border-radius: var(--r-sm); padding: 6px 10px; z-index: 5; }
 .unknown-num { font-weight: var(--fw-bold); }

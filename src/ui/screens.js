@@ -13,7 +13,7 @@ import { TIERS, tierOf, goldNeeded } from '../content/vehicles.js';
 import { milestonesCrossed } from '../content/milestones.js';
 import { icon, starPoints } from './icons.js';
 import { vehicleArt } from './art/vehicles.js';
-import { CAR_COLORS, pickerBus, stationSign } from './art/scenes.js';
+import { CAR_COLORS, pickerBus, stationSign, openingScene, segmentScene, placementScene, bandVehicle } from './art/scenes.js';
 import { neighborNames } from './band.js';
 
 // 아이가 고르는 차량 색(시각 4차 3.4): art/scenes.js CAR_COLORS 6색. 색은 지붕 띠에만 칠한다(지도 위 차량은 흰 몸통이라 남색도 묻히지 않음).
@@ -123,6 +123,9 @@ export function renderHome(root, app, { onStart, onExpress, onChallenge, onGarag
   );
 }
 
+/** 일지 줄 머리 아이콘(뜻을 싣지 않는 길잡이 — 글자가 내용을 말한다) */
+const logIcon = (l) => (/^새로 켜진|개통|통과/.test(l) ? 'check' : /살펴봐요/.test(l) ? 'info' : /^오늘 푼 생각|길을 바로/.test(l) ? 'hint' : /금 도장|힌트를 보고|다시 생각/.test(l) ? 'stamp' : /km|m 달렸어요/.test(l) ? 'map' : /출발/.test(l) ? 'depart' : 'info');
+
 /** 운행 일지: 다섯 줄 이내, 가장 큰 소식 하나를 크게(SPEC 3.4, 9.5b) */
 export function renderLog(root, app, run, { onAgain, onHome }) {
   const state = app.state;
@@ -141,7 +144,35 @@ export function renderLog(root, app, run, { onAgain, onHome }) {
   else if (inspected.length) big = h('div.big-news', h('div.big-title', `${inspected.join(' · ')}역 점검 끝!`));
   else if (newly.length) big = h('div.big-news', h('div.big-title', passed.length === newly.length ? `${newly.join(' · ')}역 통과!` : `${newly.join(' · ')}역 개통!`));
 
+  // 큰 소식 그림(시각 4차 3.6, UX 8차 4.3): 개통 = 승강장 장면, 승급 = 면허증 + 새 차량, 시승 = 미리 켠 역이 차례로 켜짐, 소식 없음 = 구간 그림
+  const html = (s, cls = 'div.scene') => h(cls, { html: s });
+  const lineColorOf = (id) => (NODES.get(id)?.line === 'L2' ? '#AFD46B' : '#F7941D');
+  let opening = false;
+  if (sm.license) big.prepend(html(vehicleArt({ tier: sm.license, shown: 3, title: tierOf(sm.license).name }), 'div.license-art'));
+  else if (run.mode === 'placement' && newly.length) { big.prepend(html(placementScene({ names: newly }))); big.classList.add('v2-big'); }
+  else if (!inspected.length && (newly.length || sm.line2Opened)) {
+    const id = sm.line2Opened ? 'N25' : sm.newlyLit.at(-1);
+    const st = stationOf(id);
+    const nb = neighborNames(id);
+    const isL2 = NODES.get(id)?.line === 'L2';
+    const allPassed = passed.length === newly.length;
+    // 역 개통에는 그 노선의 열차가 들어온다(1호선 8량 앞 3칸, 2호선은 노선 색 띠만 바꿈). 1호선 외관은 FACTS 미확인이라 문·팬터그래프 없음
+    const train = vehicleArt({ arche: 'metro', cars: isL2 ? 6 : 8, band: lineColorOf(id), shown: 3 });
+    const caption = sm.line2Opened ? '서면역 개통!' : `${st?.name ?? ''}역 ${allPassed ? '통과' : '개통'}!`;
+    big = h('div.big-news.v2-big', html(openingScene({ name: st?.name ?? '', code: st?.code, prev: nb.prev, next: nb.next, line: isL2 ? '2' : '1', lineColor: lineColorOf(id), train, caption })),
+      sm.line2Opened ? h('div', '2호선으로 갈아탈 수 있어요. 이제 운행마다 1호선과 2호선을 번갈아 달려요. 2호선에서는 시간과 길이를 배워요.') : newly.length > 1 ? h('div', `새로 켜진 역: ${newly.join(', ')}`) : null);
+    opening = true;
+  } else if (!big && sm.dest && run.mode !== 'placement') {
+    const st = stationOf(sm.dest);
+    const nb = neighborNames(sm.dest);
+    const tierNow = tierOf(state.activeCard ?? state.license);
+    big = h('div.big-news.v2-big', html(segmentScene({ prev: nb.prev, next: st?.name ?? '', halves: sm.destHalves, lineColor: lineColorOf(sm.dest), car: bandVehicle({ kind: tierNow.kind === 'bus' ? 'bus' : 'rail', band: state.profile.color || '#1F3342', w: 66 }) })),
+      h('div', sm.destHalves >= FULL ? `${st?.name}역 바로 앞이에요.` : `${st?.name}역까지 ${Math.ceil((FULL - sm.destHalves) / 2)}칸 남았어요. 다음 운행에서 이어 달려요.`));
+  }
+
   const lines = [];
+  // 시승: 몇 문제로 정했는지 첫 줄에(UX 8차 ⑥)
+  if (run.mode === 'placement') lines.push(`${run.index}문제로 출발역을 정했어요.`);
   if (newly.length && run.mode !== 'placement' && !big?.textContent.includes(newly[0])) lines.push(`새로 켜진 역: ${newly.join(', ')}`);
   if (inspectNew.length) lines.push(`다음 운행에서 ${inspectNew.join(', ')}역을 한 번 더 살펴봐요. 불은 그대로예요.`);
   const learned = [...new Set(run.slots.slice(0, run.index).filter((x) => x.kind !== 'review' && x.kind !== 'redo').map((x) => NODES.get(x.node)?.title).filter(Boolean))];
@@ -153,9 +184,10 @@ export function renderLog(root, app, run, { onAgain, onHome }) {
   // 오늘 1 km 미만이면 "오늘 900 m 달렸어요", 그 위는 정수 km(운행 뒤 정수 − 운행 전 정수로 덧셈이 맞게)
   const todayM = state.meters - run.startMeters;
   const todayKm = Math.floor(state.meters / 1000) - Math.floor(run.startMeters / 1000);
-  lines.push(todayKm >= 1 ? `오늘 ${todayKm} km · 모두 ${kmText(state.meters)}` : `오늘 ${Math.floor(todayM / 100) * 100} m 달렸어요 · 모두 ${kmText(state.meters)}`);
+  // 0 m 줄은 보이지 않게(해당 없는 줄은 뺀다, UX 8차 4.3)
+  if (todayKm >= 1 || todayM >= 100) lines.push(todayKm >= 1 ? `오늘 ${todayKm} km · 모두 ${kmText(state.meters)}` : `오늘 ${Math.floor(todayM / 100) * 100} m 달렸어요 · 모두 ${kmText(state.meters)}`);
   const crossed = milestonesCrossed(run.startMeters, state.meters);
-  if (crossed.length) lines[lines.length - 1] += ` — ${crossed.at(-1).text}!`;
+  if (crossed.length && (todayKm >= 1 || todayM >= 100)) lines[lines.length - 1] += ` — ${crossed.at(-1).text}!`;
   const noMoreToday = runsLeftToday(state, dayNumber()) <= 0;
   if (destName && run.mode !== 'placement') lines.push(`다음 운행은 ${destName}역 앞에서 출발해요.` + (noMoreToday && sm.redo > 0 ? ' 오늘 넘긴 문제가 첫 문제로 나와요.' : ''));
   // 시승: 왜 거기서 출발하는지 한 줄(UX 7차 A-3)
@@ -163,18 +195,18 @@ export function renderLog(root, app, run, { onAgain, onHome }) {
   const lineName = (id) => (NODES.get(id)?.line === 'L2' ? '2호선' : '1호선');
   const title = run.mode === 'placement' ? '시승 운행 결과' : destName && !newly.length ? `${destName}역 가는 길` : newly.length ? `${lineName(sm.newlyLit.at(-1))} ${newly.at(-1)}역 도착` : '운행 일지';
 
-  if (newly.length) setTimeout(() => chime(state.settings), 200);
+  if (newly.length) setTimeout(() => chime(state.settings), opening ? 900 : 200); // 개통 장면: 역명판이 켜지는 순간에 맞춘다
   if (sm.license) setTimeout(() => approach(state.settings), 300);
 
   // 부모 화면용 기록
   app.save({ ...state, runs: state.runs + 1, logs: [...state.logs, { at: new Date().toISOString(), mode: run.mode, newly: sm.newlyLit, meters: sm.meters, gold: sm.gold, tries: run.index }].slice(-60) });
 
   clear(root).append(
-    h('main.log',
+    h('main.log.v2-log',
       h('h2', title),
       big,
       // 여섯 줄이 되면 '오늘 푼 생각'을 빼서 다음 출발역 줄이 잘리지 않게 한다
-      h('ul.log-lines', (lines.length > 5 ? lines.filter((l) => !l.startsWith('오늘 푼 생각')) : lines).slice(0, 5).map((l) => h('li', l))),
+      h('ul.log-lines.v2-log-cards', (lines.length > 5 ? lines.filter((l) => !l.startsWith('오늘 푼 생각')) : lines).slice(0, 5).map((l) => h('li', icon(logIcon(l)), h('span', l)))),
       h('p.log-end', run.mode === 'placement' ? '시승 운행 완료!' : '끝까지 운행 완료!'),
       // 끝 단추는 같은 무게로, "오늘은 여기까지"를 먼저 둔다(아동 심리 자문 1차 H1).
       h('div.next-btns.even', h('button.secondary.big', { type: 'button', onclick: onHome }, '오늘은 여기까지'), sm.dest && runsLeftToday(app.state, dayNumber()) > 0 ? h('button.secondary.big', { type: 'button', onclick: onAgain }, '한 번 더 운행') : null),

@@ -38,3 +38,36 @@ export function stationSign({ name, nameEn, code, prev, next, line = '1', lineCo
   <div class="sign-arrows"><span>${prev ? `← ${esc(prev)}` : ''}</span>${cells ? `<span class="sign-cells" aria-label="4칸 중 ${Math.floor(halves / 2)}칸${halves % 2 ? ' 반' : ''} 채움">${cellsHtml}</span>` : ''}<span>${next ? `${esc(next)} →` : ''}</span></div>
 </section>`;
 }
+
+/**
+ * 일지 큰 소식 — 역 개통 장면(높이 약 360, 시각 4차 3.6): 승강장 + 역명판(꺼짐 → 켜짐 0.6~1.5초) + 들어오는 열차(1.1초) + "○○역 개통!".
+ * 동작 줄이기에서는 끝 상태만(CSS). train: 열차 그림 SVG 문자열(art/vehicles.js). caption: 아래 큰 글자
+ */
+export function openingScene({ name, code, prev, next, line = '1', lineColor = '#F7941D', train = '', caption }) {
+  const num = code && /^\d+$/.test(code) ? String(code).padStart(3, '0') : '';
+  const lamps = Array.from({ length: 10 }, (_, i) => `<rect x="${i * 96 + 30}" y="56" width="60" height="10" rx="3" fill="#FFF6D8" stroke="#CBD4DA"/>`).join('');
+  return `<figure class="v2-opening" style="--lc:${lineColor}" aria-label="${esc(caption)}">
+  <svg class="op-bg" viewBox="0 0 900 340" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><rect width="900" height="340" fill="#EAF0F3"/><rect y="40" width="900" height="16" fill="#CBD4DA"/>${lamps}<rect y="270" width="900" height="70" fill="#D8DDD9"/><rect y="266" width="900" height="6" fill="#B9C2C8"/></svg>
+  <div class="op-sign"><span class="op-badge">${esc(line)}${num ? `<small>${num}</small>` : ''}</span><b>${esc(name)}</b><span class="op-arrows">${prev ? `← ${esc(prev)}` : ''}${prev && next ? ' · ' : ''}${next ? `${esc(next)} →` : ''}</span></div>
+  <div class="op-train">${train}</div>
+  <figcaption class="op-caption">${esc(caption)}</figcaption>
+</figure>`;
+}
+
+/** 일지 큰 소식 — 구간 그림(소식이 없는 운행, UX 8차 4.3): 앞 역 ●━[칸 4개]━○ 다음 역, 내 차량이 채운 만큼 앞에 */
+export function segmentScene({ prev, next, halves = 0, lineColor = '#F7941D', car = '' }) {
+  const cells = Array.from({ length: 4 }, (_, i) => { const hv = halves - i * 2; return `<i class="cell ${hv >= 2 ? 'full' : hv === 1 ? 'half' : 'empty'}"></i>`; }).join('');
+  const t = Math.min(halves, 8) / 8;
+  return `<figure class="v2-segment" style="--lc:${lineColor}" aria-label="${esc(prev ?? '')}에서 ${esc(next)}까지 4칸 중 ${Math.floor(halves / 2)}칸${halves % 2 ? ' 반' : ''}">
+  <span class="sg-name">${esc(prev ?? '출발')}</span>
+  <div class="sg-track"><span class="sg-dot done"></span><div class="sg-line"><div class="sg-fill" style="width:${t * 100}%"></div><div class="sg-car" style="left:calc(${t * 100}% - 33px)">${car}</div><div class="sg-cells">${cells}</div></div><span class="sg-dot next"></span></div>
+  <span class="sg-name"><b>${esc(next)}</b></span>
+</figure>`;
+}
+
+/** 시승 결과 큰 소식: 미리 켠 역이 차례로 켜지는 그림(최대 3역, ux-02 2.4). names: 역 이름들 */
+export function placementScene({ names, lineColor = '#F7941D' }) {
+  const shown = names.slice(0, 3);
+  const items = shown.map((n, i) => `<li style="--d:${0.3 + i * 0.5}s"><svg viewBox="0 0 40 40" width="40" height="40" aria-hidden="true"><circle cx="20" cy="20" r="17" fill="${lineColor}" fill-opacity="0.3"/><circle cx="20" cy="20" r="12" fill="${lineColor}" stroke="${INK}" stroke-width="2.5"/><circle cx="20" cy="20" r="5" fill="#fff" stroke="${INK}" stroke-width="1"/></svg><b>${esc(n)}</b></li>`).join('<li class="pl-gap" aria-hidden="true"></li>');
+  return `<figure class="v2-placement" style="--lc:${lineColor}"><ol>${items}</ol></figure>`;
+}

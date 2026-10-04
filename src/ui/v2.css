@@ -160,3 +160,62 @@
   .v2-setup h1 { font-size: var(--fs-hero); }
 }
 @media (min-width: 880px) and (orientation: portrait) { .v2-setup .setup-map { height: 55vh; } .v2-setup .setup-panel { padding: 28px 40px 40px; } }
+
+/* ── 운행 일지 v2: 큰 소식 그림 + 2열 카드(UX 8차 4.3) ── */
+.v2-log { max-width: 1100px; }
+.v2-big { padding: 0; overflow: hidden; display: grid; gap: 0; }
+.v2-big > div:not(.scene) { padding: 12px 18px 16px; font-size: var(--fs-lead); }
+.v2-big .scene { line-height: 0; }
+.license-card .license-art { height: 150px; background: linear-gradient(#EEF4F8 0 72%, #E2E7E3 72%); border-radius: var(--r-md); display: grid; place-items: end center; padding: 8px 12px 0; margin-bottom: 8px; }
+.license-card .license-art svg { width: 100%; height: 136px; }
+.v2-log-cards { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; line-height: 1.5; }
+.v2-log-cards li { display: flex; gap: 12px; align-items: flex-start; background: var(--paper); border: 1.5px solid var(--ink); border-radius: var(--r-md); padding: 14px 16px; }
+.v2-log-cards li .icon { width: 28px; height: 28px; margin-top: 2px; }
+@media (max-width: 760px) { .v2-log-cards { grid-template-columns: 1fr; } }
+
+/* 역 개통 장면(높이 360): 승강장 + 역명판(꺼짐 → 켜짐) + 열차가 들어옴 + "○○역 개통!" */
+.v2-opening { position: relative; margin: 0; height: 360px; overflow: hidden; background: #EAF0F3; border-bottom: 2px solid var(--ink); line-height: normal; }
+.op-bg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.op-sign { position: absolute; left: 50%; top: 82px; transform: translateX(-50%); display: flex; align-items: center; gap: 16px; padding: 12px 22px; background: #CBD4DA; border: 2.5px solid var(--ink); border-radius: 14px; color: var(--ink-2); white-space: nowrap; animation: v2signon 900ms 600ms var(--ease) both; }
+.op-sign b { font-size: 40px; font-weight: 800; }
+.op-badge { width: 56px; height: 56px; border-radius: 50%; background: #fff; border: 2.5px solid var(--ink); display: grid; place-items: center; align-content: center; font-weight: 800; font-size: 24px; line-height: 1; color: var(--ink); animation: v2badgeon 900ms 600ms var(--ease) both; }
+.op-badge small { font-size: 12px; margin-top: 2px; }
+.op-arrows { font-size: 18px; font-weight: 700; }
+.op-train { position: absolute; left: 0; right: 0; bottom: 64px; height: 120px; animation: v2arrive 1100ms var(--ease) both; }
+.op-train svg { height: 120px; width: auto; max-width: 100%; display: block; margin: 0 auto; }
+.op-caption { position: absolute; left: 0; right: 0; bottom: 14px; text-align: center; font-size: 30px; font-weight: 800; color: var(--ink); animation: v2fadein 300ms 1400ms both; }
+@keyframes v2arrive { from { transform: translateX(-70%); } to { transform: translateX(0); } }
+@keyframes v2signon { to { background: #fff; color: var(--ink); box-shadow: 0 0 0 6px color-mix(in srgb, var(--lc) 35%, transparent); } }
+@keyframes v2badgeon { to { background: var(--lc); } }
+@media (prefers-reduced-motion: reduce) { .op-train, .op-sign, .op-badge, .op-caption { animation-duration: 1ms !important; animation-delay: 0ms !important; } }
+@media (max-width: 600px) { .v2-opening { height: 300px; } .op-sign { top: 70px; gap: 10px; padding: 10px 14px; } .op-sign b { font-size: 30px; } .op-arrows { display: none; } .op-train { height: 90px; bottom: 60px; } .op-train svg { height: 90px; } .op-caption { font-size: 24px; } }
+
+/* 구간 그림(소식 없는 운행) */
+.v2-segment { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 16px; padding: 56px 24px 40px; background: linear-gradient(#EEF4F8 0 60%, #E2E7E3 60%); border-bottom: 2px solid var(--ink); line-height: normal; }
+.sg-name { font-size: 20px; color: var(--ink-2); white-space: nowrap; } .sg-name b { font-size: 30px; color: var(--ink); }
+.sg-track { display: flex; align-items: center; }
+.sg-dot { width: 22px; height: 22px; border-radius: 50%; border: 3px solid var(--ink); background: #fff; flex: none; }
+.sg-dot.done { background: var(--lc); }
+.sg-dot.next { box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--ink); }
+.sg-line { position: relative; flex: 1; height: 10px; background: #fff; border: 2px solid var(--ink); border-radius: 6px; margin: 0 6px; }
+.sg-fill { position: absolute; inset: 0 auto 0 0; background: var(--lc); border-radius: 4px; }
+.sg-car { position: absolute; top: -48px; line-height: 0; }
+.sg-cells { position: absolute; left: 0; right: 0; top: 18px; display: flex; justify-content: space-between; gap: 6px; }
+.sg-cells .cell { width: 56px; height: 22px; border: 2px solid var(--ink); border-radius: 4px; background: #fff; }
+.sg-cells .cell.full { background: var(--fig-fill); }
+.sg-cells .cell.half { background: repeating-linear-gradient(-45deg, var(--ink) 0 2px, #fff 2px 6px); }
+@media (max-width: 600px) { .v2-segment { grid-template-columns: 1fr; padding: 56px 16px 44px; } .sg-cells .cell { width: 36px; } }
+
+/* 시승 결과: 미리 켠 역이 차례로 켜짐(최대 3역) */
+.v2-placement { margin: 0; padding: 36px 24px; background: #EAF0F3; border-bottom: 2px solid var(--ink); line-height: normal; }
+.v2-placement ol { list-style: none; margin: 0; padding: 0; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; }
+.v2-placement li { display: grid; justify-items: center; gap: 6px; font-size: 22px; animation: v2fadein 500ms var(--d) both; }
+.v2-placement li svg { animation: v2pop 400ms var(--d) both; }
+.v2-placement .pl-gap { width: 48px; height: 6px; background: var(--lc); border: 1.5px solid var(--ink); border-radius: 3px; animation: none; }
+/* 동작 줄이기: 끝 상태만 보인다(style.css가 모든 애니메이션을 끄므로 끝 모양을 직접 둔다) */
+@media (prefers-reduced-motion: reduce) {
+  .op-sign { background: #fff; color: var(--ink); box-shadow: 0 0 0 6px color-mix(in srgb, var(--lc) 35%, transparent); }
+  .op-badge { background: var(--lc); }
+}
+.v2-big > div.big-title, .v2-big > .big-title { padding: 12px 18px 0; }
+@media (max-width: 520px) { .v2-log .next-btns.even { flex-direction: column; align-items: stretch; } }
